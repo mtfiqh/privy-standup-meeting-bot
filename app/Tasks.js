@@ -1,4 +1,4 @@
-const {addTaskTransaction, getUserProjects} = require("./DataTransaction")
+const {addTaskTransaction, getUserProjects, isAdmin,getUserTasks} = require("./DataTransaction")
 const {App} = require('../core/App')
 /**
  * lookup begin with addTask-action-args
@@ -10,14 +10,97 @@ const {App} = require('../core/App')
  *
  */
 
-class AddTask extends App {
+class Tasks extends App {
     constructor(bot){
         super()
         this.bot=bot
+        this.register([
+            this.reset,
+            this.onInsertTask,
+            this.onInsertPriority,
+            this.onInsertProject,
+            this.onMakeSure,
+            this.showButton,
+            this.onCallbackInsertTask,
+            this.onShowTasks,
+        ])
+    }
+
+    showButton(from){
+        console.log(from.id, "show button tasks, checking is admin")
+        this.bot.sendMessage(from.id,"Mohon Tunggu sebentar ya....", this.messageOption()).then(()=>{
+            isAdmin(from.id).then(admin=>{
+                let keyboard=[
+                    [
+                        {text:'+ Add Tasks', callback_data:"tasks-onCallbackInsertTask-"+from.id+"@"+from.first_name}, 
+                        {text:'Show Tasks', callback_data:"tasks-onShowTasks-"+from.id}
+                    ]
+                ]
+                if(admin){
+    
+                }
+                this.bot.sendMessage(from.id, `Menu: Tasks`, this.messageOption("taskButton",keyboard))
+            })
+
+        })
     }
 
     reset(userID){
         delete this.cache[userID]
+    }
+    /**
+     * 
+     * @param {userID} args 
+     */
+    onShowTasks(args){
+        this.bot.sendMessage(args, "tunggu sebentar ya, sedang mengumpulkan data mu", this.messageOption())
+        args=parseInt(args)
+        console.log(args, "on Show Tasks")
+        getUserTasks(args).then(tasks=>{
+            console.log(args, "parsing list of tasks, sort by project")
+            let list={}
+            for(let task of tasks){
+                if(task.projectName in list){
+
+                }else{
+                    list[task.projectName]=[]
+                }
+                let tempDate = task.date.toDate()
+                let readableDate = tempDate.getDate()+'/'+tempDate.getMonth()+'/'+tempDate.getFullYear()
+                list[task.projectName].push({
+                    name:task.name,
+                    priority:task.priority,
+                    date: readableDate//new Date(task.date._seconds)
+                })
+            }
+            console.log(args, "parsing object to String of tasks")
+            let text="Berikut List Tasks mu:\n\n"
+            for(let l of Object.keys(list)){
+                text=text+'<b>'+l+"</b>\n"
+                let i =1
+                for(let t of list[l]){
+                    text=text+i+'. '+t.name+' ['+t.priority+']\n'+t.date+'\n\n'
+                    i++
+                }
+                text=text+'\n\n'
+            }
+            // console.log(text)
+            this.bot.sendMessage(args, `${text}`, this.messageOption())
+        })
+    }
+    onCallbackInsertTask(args){
+        let [userID, first_name]=args.split('@')
+        userID=parseInt(userID)
+        console.log(userID, "on Callback Insert Task", args)
+        this.addCache(userID, {
+            name:first_name, 
+            session:"onInsertTask",
+            tasks:[],
+            priority:[],
+            projects:{}
+        })
+        this.bot.sendMessage(userID, `<a href='tg://user?id=${userID}'>${first_name}</a>, silahkan masukkan nama tasknya!`,this.messageOption("cancel"))
+        console.log("membuat cache baru",userID)
     }
 
     onInsertTask(args){
@@ -208,6 +291,15 @@ class AddTask extends App {
                     // remove_keyboard:true,
                 })
             }
+        }else if(type==="taskButton"){
+            opts= {
+                // reply_to_message_id: msg.message_id,
+                parse_mode: "HTML",
+                reply_markup: JSON.stringify({
+                    inline_keyboard: projectList,
+                    // remove_keyboard:true,
+                })
+            }
         }else if(type==="project"){
             console.log(projectList)
             opts= {
@@ -234,4 +326,4 @@ class AddTask extends App {
 
 }
 
-module.exports = {AddTask}
+module.exports = {Tasks}
