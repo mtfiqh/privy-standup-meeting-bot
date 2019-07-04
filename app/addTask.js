@@ -1,7 +1,5 @@
 const {addTaskTransaction, getUserProjects} = require("./DataTransaction")
 const {App} = require('../core/App')
-
-// const app = new App
 /**
  * lookup begin with addTask-action-args
  * session:
