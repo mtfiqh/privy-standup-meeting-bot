@@ -10,7 +10,7 @@ function save(date, report) {
     const {
         google
     } = require('googleapis')
-    const keys = require('./keys-sheets.json')
+    const keys = require('../credentials/keys-sheets.json')
 
     const client = new google.auth.JWT(
         keys.client_email,
