@@ -2,6 +2,7 @@ const firebase  = require("./Firebase.js")
 const { save }  = require('./Spreadsheets.js')
 
 const dateTime  = require('node-datetime');
+const dateCalc  = require("add-subtract-date");
 
 const admin     = firebase.admin()
 const db        = firebase.database();
@@ -10,7 +11,7 @@ const projects  = []
 const tasks     = new Set([])
 
 load = () => {
-    //Using for testing
+    //Using to testing
 }
 
 listenUsers = async () => {
@@ -110,10 +111,9 @@ listenTasks = async () => {
 const getUsersData = async (id) => {
     /**
      * Get users data from firebase document
-     * @param {String} 'all' OR 
-     * @param {int} userID
+     * @param {id} - userID of a user or keyword 'all' to get all users data
      * 
-     * @return {Array} 
+     * @return {Array} - Array of user data or single object of user data 
      */
 
     let userData = new Set([])
@@ -145,6 +145,14 @@ const getUsersData = async (id) => {
 }
 
 const getUserTasksOrderByPriority = async (uid, order) => {
+    /**
+     * Get user tasks in order by priority HIGH, MEDIUM or LOW
+     * 
+     * @param {uid}     - userID of a user
+     * @param {order}   - order of tasks can be ASC or DESC
+     *
+     * @returns {Array} - An array containing user data in requested order 
+     */
     let taskList = []
     
     dbRef = db.collection('tasks').orderBy('priority', order)
@@ -171,6 +179,13 @@ const getUserTasksOrderByPriority = async (uid, order) => {
 }
 
 const getProjects = async (type) => {
+    /**
+     * Get all projects
+     * @param {type} - type of projects like 'finished' or 'In Progress'
+     * 
+     * @returns {Set} - returns a set of project names
+     */
+
     let projectNames = new Set([])
 
     return db.collection('projects').get()
@@ -194,6 +209,12 @@ const getProjects = async (type) => {
 }
 
 const getUserTasks = async (uid) => {
+    /**
+     * Get unfinished user tasks
+     * @param {uid} - userID of a user 
+     * 
+     * @returns {taskList} - returns task list of user in an Array
+     */
     let taskList = []
     
     dbRef = db.collection('tasks').where('userID', '==', uid)
@@ -220,6 +241,13 @@ const getUserTasks = async (uid) => {
 }
 
 const getUserProjects = async (uid) => {
+    /**
+     * Get project(s) of a user
+     * 
+     * @param {uid} - userID of a user
+     * 
+     * @returns {Project List} - returns project list of a user in an Array
+     */
     let projectList = []
     dbRef = db.collection('projects').where('users', 'array-contains', uid)
     
@@ -249,9 +277,21 @@ const getUserProjects = async (uid) => {
 }
 
 const getDate = () => {
+    /**
+     * Get current date
+     * 
+     * @returns {Object} - returns an object containing information below
+     * {
+     *      day   :01,
+     *      month :01,
+     *      year  :2001
+     *      timestamp:January, 01 2001 12:00 A.M
+     * }
+    */
+
+
     const date    = dateTime.create();
-    let timestamp = new Date(date.format('Y') + 
-                    '/' + date.format('m') + '/' + date.format('d'))
+    let timestamp = new Date(date.format('Y') +'/'+date.format('m')+'/'+date.format('d'))
     
     return {
         day      : date.format('d'),
@@ -262,6 +302,12 @@ const getDate = () => {
 }
 
 const setAdmin = (userID) => {
+    /**
+     * Set a user as admin
+     * 
+     * @param {userID} - userID of a user who will be set as admin
+     */
+
     db.collection('users').doc(userID.toString())
     .update({ type: 'admin' })
     .catch(err => {
@@ -276,6 +322,12 @@ const setAdmin = (userID) => {
 
 
 const addTaskTransaction = async (data) => {
+    /**
+     * Add task(s) to tasks document in firebase 
+     * @param {data} - an object that contains information of task
+     * 
+     */
+    
     let taskIDs = []
     let rep     = {}
     
@@ -712,6 +764,92 @@ const takeOverTask = (payloads) => {
         })
     })
 
+}
+
+const generateTimestamp=(date)=>{
+    /**
+     * @param {String} date In format yyyy/mm/dd
+     */
+    const timestamp = new Date(date)
+    return timestamp
+}
+
+const addHoliday=({name,date})=>{
+    /**
+     * Function to set holiday in firebase document
+     * @param {Object}
+     * => {
+     *      name: 'Idul Fitri',
+     *      date:'yyyy/mm/dd'
+     *    }
+     * 
+     */
+    const timestamp = generateTimestamp(date)
+
+    db.collection('day-off').doc(timestamp.toString())
+    .set({name:name,type:'holiday',users:[]},{merge:true})
+    console.log(timestamp)
+}
+
+const userDayOff=async ({userID,startDate,long})=>{
+    let start = generateTimestamp(startDate)
+    
+    for(let i=0;i < long;i++){
+        await insertDayOff(start,userID)
+        start=generateTimestamp(dateCalc.add(start,1,'day'))
+    }
+    
+}
+
+const insertDayOff=async(date,userID)=>{
+    return db.collection('day-off').doc(date.toString())
+    .get().then(async results=>{
+        if(results.data()===undefined){   
+            let schema = {
+                name:'cuti',
+                type:'day-off',
+                users:[]
+            }
+            
+            await db.collection('day-off').doc(date.toString())
+            .set(schema,{merge:true})
+            
+            await db.collection('day-off').doc(date.toString())
+            .update({ users:admin.firestore.FieldValue.arrayUnion(userID) })
+        }else{
+            console.log(results.data().type)
+            if(results.data().type!='holiday'){
+                db.collection('day-off').doc(date.toString())
+                .update({users:admin.firestore.FieldValue.arrayUnion(userID) })
+            } 
+        }
+        
+        console.log('result ')
+        console.log(results.data())
+    })
+    .catch(e=>{
+        console.log(e)
+        return e
+    })
+}
+
+const checkDayOff=async()=>{
+    /**
+     * Function to check user(s) who free today
+     * 
+     * @returns {Array} [] OR [userID,userID]
+     */
+
+    let todayDate = getDate()
+
+    return db.collection('day-off').doc(todayDate.toString())
+    .get().then(results=>{
+        if(results.data()===undefined){
+            return []
+        }else{
+            return results.data().users
+        }
+    })
 }
 
 load()
