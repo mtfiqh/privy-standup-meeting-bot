@@ -1,5 +1,5 @@
-const firebase  = require("./firebase.js")
-const { save }  = require('./spreadsheets.js')
+const firebase  = require("./Firebase.js")
+const { save }  = require('./Spreadsheets.js')
 
 const dateTime  = require('node-datetime');
 

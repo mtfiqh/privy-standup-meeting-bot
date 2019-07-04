@@ -2,7 +2,7 @@ module.exports = {
     database : function(){                     
         var admin = require("firebase-admin");
 
-        var serviceAccount = require("./privy-bot-4930d-firebase-adminsdk-ntsav-59a9c05f17.json");
+        var serviceAccount = require("../credentials/privy-bot-4930d-firebase-adminsdk-ntsav-59a9c05f17.json");
 
         admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
