@@ -5,8 +5,8 @@ class Task extends App {
     constructor() {
         super()
         this.register([
-            this.onSave,
-            this.onUpdate
+            this.onSave.name,
+            this.onUpdate.name
         ])
     }
 
@@ -68,6 +68,18 @@ describe(` Test core/App.js`, function () {
                 const [cmd, action, addr] = command.split('-')
                 const res = lookUp[cmd].listen(action, {})
                 assert.deepEqual(res, "OnUpdate")
+            })
+        
+        it(`Action 'onCancel' on 'Task' has not been registered!`,
+            function () {
+                const command = "Task-onCancel-333"
+                try{
+                    const [cmd, action, addr] = command.split('-')
+                    lookUp[cmd].listen(action, {})
+                }catch(error){
+                    assert.equal(error.message, `Action 'onCancel' on 'Task' has not been registered!`)   
+                }
+                
             })
     })
 })

@@ -885,8 +885,9 @@ const checkDayOff=async()=>{
      * @returns {Array} [] OR [userID,userID]
      */
 
-    let todayDate = getDate()
-
+    let {timestamp} = getDate()
+    todayDate = timestamp
+    
     return db.collection('day-off').doc(todayDate.toString())
     .get().then(results=>{
         if(results.data()===undefined){
@@ -897,12 +898,17 @@ const checkDayOff=async()=>{
     })
 }
 
+const updateUser = (userID,payload)=>{
+    db.collection('users').doc(userID.toString()).set(payload,{merge:true})
+}
+
 load()
 
 module.exports = {
     load,
     listenProjects,
     listenUsers,
+    updateUser,
     addProjects,
     addTaskTransaction,
     deleteProject,
@@ -918,6 +924,7 @@ module.exports = {
     getUserTasksOrderByPriority,
     assignUserToProjects,
     updateTaskStatus,
+    checkDayOff,
     isAdmin,
     setAdmin,
     takeOverTask

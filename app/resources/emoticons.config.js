@@ -11,5 +11,6 @@ module.exports = {
     offer   :'🤝',
     assign  :'🤏',
     man     :'🙍‍♂️',
-    woman   :'🙍‍♀️'
+    woman   :'🙍‍♀️',
+    laptop  :'💻'
 }
