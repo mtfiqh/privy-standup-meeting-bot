@@ -30,7 +30,8 @@ class AssignTasks extends App{
             tasks:[],
             priority:[],
             projects:[],
-            to:{}
+            to:{},
+            token:Math.random().toString(20).substr(2,8)
         })
         console.log(userID, "assignTasks - cache created", this.cache[userID])
         this.bot.sendMessage(userID, `<a href='tg://user?id=${userID}'>${first_name}</a>, silahkan masukkan nama task yang akan di assign!`,this.messageOption("cancel"))
@@ -136,9 +137,11 @@ class AssignTasks extends App{
                             for(let user of users){
                                 opts.push([{
                                     text:user.name,
-                                    callback_data:'assignTasks-onSelectUser-'+from.id+'@'+user.name+'@'+user.userID
+                                    callback_data:'assignTasks-onSelectUser-'+from.id+'@'+user.userID+'@'+this.cache[from.id].token
                                 }])
+                                this.cache[from.id].to[user.userID]=user.name
                             }
+                            console.log(opts)
                             this.bot.sendMessage(from.id, 'silahkan pilih user yang akan di assign Tasks nya', this.messageOption("taskButton", opts))
                         })
                         this.cache[from.id].session="onSelectUser"
@@ -154,25 +157,29 @@ class AssignTasks extends App{
     }
 
     onSelectUser(args){
-        const [userID, toName, toUserID] = args.split('@')
-        console.log(this.cache[userID])
+        const [userID, toUserID, token] = args.split('@')
         if(this.cache[userID] && this.cache[userID].session==="onSelectUser"){
-            this.cache[userID].to={
-                userID:toUserID,
-                name:toName
+            if(token===this.cache[userID].token){
+                this.cache[userID].to={
+                    userID:toUserID,
+                    name:this.cache[userID].to[toUserID]
+                }
+                console.log('onSelectUser', args)
+                let tempText="text akan disimpan ke dalam project"+"<b>"+this.cache[userID].projects+"</b>, berikut daftar task(s) nya:\n"
+                let i=1
+                let j=0
+                for(let task of this.cache[userID].tasks){
+                    tempText=tempText+i+'. '+task+'['+this.cache[userID].priority[j]+']\n'
+                    i++
+                    j++
+                }
+                tempText=tempText+"\n Tasks akan di assign ke <b>"+this.cache[userID].to.name+"</b> apakah kamu yakin?"
+                this.cache[userID].session="onMakeSure"
+                this.bot.sendMessage(userID, `${tempText}`, this.messageOption("save-cancel"))
+
+            }else{
+                console.error(userID, "assignTasks - onSelectUser, token is invalid")
             }
-            console.log('onSelectUser', args)
-            let tempText="text akan disimpan ke dalam project"+"<b>"+this.cache[userID].projects+"</b>, berikut daftar task(s) nya:\n"
-            let i=1
-            let j=0
-            for(let task of this.cache[userID].tasks){
-                tempText=tempText+i+'. '+task+'['+this.cache[userID].priority[j]+']\n'
-                i++
-                j++
-            }
-            tempText=tempText+"\n Tasks akan di assign ke <b>"+this.cache[userID].to.name+"</b> apakah kamu yakin?"
-            this.cache[userID].session="onMakeSure"
-            this.bot.sendMessage(userID, `${tempText}`, this.messageOption("save-cancel"))
         }
     }
 
