@@ -4,7 +4,7 @@ class App {
         if (this.constructor === App) {
             throw new TypeError("Abstract class 'App' cannot be instantiated directly.")
         }
-        this.lookUp = {} // {functionName : function}
+        this.lookUp = new Set([]) // action-methods name
         this.cache = {}
     }
 
@@ -16,22 +16,27 @@ class App {
     }
     /**
      * Register the function in the instance class to the lookUp variable
-     * @param {Array} func - Array of Function
+     * @param {Array} functionNames - Array of Functions Name
      */
-    register(func) {
-        for (let fn of func) {
-            const name = fn.name
-            this.lookUp[name] = fn
+    register(functionNames) {
+        for (let name of functionNames) {
+            this.lookUp.add(name)
         }
     }
     /**
      * Call functions that are in the appropriate lookUp variable
      * @param {string} action  - method name
-     * @param {Object} args    - optional data
-     * @return {any}           - return from action function
+     * @param {any} args    - optional data
+     * @return {any}           - return from action method
      */
     listen(action, args) {
-        return this.lookUp[action].call(this, args)
+        if(!this.lookUp.has(action)){
+            throw new Error(
+                `Action '${action}' on '${this.constructor.name}' has not been registered!`,
+            )
+        }
+        //call action-method using method name
+        return this[action].call(this, args)
     }
 }
 
