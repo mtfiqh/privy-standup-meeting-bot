@@ -46,9 +46,42 @@ bot.onText(/\/tasks/, (context, match)=>{
 
 
 
-bot.on('callback_query', query => {
-    const {from, message, data:command} = query
-    const [lookUpKey, action, address] = command.split('-')
-    const currentApp = lookUp[lookUpKey]
-    currentApp.listen(action,address)
+bot.on('callback_query', async query => {
+    try {
+        const {from, message, data:command} = query
+        const [lookUpKey, action, address] = command.split('-')
+        const currentApp = lookUp[lookUpKey]
+        const response = await currentApp.listen(action,address)
+        handleRespond(response, from.id, message.message_id)    
+    } catch (error) {
+        console.error("Error on callback_query", error.message)
+    }
+    
 })
+
+
+function handleRespond(response, to, message_id) {
+    /**
+     * response = {
+     *     type : type case (ex."Edit") (required!)
+     *     from : prefix,
+     *     message: message
+     *     options: inlineKeyboardOption
+     *     deleteLast : boolean
+     *     agrs : any
+     * }
+     */
+
+    if(!response) return
+
+    const {type} = response
+    if(type=="Edit"){
+        bot.editMessageText(response.message,{
+            message_id:message_id,
+            chat_id:to,
+            ...response.options
+        })
+    }else{
+        bot.sendMessage(to, response.message, response.options)
+    }
+}
