@@ -4,11 +4,10 @@ const {Menu} = require('./app/menu')
 
 const bot =  new TelegramBot(process.env.BOT_TOKEN, {polling:true})
 const addTasks = new AddTasks(bot)
-const menu = new Menu(bot)
 // global var
 const lookUp = {
     "addTasks"  : addTasks,
-    "menu"      : menu
+
 }
 
 /**
@@ -17,7 +16,7 @@ const lookUp = {
  */
 bot.on("message", context=>{
     const {from,chat,text}=context
-    try{
+   try{
         //untuk function 'addTasks'
         if(addTasks.cache[from.id]){
             addTasks.listen(addTasks.cache[from.id].session, context)
@@ -29,12 +28,19 @@ bot.on("message", context=>{
 
 })
 
+bot.on('polling_error',msg=>{
+    console.log(msg)
+})
+
+
 bot.onText(/\/menu/, (context, match)=>{
     console.log("menu")
-    const {from} = context
-    bot.sendMessage(from.id, `Halo *${from.first_name}*!`, {
-        'parse_mode': 'Markdown',
-    })
+    const {from,chat} = context
+    
+    const menu = new Menu(bot,from.id)
+
+    lookUp[`Menu@${from.id}`] = menu
+    menu.onMain(context)
 })
 
 bot.onText(/\/Tasks/, (context, match)=>{
@@ -47,7 +53,6 @@ bot.onText(/\/Tasks/, (context, match)=>{
 })
 
 
-
 function handleRespond(response, to, message_id) {
     if (response) {
         if (response.deleteLast) {
@@ -55,9 +60,14 @@ function handleRespond(response, to, message_id) {
         }
         if (response.message) {
             bot.sendMessage(to, response.message, response.options)
+            .then(result=>{
+                if(result.text==='/req'){
+                    //Jose's Function
+                }
+            })
         }
     }else{
-        console.log(response)
+        console.log("Response :",response)
     }
 }
 bot.on('callback_query', async query => {

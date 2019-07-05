@@ -1,43 +1,235 @@
 const {isAdmin} = require("./DataTransaction")
+const {
+        menuAdmin,
+        menuUser,
+        menuProjectsAdmin,
+        menuProjectsUser,
+        menuTasksUser,
+        menuTasksAdmin
+    } = require('./resources/menu.config')
 
 const {App} = require('../core/App')
 
 class Menu extends App{
-    constructor(bot){
+    constructor(bot,userID){
         super()
-        this.register=[
-            this.onTasks
-        ]
+        this.register([
+            //Basic Section
+            this.onMain,
+            this.onBackPressed,
+            
+            //Task Section
+            this.onTasksClicked,
+            this.onReportTasks,
+            this.onAddTasks,
+            this.onListTasks,
+            this.onOfferTasks,
+            this.onAssignTasks,
+            
+            //Project Section
+            this.onProjectsClicked,
+            this.onAddProjects,
+            this.onEditProjects,
+            this.onDeleteProjects,
+            this.onListProjects,
+            
+            // Add new section here
+
+        ])
+
+        // Define Class variable here
+        this.prefix = `${Menu.name}@${userID}`
+        this.isAdmin={}
+        this.state=[]
         this.bot=bot
+        
     }
 
-    onTasks(from){
-        console.log(from.id, "show button tasks, checking is admin")
-        this.bot.sendMessage(from.id,"Mohon Tunggu sebentar ya....", { parse_mode: "HTML", reply_markup:{ remove_keyboard:true}} ).then(()=>{
-            isAdmin(from.id).then(admin=>{
-                let keyboard=[
-                    [
-                        {text:'+ Add Tasks', callback_data:"addTasks-onCallbackInsertTask-"+from.id+"@"+from.first_name}, 
-                        {text:'Show Tasks', callback_data:"addTasks-onShowTasks-"+from.id}
-                    ]
-                ]
-                if(admin){
+
+    //----------------BASIC SECTION-----------------------------------------
+    async onMain({from,chat}){
+        const load = result=>{
+        this.isAdmin = result
+        this.from = from
+        let opts = this.getMessageOptionOnMenu(from.id)
+        let greetings = this.generateGreetings()
+        
+        
+        this.bot.sendMessage(chat.id,   
+            `Selamat ${greetings} ${from.first_name},\nSilahkan gunakan tombol dibawah ini.`,
+            opts)
+            
+        }
+        await isAdmin(from.id).then(load.bind(this))
+        
+        this.state.push({func:this.onMain.name,args:{from,chat}})
+        
+    }
     
-                }
-                let opts= {
-                    // reply_to_message_id: msg.message_id,
-                    parse_mode: "HTML",
-                    reply_markup: JSON.stringify({
-                        inline_keyboard: keyboard
-                        // remove_keyboard:true,
-                    })
-                }
+    onBackPressed(){
+        this.state.pop()
+        let {func,args} = this.state.pop()
 
-                this.bot.sendMessage(from.id,"Menu: Task", opts)
-            })
-
-        })
+        this[func].call(this,args)
+        return {deleteLast:true}
     }
+        
+    //-----------------END SECTION----------------------------
+
+
+    //-----------------TASK SECTION---------------------------
+    onTasksClicked(){
+        this.state.push({func:this.onTasksClicked.name,args:{}})
+
+        if(this.isAdmin){
+            return menuTasksAdmin(this.prefix,this.from)
+        }else{
+            return menuTasksUser(this.prefix,this.from)
+        }
+    }
+
+    onAddTasks(){
+        this.state.push({func:this.onAddTasks.name,args:{}})
+
+        return {
+            //Objects to trigger taufiq's function
+            
+            //Testing
+            message:'addTask'
+        }
+    }
+
+    onListTasks(){
+        this.state.push({func:this.onListTasks.name,args:{}})
+        
+        return {
+            //Objects to trigger taufiq's function
+
+            //Testing
+            message:'ListTask',
+        }
+    }
+
+    onReportTasks(){
+        this.state.push({func:this.onReportTasks.name,args:{}})
+        return {
+
+            //Testing
+            message:'ReportTask'
+        }
+    }
+
+    onOfferTasks(){
+        this.state.push({func:this.onOfferTasks.name,args:{}})
+        return {
+            //Object to trigger Jose's function
+
+            //Testing
+            message:'OfferTask',
+        }
+    }
+
+    onAssignTasks(){
+        this.state.push({func:this.onAssignTasks.name,args:{}})
+        return {
+            //Objects to trigger taufiq's function
+            //Testing
+            message:'assignTask',
+        }
+    }
+
+    //----------------END SECTION----------------------------
+
+
+    //----------------PROJECT SECTION------------------------
+    onProjectsClicked(){
+        this.state.push({func:this.onProjectsClicked.name,args:{}})
+
+        if(this.isAdmin){
+            return menuProjectsAdmin(this.from,this.prefix)
+        }else{
+            return menuProjectsUser(this.from,this.prefix)
+        }
+    }
+
+    onAddProjects(){
+        this.state.push({func:this.onAddProjects.name,args:{}})
+        return {
+            //Objects to trigger taufiq's function
+            //Testing
+            message:'addProject',
+        }
+    }
+
+    onEditProjects(){
+        this.state.push({func:this.onEditProjects.name,args:{}})
+        return {
+            //Objects to trigger taufiq's function
+            //Testing
+            message:'editProject',
+        }
+    }
+
+    onDeleteProjects(){
+        this.state.push({func:this.onDeleteProjects.name,args:{}})
+        return {
+            //Objects to trigger taufiq's function
+            //Testing
+            message:'deleteProject',
+        }
+    }
+
+    onListProjects(){
+        this.state.push({func:this.onListProjects.name,args:{}})
+        return {
+            //Objects to trigger taufiq's function
+            //Testing
+            message:'listProject',
+        }
+    }
+
+    //-----------------END SECTION------------------------------
+
+
+    //-----------------SUPPORT FUNCTION-------------------------
+    
+    /**
+     * Generate message option (button) based on user type (admin|user)
+     * @param {int} userID - userID of a user
+     * 
+     * @returns {Object} messageOption - Message that will be rendered as button
+     */
+    getMessageOptionOnMenu(userID){
+        if(this.isAdmin){
+            return menuAdmin(this.prefix,userID)
+        }else{
+            return menuUser(this.prefix,userID)
+        }
+    }
+
+    /**
+     * Generate greetings based on local language and time
+     * 
+     * @returns {String} message - {'Pagi'|'Siang'|'Sore'|'Malam'}
+     */
+    generateGreetings(){
+
+        let now = new Date()
+        let hour = now.getHours()
+        let message = ''
+        
+        if(hour>4&&hour<10){
+            message = 'Pagi'
+        }else if(hour>=10&&hour<15){
+            message = 'Siang'
+        }else if(hour>=15&&hour<19){
+            message = 'Sore'
+        }else{
+            message = 'Malam'
+        }
+        return message
+    }
+    
 }
 
 module.exports={Menu}
