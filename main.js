@@ -1,14 +1,17 @@
 const TelegramBot   = require("node-telegram-bot-api")
 const {AddTasks} = require('./app/addTasks.js')
 const {Menu} = require('./app/menu')
+const {AssignTasks} = require('./app/assignTasks')
 
 const bot =  new TelegramBot(process.env.BOT_TOKEN, {polling:true})
 const addTasks = new AddTasks(bot)
 const menu = new Menu(bot)
+const assignTasks = new AssignTasks(bot)
 // global var
 const lookUp = {
-    "addTasks"  : addTasks,
-    "menu"      : menu
+    "addTasks"      : addTasks,
+    "menu"          : menu,
+    "assignTasks"   : assignTasks
 }
 
 /**
@@ -21,6 +24,8 @@ bot.on("message", context=>{
         //untuk function 'addTasks'
         if(addTasks.cache[from.id]){
             addTasks.listen(addTasks.cache[from.id].session, context)
+        }else if(assignTasks.cache[from.id]){
+            assignTasks.listen(assignTasks.cache[from.id].session, context)
         }
 
     }catch(e){

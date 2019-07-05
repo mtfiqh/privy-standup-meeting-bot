@@ -31,6 +31,10 @@ class App {
      * @return {any}           - return from action function
      */
     listen(action, args) {
+        if(this.lookUp[action]===undefined){
+            console.log("\x1b[31m",`Action '${action}' on '${this.constructor.name}' has not been registered!`,'\x1b[0m')
+            return
+        }
         return this.lookUp[action].call(this, args)
     }
 }

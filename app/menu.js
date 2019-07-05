@@ -19,10 +19,12 @@ class Menu extends App{
                     [
                         {text:'+ Add Tasks', callback_data:"addTasks-onCallbackInsertTask-"+from.id+"@"+from.first_name}, 
                         {text:'Show Tasks', callback_data:"addTasks-onShowTasks-"+from.id}
-                    ]
+                    ],
+                    
                 ]
+                console.log(from.id, "is Admin",admin)
                 if(admin){
-    
+                    keyboard.push([ {text:'Assign Tasks', callback_data:"assignTasks-onCallback-"+from.id+'@'+from.first_name}])
                 }
                 let opts= {
                     // reply_to_message_id: msg.message_id,
