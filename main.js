@@ -1,6 +1,6 @@
 const TelegramBot                 = require("node-telegram-bot-api")
 const cron                        = require('node-cron')
-const {getUsersData,getUserTasks,getUserTasks} = require('./app/DataTransaction.js')
+const {getUsersData,getUserTasks,checkDayOff} = require('./app/DataTransaction.js')
 
 const bot =  new TelegramBot(process.env.BOT_TOKEN, {polling:true})
 
@@ -20,7 +20,7 @@ bot.on('callback_query', query => {
     currentApp.listen(action,currentApp.cache[address])
 })
 
-cron.schedule('* * 10 * * *',()=>{
+cron.schedule('* * 9 * * *',()=>{
     /**
      * Cron function for reminder every 9 A.M
      * The function get data from database and check if user is active or not
@@ -70,4 +70,14 @@ cron.schedule('* * 13 * * *',()=>{
      * Messages send to all users
      */
     //Implements function to send messages here
+})
+
+cron.schedule('*/10 * * * * *',()=>{
+    /**
+     * Check day-off from database and set user is active on inactive based on results
+     */
+    checkDayOff().then(result=>{
+//        console.log(result)
+    
+    })
 })

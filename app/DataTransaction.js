@@ -833,21 +833,24 @@ const insertDayOff=async(date,userID)=>{
     })
 }
 
-const checkDayOff=async()=>{
+const checkDayOff = async()=>{
     /**
      * Function to check user(s) who free today
      * 
      * @returns {Array} [] OR [userID,userID]
      */
 
-    let todayDate = getDate()
-
+    let {timestamp} = getDate()
+    let todayDate = timestamp
     return db.collection('day-off').doc(todayDate.toString())
     .get().then(results=>{
         if(results.data()===undefined){
             return []
         }else{
-            return results.data().users
+            return {
+                    type:results.data().type,
+                    data:results.data().users
+                }
         }
     })
 }
@@ -860,6 +863,9 @@ module.exports = {
     listenUsers,
     addProjects,
     addTaskTransaction,
+    checkDayOff,
+    addHoliday,
+    userDayOff,
     deleteProject,
     getTaskCount,
     exportToExcel,
