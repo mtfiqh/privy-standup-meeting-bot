@@ -50,6 +50,7 @@ class Report extends App {
     send(){
         if(this.selected.size==0) 
             return {
+                destroy:true,
                 id:this.id,
                 type: "Edit",
                 ...dict.send.failed
@@ -76,11 +77,12 @@ class Report extends App {
         // cleaning temp
         this.bucket.splice(0, this.bucket.length)
         this.selected.clear()
-        console.log(this.cache[this.prefix])
+        delete this.cache[this.prefix]
 
         // response
         const {message, options} = dict.send.success
         return {
+            destroy:true,
             id:this.id,
             type: "Edit",
             message : helper.selectedButtonToString(dataTosend[this.id],"Done",message),
@@ -93,6 +95,7 @@ class Report extends App {
         this.selected.clear()
         this.bucket.splice(0, this.bucket.length)
         return {
+            destroy:true,
             id:this.id,
             type:"Delete"
         }
