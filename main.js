@@ -64,6 +64,7 @@ bot.onText(/\/addTasks/, (context, match)=>{
         console.log(e)
     }
 })
+
 bot.onText(/\/assignTasks/, (context, match)=>{
     const {from} = context
     try{
@@ -88,16 +89,33 @@ bot.onText(/\/assignTasks/, (context, match)=>{
 bot.onText(/\/showTasks/, async (context, match)=>{
     const {from}=context
     try{
-        lookUp[`assignTasks@${from.id}`] = new Tasks(from.id, 'assignTasks')
-        console.log(from.id, `created 'assignTasks@${from.id}' lookup`)
-        let currentApp = lookUp[`assignTasks@${from.id}`]
         let response = await currentApp.showTasks(from)
-         handleRespond(response, from.id)
+        handleRespond(response, from.id)
     }catch(e){
         console.log(e)
     }
 })
 
+function initTasks(prefix, userID, name){
+    try{
+        lookUp[`${prefix}@${userID}`] = new Tasks(userID, prefix, name)
+        currentState[userID]=prefix
+        console.log(userID, `created '${prefix}@${userID}' lookup`)
+        console.log(userID, `lock user in state '${prefix}'`)
+        const response={
+            message:`Silahkan ketik nama task(s) mu yang akan di assign`,
+            options:{
+                reply_markup:{
+                    resize_keyboard:true,
+                    keyboard:[['CANCEL']]
+                }   
+            }
+        }
+        handleRespond(response, userID)
+    }catch(e){
+        console.log(e)
+    }
+}
 
 bot.on('callback_query', async query => {
     try {
@@ -198,6 +216,21 @@ async function handleAuto(context){
             response = await initUserReport(chat.id, chat.first_name, message_id)
             if(!response.active) await bot.sendMessage(chat.id, response.message,response.options)
             bot.deleteMessage(chat.id, message_id)
+            break
+        case '/addTasks':
+            bot.deleteMessage(chat.id, message_id)
+            await initTasks('addTasks', chat.id, chat.first_name)
+            break
+        case '/assignTasks':
+            bot.deleteMessage(chat.id, message_id)
+            await initTasks('assignTasks', chat.id, chat.first_name)
+            break
+        case '/showTasks':
+            bot.deleteMessage(chat.id, message_id)
+            lookUp[`showTasks@${chat.id}`] = new Tasks(chat.id, 'showTasks', chat.name)
+            const currentApp=lookUp[`showTasks@${chat.id}`]
+            let response = await currentApp.showTasks(chat)
+            handleRespond(response, chat.id)
             break
         default:
             console.log("waiting...")
