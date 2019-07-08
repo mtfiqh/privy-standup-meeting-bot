@@ -36,12 +36,33 @@ bot.onText(/\/menu/, (context, match)=>{
 bot.onText(/\/addTasks/, (context, match)=>{
     const {from} = context
     try{
-        lookUp[`addTasks@${from.id}`] = new Tasks(from.id, 'addTasks')
+        lookUp[`addTasks@${from.id}`] = new Tasks(from.id, 'addTasks', from.first_name)
         currentState[from.id]='addTasks'
         console.log(from.id, `created 'addTasks@${from.id}' lookup`)
         console.log(from.id, `lock user in state 'addTasks'`)
         const response={
             message:`Silahkan ketik nama task(s) mu`,
+            options:{
+                reply_markup:{
+                    resize_keyboard:true,
+                    keyboard:[['CANCEL']]
+                }   
+            }
+        }
+        handleRespond(response, from.id)
+    }catch(e){
+        console.log(e)
+    }
+})
+bot.onText(/\/assignTasks/, (context, match)=>{
+    const {from} = context
+    try{
+        lookUp[`assignTasks@${from.id}`] = new Tasks(from.id, 'assignTasks')
+        currentState[from.id]='assignTasks'
+        console.log(from.id, `created 'assignTasks@${from.id}' lookup`)
+        console.log(from.id, `lock user in state 'assignTasks'`)
+        const response={
+            message:`Silahkan ketik nama task(s) mu yang akan di assign`,
             options:{
                 reply_markup:{
                     resize_keyboard:true,
@@ -93,6 +114,9 @@ function handleRespond(response, to, message_id) {
             ...response.options
         })
     }else{
+        if(response.multiple===true){
+            bot.sendMessage(response.to.userID, response.messageTo, response.options)   
+        }
         bot.sendMessage(to, response.message, response.options)
     }
     if(response.listenType===true){

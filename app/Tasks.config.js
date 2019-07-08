@@ -92,11 +92,36 @@ const onSaved=()=>{
         }
     }
 }
+
+const onAssign=(to, textMe, textTo)=>{
+    return{
+        multiple:true,
+        to,
+        message:`${textMe}`,
+        messageTo:`${textTo}`,
+        options:{parse_mode:'HTML', reply_markup:{remove_keyboard:true}}
+    }
+}
+
+const onSelectUser=(users)=>{
+    return {
+        message:`Silahkan pilih user, yang akan di assign task nya`,
+        options:{
+            parse_mode:'HTML',
+            reply_markup:{
+                remove_keyboard:true,
+                inline_keyboard:users
+            }
+        }
+    }
+}
 module.exports={
     onTypeListenMessage,
     onCancelMessage,
     onPrioritySelected,
     onSelectProjects,
     onSureMessage,
-    onSaved
+    onSaved,
+    onSelectUser,
+    onAssign
 }
