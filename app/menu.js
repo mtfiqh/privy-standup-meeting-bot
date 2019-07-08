@@ -124,7 +124,7 @@ class Menu extends App{
 
             //Testing
             type:'Auto',
-            message:'ListTask',
+            message:'/showTasks',
         }
     }
 
