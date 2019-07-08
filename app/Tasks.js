@@ -1,329 +1,227 @@
-const {addTaskTransaction, getUserProjects, isAdmin,getUserTasks} = require("./DataTransaction")
+const {addTaskTransaction, getUserProjects,getUsersData, isAdmin,getUserTasks, getProjects} = require("./DataTransaction")
 const {App} = require('../core/App')
-/**
- * lookup begin with addTask-action-args
- * session:
- *      #onInsertTask
- *      #onInsertPriority
- *      #onInsertProject
- *      #onMakeSure
- *
- */
+const {onTypeListenMessage,onShowTasks, onPrioritySelected, onCancelMessage, onSelectProjects,onAssign, onSureMessage, onSaved, onSelectUser} = require('./Tasks.config')
 
-class Tasks extends App {
-    constructor(bot){
+class Tasks extends App{
+    constructor(userID, prefix, name){
         super()
-        this.bot=bot
         this.register([
-            this.reset,
-            this.onInsertTask,
-            this.onInsertPriority,
-            this.onInsertProject,
-            this.onMakeSure,
-            this.showButton,
-            this.onCallbackInsertTask,
-            this.onShowTasks,
+            this.onTypeListen.name,
+            this.setPriority.name,
+            this.selectProject.name,
+            this.onSure.name,
+            this.selectUser.name
         ])
-    }
+        this.addCache('userID',userID)
+        //add prefix to be guide what func will be use
+        //addTasks or assignTasks
+        this.addCache('prefix', prefix)
+        this.addCache('token', Math.random().toString(36).substring(8))
+        this.addCache('countTasks',0)
 
-    showButton(from){
-        console.log(from.id, "show button tasks, checking is admin")
-        this.bot.sendMessage(from.id,"Mohon Tunggu sebentar ya....", this.messageOption()).then(()=>{
-            isAdmin(from.id).then(admin=>{
-                let keyboard=[
-                    [
-                        {text:'+ Add Tasks', callback_data:"tasks-onCallbackInsertTask-"+from.id+"@"+from.first_name}, 
-                        {text:'Show Tasks', callback_data:"tasks-onShowTasks-"+from.id}
-                    ]
-                ]
-                if(admin){
+    }
     
-                }
-                this.bot.sendMessage(from.id, `Menu: Tasks`, this.messageOption("taskButton",keyboard))
-            })
-
-        })
+    async showTasks(from){
+        await this.listTasks(from)
+        return onShowTasks(this.text)
     }
 
-    reset(userID){
-        delete this.cache[userID]
-    }
-    /**
-     * 
-     * @param {userID} args 
-     */
-    onShowTasks(args){
-        this.bot.sendMessage(args, "tunggu sebentar ya, sedang mengumpulkan data mu", this.messageOption())
-        args=parseInt(args)
-        console.log(args, "on Show Tasks")
-        getUserTasks(args).then(tasks=>{
-            console.log(args, "parsing list of tasks, sort by project")
-            let list={}
-            for(let task of tasks){
-                if(task.projectName in list){
-
-                }else{
-                    list[task.projectName]=[]
-                }
+    async listTasks(from){
+        this.text="Berikut task yang kamu punya\n"
+        const getTheTasks = function(tasks){
+            let i=1
+            for (let task of tasks){
                 let tempDate = task.date.toDate()
                 let readableDate = tempDate.getDate()+'/'+tempDate.getMonth()+'/'+tempDate.getFullYear()
-                list[task.projectName].push({
-                    name:task.name,
-                    priority:task.priority,
-                    date: readableDate//new Date(task.date._seconds)
-                })
+                this.text+=`\n<b>#${task.projectName}</b>\n${i}. ${task.name} [${task.priority}]\nDibuat pada: ${readableDate}\n`
+                i++
             }
-            console.log(args, "parsing object to String of tasks")
-            let text="Berikut List Tasks mu:\n\n"
-            for(let l of Object.keys(list)){
-                text=text+'<b>'+l+"</b>\n"
-                let i =1
-                for(let t of list[l]){
-                    text=text+i+'. '+t.name+' ['+t.priority+']\n'+t.date+'\n\n'
-                    i++
-                }
-                text=text+'\n\n'
-            }
-            // console.log(text)
-            this.bot.sendMessage(args, `${text}`, this.messageOption())
-        })
+        }
+        await getUserTasks(this.cache.userID).then(getTheTasks.bind(this))
     }
-    onCallbackInsertTask(args){
-        let [userID, first_name]=args.split('@')
-        userID=parseInt(userID)
-        console.log(userID, "on Callback Insert Task", args)
-        this.addCache(userID, {
-            name:first_name, 
-            session:"onInsertTask",
-            tasks:[],
-            priority:[],
-            projects:{}
-        })
-        this.bot.sendMessage(userID, `<a href='tg://user?id=${userID}'>${first_name}</a>, silahkan masukkan nama tasknya!`,this.messageOption("cancel"))
-        console.log("membuat cache baru",userID)
+    
+    async onTypeListen(args){
+        const{from, text}=args
+        if(text==="SAVE"){
+            console.log(from.id, `${this.cache.prefix} - SAVE BUTTON CLICKED`)            
+            console.log(from.id, `${this.cache.prefix} - load projects from firebase`)
+            await this.setKeyboardOfUsersProject(from.id)
+            console.log('dataprojects', this.dataProjects)
+            return onSelectProjects(this.dataProjects)
+
+        }else if(text==="CANCEL"){
+            console.log()
+            delete this.cache
+            return onCancelMessage()
+        }
+        console.log(from.id, `${this.cache.prefix} - Insert Task(s)`)
+        //if tasks not create yet
+        if(this.cache.tasks===undefined){
+            this.addCache('tasks', [])
+            console.log(from.id, `${this.cache.prefix} - cache tasks created`)
+        }
+        this.cache.tasks.push(text)
+        console.log(from.id, `${this.cache.prefix} - ${text} added`)
+        return onTypeListenMessage(text, this.cache.prefix, this.cache.userID, this.cache.countTasks.toString()+this.cache.token)
     }
 
-    onInsertTask(args){
-        const {from, text}=args
-        if(this.cache[from.id]){
-            if(this.cache[from.id].session==="onInsertTask"){
-                console.log(from.id, "addTask-onInsertTask")
-                if(text==="SAVE"){
-                    this.bot.sendMessage(from.id, `Tunggu sebentar...`, this.messageOption()).then(e=>{
-                        
-                        console.log(from.id, "addTask-SaveAction")
-                        // get user projects
-                        getUserProjects(from.id).then(projects=>{
-                            if(projects.length<1){
-                                this.bot.sendMessage(from.id, `Mohon maaf, kamu tidak terkait dengan projects apapun, silahkan hubungi leader`, this.messageOption())
-                                this.reset(from.id)
-                            }else{
-                                projects.push(['CANCEL'])
-                                this.cache[from.id].projects=new Set([].concat(...projects))
-                                this.bot.sendMessage(from.id, `Task akan di tambahkan untuk project apa?`, this.messageOption("project", projects))
-                                this.cache[from.id].session="onInsertProject"
-                            }
-                        })
-                    })
-                    
-                }else if(text==="CANCEL"){
-                    console.log(from.id, "addTask-CancelAction")
-                    this.bot.sendMessage(from.id, `<a href='tg://user?id=${from.id}'>${from.first_name}</a>, permintaan anda sudah dibatalkan!`,this.messageOption())
-                    this.reset(from.id)
-                }else{
-                    this.cache[from.id].tasks.push(text)
-                    this.bot.sendMessage(from.id, `<a href='tg://user?id=${from.id}'>${from.first_name}</a>, pilih priority untuk task <b>${text}</b>`,this.messageOption('priority'))
-                    console.log(from.id, "addTask-insertTask ", text)
-                    this.cache[from.id].session="onInsertPriority"        
-                }
-            }
-        }else{
-            this.cache[from.id]={
-                name:from.first_name, 
-                session:"onInsertTask",
-                tasks:[],
-                priority:[],
-                projects:{}
-            }
-            this.bot.sendMessage(from.id, `<a href='tg://user?id=${from.id}'>${from.first_name}</a>, silahkan masukkan nama tasknya!`,this.messageOption("cancel"))
-            console.log("membuat cache baru",from.id)
+    setPriority(args){
+        const [priority, token]=args.split('@')
+        if(this.cache.countTasks.toString()+this.cache.token !== token){
+            console.log(this.cache.userID, 'clicked invalid button token')
+            return
         }
+        if(this.cache.priority===undefined){
+            this.addCache('priority',[])
+            console.log(this.cache.userID, `${this.cache.prefix} - cache priority created`)
+        }
+        this.cache.priority.push(priority)
+        this.cache.countTasks++
+        return onPrioritySelected(priority, this.cache.userID, this.cache.prefix)
+    }
+
+    async setKeyboardOfUsersProject(userID){
+        this.dataProjects = []
+        const setProjects = function(projects){
+            if(this.cache.projects===undefined) this.addCache('projects', [])
+            projects = new Set(projects)
+            let count=0
+            for(let project of projects){
+                this.dataProjects.push([{text:`${project}`, callback_data:`${this.cache.prefix}@${this.cache.userID}-selectProject-${count}@p${this.cache.token}`}])
+                this.cache.projects.push(project)
+                count++
+            }
+            this.dataProjects.push([{text:`CANCEL`, callback_data:`${this.cache.prefix}@${this.cache.userID}-selectProject-c@p${this.cache.token}`}])
+
+        }
+        if(this.cache.prefix==="addTasks"){
+            await getUserProjects(userID).then(setProjects.bind(this))
+        }else if(this.cache.prefix==="assignTasks"){
+            await getProjects('In Progress').then(setProjects.bind(this))
+        }
+    }
+    async setKeyboardOfUsers(){
+        this.dataUsers = []
+        const getUsers = function(users){
+            if(this.cache.users===undefined) this.addCache('users', [])
+            users = new Set(users)
+            let count=0
+            for(let user of users){
+                this.dataUsers.push([{text:`${user.name}`, callback_data:`${this.cache.prefix}@${this.cache.userID}-selectUser-${count}@u${this.cache.token}`}])
+                this.cache.users.push({
+                    userID:user.userID,
+                    name:user.name
+                })
+                count++
+            }
+            this.dataUsers.push([{text:`CANCEL`, callback_data:`${this.cache.prefix}@${this.cache.userID}-selectUser-c@u${this.cache.token}`}])
+        }
+        await getUsersData('all').then(getUsers.bind(this))
+    }
+
+    async selectProject(args){
+        const [idx, token]=args.split('@')
+        if(idx=="c"){
+            delete this.cache
+            return onCancelMessage()
+        }
+
+        if(`p${this.cache.token}`!==token){
+            console.log(this.cache.userID, `${this.cache.prefix} - selectProject token is invalid`)
+            return
+        }
+
+        this.cache.projects = this.cache.projects[idx]
+        console.log(this.cache.userID, `${this.cache.projects} selected`)
+        if(`${this.cache.prefix}`==='addTasks'){
+            console.log(this.cache.userID, 'on addTask goto onSure')
+            const text = this.createTextForSure()
+            return onSureMessage(text, this.cache.prefix, this.cache.userID, 's'+this.cache.token)
+        }
+        console.log(this.cache.userID, 'on assignTasks goto select User')
+        await this.setKeyboardOfUsers()
+        return onSelectUser(this.dataUsers)
+        
         
     }
 
-    onInsertPriority(args){
-        const {from, text}=args
-        if(this.cache[from.id]){
-            if(this.cache[from.id].session==="onInsertPriority"){
-                if(text==="CANCEL"){
-                    console.log(from.id, "addTask-CancelAction")
-                    this.bot.sendMessage(from.id, `<a href='tg://user?id=${from.id}'>${from.first_name}</a>, permintaan anda sudah dibatalkan!`,this.messageOption())
-                    this.reset(from.id)
-                }else if(text==="HIGH"){
-                    this.cache[from.id].session="onInsertTask"
-                    this.bot.sendMessage(from.id, "priority ditetapkan "+text, this.messageOption("save-cancel"))
-                    this.cache[from.id].priority.push(text)
-                    console.log(from.id, "priority "+text+" selected")
-                }else if(text==="MEDIUM"){
-                    this.cache[from.id].session="onInsertTask"
-                    this.bot.sendMessage(from.id, "priority ditetapkan "+text, this.messageOption("save-cancel"))
-                    this.cache[from.id].priority.push(text)
-                    console.log(from.id, "priority "+text+" selected")
-                    
-                }else if(text==="LOW"){
-                    this.cache[from.id].session="onInsertTask"
-                    this.bot.sendMessage(from.id, "priority ditetapkan "+text, this.messageOption("save-cancel"))
-                    this.cache[from.id].priority.push(text)
-                    console.log(from.id, "priority "+text+" selected")
-                }
-            }else{
-
-            }
+    createTextForSure(){
+        let text=`Berikut list tasks, task yang akan kamu masukkan kedalam project ${this.cache.projects}`
+        let i=0
+        for(let task of this.cache.tasks){
+            console.log(task)
+            text=`${text}\n ${i+1}. ${task} [${this.cache.priority[i]}]`
+            i++
         }
+        if(this.cache.prefix==="assignTasks") text=text+`\n\nakan diberikan kepada ${this.cache.users.name}`
+        return text
     }
 
-    onInsertProject(args){
-        const {from, text} = args
-        if(this.cache[from.id]){
-            if(this.cache[from.id].session==="onInsertProject"){
-                console.log('text', text)
-                console.log('data', this.cache[from.id].projects)
-                if(text==="CANCEL"){
-                    console.log(from.id, "addTask-CancelAction")
-                    this.bot.sendMessage(from.id, `<a href='tg://user?id=${from.id}'>${from.first_name}</a>, permintaan anda sudah dibatalkan!`,this.messageOption())
-                    this.reset(from.id)
-                }else if((this.cache[from.id].projects).has(text)){
-                    //make sure
-                    let tempText="text akan disimpan ke dalam project"+"<b>"+text+"</b>, berikut daftar task(s) nya:\n"
-                    this.cache[from.id].projects = text //mengubah dari projects cache dari kumpulan semua project ke 1 project yang dipilih
-                    let i=1
-                    let j=0
-                    for(let task of this.cache[from.id].tasks){
-                        tempText=tempText+i+'. '+task+'['+this.cache[from.id].priority[j]+']\n'
-                        i++
-                        j++
-                    }
-                    this.cache[from.id].session="onMakeSure"
-                    this.bot.sendMessage(from.id, `${tempText}`, this.messageOption("save-cancel"))
-                }else{
-                    this.bot.sendMessage(from.id,`Maaf, nama project tidak sesuai, pilih lagi ya`)
-                }
-            }else{
+    createTextForNotif(){
+        let text = `Kamu mendapatkan tasks dari ${this.cache.name} untuk project ${this.cache.projects[0]} berikut list tasks nya:\n\n`
+        let i=0
+        for(let task of this.cache.tasks){
+            console.log(task)
+            text=`${text}\n ${i+1}. ${task} [${this.cache.priority[i]}]`
+            i++
+        }
+        return text
+    }
     
+    async onSure(args){
+        console.log(this.cache.userID, `${this.cache.prefix} - onSure`)
+        const [ans, token]=args.split('@')
+        if(token!=='s'+this.cache.token){
+            console.log(this.cache.userID, `${this.cache.prefix} - onSure token is invalid`)
+            return
+        }
+        if(ans==="Y"){
+            let i=0
+            let tasks=[]
+            for(let task of this.cache.tasks){
+                tasks.push({
+                    name:task,
+                    userID:this.cache.prefix==="addTasks" ? this.cache.userID : this.cache.users.userID,
+                    projectName: this.cache.prefix==="addTasks"? this.cache.projects[0] : this.cache.projects,
+                    status:'In Progress',
+                    priority:this.cache.priority[i]
+                })
+                i++
             }
+            addTaskTransaction(tasks)
+            console.log(this.cache.userID, `${this.cache.prefix} - saved`)
+            if(this.cache.prefix==="assignTasks"){
+                let textMe =`Selamat, tasks berhasil di assign ke ${this.cache.users.name}`
+                let textTo = this.createTextForNotif()
+                return onAssign(this.cache.users, textMe, textTo)  
+                // delete this.cache
+            } 
+            return onSaved()
 
+        }else if(ans==="N"){
+            delete this.cache
+            return onCancelMessage()
         }
     }
 
-    onMakeSure(args){
-        const {from,text}=args
-        if(this.cache[from.id]){
-            if(this.cache[from.id].session==="onMakeSure"){
-                if(text==="CANCEL"){
-                    console.log(from.id, "addTask-CancelAction")
-                    this.bot.sendMessage(from.id, `<a href='tg://user?id=${from.id}'>${from.first_name}</a>, permintaan anda sudah dibatalkan!`,this.messageOption())
-                    this.reset(from.id)
-                }else if(text==="SAVE"){
-                    console.log(from.id, "addTask-saveAction to firebase")
-                    let tasks=[]
-                    let i=0
-                    for(let task of this.cache[from.id].tasks){
-                        tasks.push({
-                            name:task,
-                            userID:from.id,
-                            projectName:this.cache[from.id].projects,
-                            status:'In Progress',
-                            priority:this.cache[from.id].priority[i]
-                        })
-                        i++
-                    }
-                    console.log(from.id, 'data to push to firebase: ', tasks)
-                    addTaskTransaction(tasks).then(()=>{
-                        this.bot.sendMessage(from.id, `Tasks berhasil ditambahkan sebagai in progress`, this.messageOption())
-                        this.reset(from.id)
-                    })
-                }
-
-            }
+    selectUser(args){
+        const [idx, token]=args.split('@')
+        if('u'+this.cache.token!==token){
+            console.log(this.cache.userID, `${this.cache.prefix} - onSelect User token is invalid`)
+            return
         }
-    }
-
-    messageOption(type, projectList){
-        let opts={}
-        if(type==="save-cancel"){    
-            opts= {
-                // reply_to_message_id: msg.message_id,
-                parse_mode: "HTML",
-                reply_markup: JSON.stringify({
-                    one_time_keyboard: true,
-                    resize_keyboard:true,
-                    keyboard: [
-                        ["SAVE"],
-                        ["CANCEL"]
-                    ],
-                    // remove_keyboard:true,
-                })
-            }
-        }else if(type==="cancel"){
-            opts= {
-                // reply_to_message_id: msg.message_id,
-                parse_mode: "HTML",
-                reply_markup: JSON.stringify({
-                    one_time_keyboard: true,
-                    resize_keyboard:true,
-                    keyboard: [
-                        ["CANCEL"]
-                    ],
-                    // remove_keyboard:true,
-                })
-            }
-        }else if(type==="priority"){
-            opts= {
-                // reply_to_message_id: msg.message_id,
-                parse_mode: "HTML",
-                reply_markup: JSON.stringify({
-                    one_time_keyboard: true,
-                    resize_keyboard:true,
-                    keyboard: [
-                        ["HIGH", "MEDIUM", "LOW"],
-                        ["CANCEL"]
-                    ],
-                    // remove_keyboard:true,
-                })
-            }
-        }else if(type==="taskButton"){
-            opts= {
-                // reply_to_message_id: msg.message_id,
-                parse_mode: "HTML",
-                reply_markup: JSON.stringify({
-                    inline_keyboard: projectList,
-                    // remove_keyboard:true,
-                })
-            }
-        }else if(type==="project"){
-            console.log(projectList)
-            opts= {
-                // reply_to_message_id: msg.message_id,
-                parse_mode: "HTML",
-                reply_markup: JSON.stringify({
-                    one_time_keyboard: true,
-                    resize_keyboard:true,
-                    keyboard: projectList
-                    // remove_keyboard:true,
-                })
-            }
-        }else{
-            opts= {
-                parse_mode: "HTML",
-                reply_markup:{
-                    remove_keyboard:true,
-                }
-            }
+        if(this.idx=='c'){
+            console.log(this.cache.userID, `${this.cache.prefix} cancel action`)
+            delete this.cache
+            return onCancelMessage()
         }
-
-        return opts
+        this.cache.users=this.cache.users[idx]
+        console.log(this.cache.users)
+        console.log(this.cache.userID, 'on addTask goto onSure')
+        const text = this.createTextForSure()
+        return onSureMessage(text, this.cache.prefix, this.cache.userID, 's'+this.cache.token)
     }
-
 }
 
-module.exports = {Tasks}
+
+module.exports={Tasks}

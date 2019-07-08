@@ -5,14 +5,100 @@ const { Report }    = require('./app/Report')
 const { TakeOfferTask } = require('./app/TakeOfferTask')
 const lookUp        = {} 
 const bot           =  new TelegramBot(process.env.BOT_TOKEN, {polling:true})
+const {Tasks} = require('./app/Tasks.js')
+
+
+// global var
+const currentState={}
+/**
+ * accept any message
+ * response has additional : done (boolean), 
+ * if true then remove currentState
+ */
+bot.on("message", async context=>{
+    const {from,chat,text}=context
+    if(currentState[from.id]){
+        console.log(from.id, 'Type Listen')
+        const currentApp = lookUp[`${currentState[from.id]}@${from.id}`]
+        const response = await currentApp.listen('onTypeListen',context)
+        handleRespond(response, from.id, context.message_id)
+        console.log(from.id, `currentState ${currentState[from.id]} deleted`)
+        delete currentState[from.id]
+    }
+
+})
+
+bot.onText(/\/menu/, (context, match)=>{
+    console.log("menu")
+    const {from} = context
+    bot.sendMessage(from.id, `Halo *${from.first_name}*!`, {
+        'parse_mode': 'Markdown',
+    })
+})
+
+bot.onText(/\/addTasks/, (context, match)=>{
+    const {from} = context
+    try{
+        lookUp[`addTasks@${from.id}`] = new Tasks(from.id, 'addTasks', from.first_name)
+        currentState[from.id]='addTasks'
+        console.log(from.id, `created 'addTasks@${from.id}' lookup`)
+        console.log(from.id, `lock user in state 'addTasks'`)
+        const response={
+            message:`Silahkan ketik nama task(s) mu`,
+            options:{
+                reply_markup:{
+                    resize_keyboard:true,
+                    keyboard:[['CANCEL']]
+                }   
+            }
+        }
+        handleRespond(response, from.id)
+    }catch(e){
+        console.log(e)
+    }
+})
+bot.onText(/\/assignTasks/, (context, match)=>{
+    const {from} = context
+    try{
+        lookUp[`assignTasks@${from.id}`] = new Tasks(from.id, 'assignTasks')
+        currentState[from.id]='assignTasks'
+        console.log(from.id, `created 'assignTasks@${from.id}' lookup`)
+        console.log(from.id, `lock user in state 'assignTasks'`)
+        const response={
+            message:`Silahkan ketik nama task(s) mu yang akan di assign`,
+            options:{
+                reply_markup:{
+                    resize_keyboard:true,
+                    keyboard:[['CANCEL']]
+                }   
+            }
+        }
+        handleRespond(response, from.id)
+    }catch(e){
+        console.log(e)
+    }
+})
+bot.onText(/\/showTasks/, async (context, match)=>{
+    const {from}=context
+    try{
+        lookUp[`assignTasks@${from.id}`] = new Tasks(from.id, 'assignTasks')
+        console.log(from.id, `created 'assignTasks@${from.id}' lookup`)
+        let currentApp = lookUp[`assignTasks@${from.id}`]
+        let response = await currentApp.showTasks(from)
+         handleRespond(response, from.id)
+    }catch(e){
+        console.log(e)
+    }
+})
+
 
 bot.on('callback_query', async query => {
     try {
-        const {from, message, data:command} = query
+        const {from, message_id, data:command} = query
         const [lookUpKey, action, address] = command.split('-')
         const currentApp = lookUp[lookUpKey]
         const response = await currentApp.listen(action,address)
-        handleRespond(response, from.id, message.message_id)
+        handleRespond(response, from.id, message_id)
         if(response && response.destroy==true){
             delete lookUp[currentApp.prefix]
         }
@@ -51,7 +137,14 @@ function handleRespond(response, to, message_id) {
         handleRespond(sender, sender.id, message_id)
         handleRespond(receiver, receiver.id,message_id)
     }else{
+        if(response.multiple===true){
+            bot.sendMessage(response.to.userID, response.messageTo, response.options)   
+        }
         bot.sendMessage(to, response.message, response.options)
+    }
+    if(response.listenType===true){
+        currentState[response.userID]=response.prefix
+        console.log(response.userID, `lock user in state '${response.prefix}'`)
     }
 }
 
