@@ -836,17 +836,17 @@ const addHoliday=({name,date})=>{
     console.log(timestamp)
 }
 
-const userDayOff=async ({userID,startDate,long})=>{
+const userDayOff=async ({userID,startDate,long,reason})=>{
     let start = generateTimestamp(startDate)
     
     for(let i=0;i < long;i++){
-        await insertDayOff(start,userID)
+        await insertDayOff(start,userID,reason)
         start=generateTimestamp(dateCalc.add(start,1,'day'))
     }
     
 }
 
-const insertDayOff=async(date,userID)=>{
+const insertDayOff=async(date,userID,reason)=>{
     return db.collection('day-off').doc(date.toString())
     .get().then(async results=>{
         if(results.data()===undefined){   
@@ -860,12 +860,12 @@ const insertDayOff=async(date,userID)=>{
             .set(schema,{merge:true})
             
             await db.collection('day-off').doc(date.toString())
-            .update({ users:admin.firestore.FieldValue.arrayUnion(userID) })
+            .update({ users:admin.firestore.FieldValue.arrayUnion({userID:userID,reason:reason}) })
         }else{
             console.log(results.data().type)
             if(results.data().type!='holiday'){
                 db.collection('day-off').doc(date.toString())
-                .update({users:admin.firestore.FieldValue.arrayUnion(userID) })
+                .update({users:admin.firestore.FieldValue.arrayUnion({userID:userID,reason:reason}) })
             } 
         }
         
@@ -887,14 +887,18 @@ const checkDayOff=async()=>{
 
     let {timestamp} = getDate()
     todayDate = timestamp
-    
+    let result = []
+
     return db.collection('day-off').doc(todayDate.toString())
     .get().then(results=>{
         if(results.data()===undefined){
             return []
         }else{
-            return results.data().users
+            results.data().users.forEach(res=>{
+                result.push(res.userID)
+            })
         }
+        return result
     })
 }
 

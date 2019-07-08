@@ -15,23 +15,23 @@ class Menu extends App{
         super()
         this.register([
             //Basic Section
-            this.onMain,
-            this.onBackPressed,
+            this.onMain.name,
+            this.onBackPressed.name,
             
             //Task Section
-            this.onTasksClicked,
-            this.onReportTasks,
-            this.onAddTasks,
-            this.onListTasks,
-            this.onOfferTasks,
-            this.onAssignTasks,
+            this.onTasksClicked.name,
+            this.onReportTasks.name,
+            this.onAddTasks.name,
+            this.onListTasks.name,
+            this.onOfferTasks.name,
+            this.onAssignTasks.name,
             
             //Project Section
-            this.onProjectsClicked,
-            this.onAddProjects,
-            this.onEditProjects,
-            this.onDeleteProjects,
-            this.onListProjects,
+            this.onProjectsClicked.name,
+            this.onAddProjects.name,
+            this.onEditProjects.name,
+            this.onDeleteProjects.name,
+            this.onListProjects.name,
             
             // Add new section here
 
@@ -44,6 +44,17 @@ class Menu extends App{
         this.bot=bot
         
     }
+
+    /**
+     * response = {
+     *     type : type case (ex."Edit") (required!)
+     *     from : prefix,
+     *     message: message
+     *     options: inlineKeyboardOption
+     *     deleteLast : boolean
+     *     agrs : any
+     * }
+     */
 
 
     //----------------BASIC SECTION-----------------------------------------
@@ -71,7 +82,12 @@ class Menu extends App{
         let {func,args} = this.state.pop()
 
         this[func].call(this,args)
-        return {deleteLast:true}
+        return {
+            message:'Back',
+            type:'Edit',
+            from:this.prefix,
+            deleteLast:true
+        }
     }
         
     //-----------------END SECTION----------------------------

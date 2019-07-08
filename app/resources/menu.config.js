@@ -2,6 +2,8 @@ const em = require('./emoticons.config')
 
 const menuAdmin =(prefix,from)=>{
     return {
+        type:'Edit',
+        from:prefix,
         parse_mode:'HTML',
         reply_markup: {
             inline_keyboard:[
@@ -20,6 +22,8 @@ const menuAdmin =(prefix,from)=>{
 
 const menuUser = (prefix,from)=>{
     return {
+        type:'Edit',
+        from:prefix,
         parse_mode:'HTML',
         reply_markup: {
             inline_keyboard:[
@@ -35,6 +39,8 @@ const menuUser = (prefix,from)=>{
 
 const menuProjectsAdmin = (from,prefix)=>{
     return {
+        type:'Edit',
+        from:prefix,
         message:'Silahkan pilih menu dibawah ini',
         options:{
             parse_mode:'HTML',
@@ -67,6 +73,8 @@ const menuProjectsAdmin = (from,prefix)=>{
 
 const menuProjectsUser = (from,prefix)=>{
     return {
+        type:'Edit',
+        from:prefix,
         message:'Silahkan pilih menu dibawah ini',
         options:{
             parse_mode:'HTML',
@@ -89,6 +97,8 @@ const menuProjectsUser = (from,prefix)=>{
 
 const menuTasksUser = (prefix,from)=>{
     return {
+        type:'Edit',
+        from:prefix,
         message:'Silahkan pilih menu dibawah ini',
         options:{
             parse_mode:'HTML',
@@ -130,6 +140,8 @@ const menuTasksUser = (prefix,from)=>{
 
 const menuTasksAdmin = (prefix,from)=>{
     return {
+        type:'Edit',
+        from:prefix,
         message:'Silahkan pilih menu dibawah ini',
         options:{
             parse_mode:'HTML',

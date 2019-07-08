@@ -15,15 +15,15 @@ const {Menu} = require('./app/menu')
 
 bot.on("message", context=>{
     const {from,chat,text}=context
-   try{
-        //untuk function 'addTasks'
-        if(addTasks.cache[from.id]){
-            addTasks.listen(addTasks.cache[from.id].session, context)
-        }
+//    try{
+//         //untuk function 'addTasks'
+//         if(addTasks.cache[from.id]){
+//             addTasks.listen(addTasks.cache[from.id].session, context)
+//         }
 
-    }catch(e){
-        console.log(e)
-    }
+//     }catch(e){
+//         console.log(e)
+//     }
 
 })
 
@@ -49,22 +49,34 @@ bot.onText(/\/Tasks/, (context, match)=>{
     }
 })
 
-
 function handleRespond(response, to, message_id) {
-    if (response) {
-        if (response.deleteLast) {
-            bot.deleteMessage(to, message_id)
-        }
-        if (response.message) {
-            bot.sendMessage(to, response.message, response.options)
-            .then(result=>{
-                if(result.text==='/req'){
-                    //Jose's Function
-                }
+    /**
+     * response = {
+     *     type : type case (ex."Edit") (required!)
+     *     from : prefix,
+     *     message: message
+     *     options: inlineKeyboardOption
+     *     deleteLast : boolean
+     *     agrs : any
+     * }
+     */
+
+    if(!response) return
+
+    const {type} = response
+    if(type=="Edit"){
+        if(response.message=='Back'){
+            bot.deleteMessage(to,message_id)
+        }else{
+            bot.editMessageText(response.message,{
+                message_id:message_id,
+                chat_id:to,
+                ...response.options
             })
         }
+
     }else{
-        console.log("Response :",response)
+        bot.sendMessage(to, response.message, response.options)
     }
 }
 
@@ -74,7 +86,8 @@ bot.on('callback_query', async query => {
         const [lookUpKey, action, address] = command.split('-')
         const currentApp = lookUp[lookUpKey]
         const response = await currentApp.listen(action, address)
-        handleRespond(response, from.id, message.message_id)    
+        //console.log(response)
+        await handleRespond(response, from.id, message.message_id)    
     } catch (error) {
         console.log(error.message)
     }
@@ -138,12 +151,14 @@ cron.schedule('* * 13 * * *',()=>{
  * Set a user active or not based on day-off databases
  * 
  */
-cron.schedule('* * 1 * *',()=>{
+cron.schedule('* * * * *',()=>{
     checkDayOff().then(results=>{
         getUsersData('all').then(result=>{
             result.forEach(user=>{
                 if(results.includes(user.userID)){
                     updateUser(user.userID,{status:'inactive'})
+                }else{
+                    updateUser(user.userID,{status:'active'})
                 }
             })
         })
@@ -151,28 +166,3 @@ cron.schedule('* * 1 * *',()=>{
 })
 
 
-function handleRespond(response, to, message_id) {
-    /**
-     * response = {
-     *     type : type case (ex."Edit") (required!)
-     *     from : prefix,
-     *     message: message
-     *     options: inlineKeyboardOption
-     *     deleteLast : boolean
-     *     agrs : any
-     * }
-     */
-
-    if(!response) return
-
-    const {type} = response
-    if(type=="Edit"){
-        bot.editMessageText(response.message,{
-            message_id:message_id,
-            chat_id:to,
-            ...response.options
-        })
-    }else{
-        bot.sendMessage(to, response.message, response.options)
-    }
-}
