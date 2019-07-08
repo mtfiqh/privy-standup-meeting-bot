@@ -94,11 +94,11 @@ bot.onText(/\/showTasks/, async (context, match)=>{
 
 bot.on('callback_query', async query => {
     try {
-        const {from, message_id, data:command} = query
+        const {from, message, data:command} = query
         const [lookUpKey, action, address] = command.split('-')
         const currentApp = lookUp[lookUpKey]
         const response = await currentApp.listen(action,address)
-        handleRespond(response, from.id, message_id)
+        handleRespond(response, from.id, message.message_id)
         if(response && response.destroy==true){
             delete lookUp[currentApp.prefix]
         }
