@@ -2,6 +2,7 @@ const firebase  = require("./Firebase.js")
 const { save }  = require('./Spreadsheets.js')
 
 const dateTime  = require('node-datetime');
+const dateCalc  = require("add-subtract-date");
 
 const admin     = firebase.admin()
 const db        = firebase.database();
@@ -10,15 +11,15 @@ const projects  = []
 const tasks     = new Set([])
 
 load = () => {
-    // listenUsers()
-    // listenProjects()
-    // listenTasks()
+    //Using to testing
 }
 
 listenUsers = async () => {
+    /**
+     * Listen to users change in firebase document
+     */
     db.collection('users')
     .onSnapshot(user => {
-        
         user.docChanges().forEach(data => {
     
             if (data.type === 'added') {
@@ -35,6 +36,9 @@ listenUsers = async () => {
 }
 
 listenProjects = async () => {
+    /**
+     * Listen to projects change in firebase document
+     */
     db.collection('projects')
     .onSnapshot(project => {
         let tasks = []
@@ -49,13 +53,12 @@ listenProjects = async () => {
                     })
                 }
 
-                projects[data.doc.id] = {}
+                projects[data.doc.id]                = {}
                 projects[data.doc.id]['projectName'] = data.doc.data().projectName
-                projects[data.doc.id]['Task'] = tasks
+                projects[data.doc.id]['Task']        = tasks
                 tasks = []
                 
                 console.log('Projects added ' + data.doc.data().projectName)
-            
             } else if (data.type === 'removed') {
                 console.log('Projects ' + data.doc.data().projectName + ' removed')
             }
@@ -64,6 +67,9 @@ listenProjects = async () => {
 }
 
 listenTasks = async () => {
+    /**
+     * Listen to tasks change in firebase document
+     */
     db.collection('tasks')
     .onSnapshot(user => {
         let counter = 0
@@ -88,10 +94,10 @@ listenTasks = async () => {
 
                 db.collection('projects').doc(data.doc.data().projectID)
                 .update(
-                    { 
-                        Task: admin.firestore.FieldValue
-                            .arrayRemove(db.collection(tasks).doc(data.doc.data().taskID)) 
-                    })
+                { 
+                    Task: admin.firestore.FieldValue
+                        .arrayRemove(db.collection(tasks).doc(data.doc.data().taskID)) 
+                })
 
                 tasks.delete(data.doc.data())
             
@@ -103,6 +109,13 @@ listenTasks = async () => {
 }
 
 const getUsersData = async (id) => {
+    /**
+     * Get users data from firebase document
+     * @param {id} - userID of a user or keyword 'all' to get all users data
+     * 
+     * @return {Array} - Array of user data or single object of user data 
+     */
+
     let userData = new Set([])
 
     if (id === 'all') {
@@ -132,6 +145,14 @@ const getUsersData = async (id) => {
 }
 
 const getUserTasksOrderByPriority = async (uid, order) => {
+    /**
+     * Get user tasks in order by priority HIGH, MEDIUM or LOW
+     * 
+     * @param {uid}     - userID of a user
+     * @param {order}   - order of tasks can be ASC or DESC
+     *
+     * @returns {Array} - An array containing user data in requested order 
+     */
     let taskList = []
     
     dbRef = db.collection('tasks').orderBy('priority', order)
@@ -147,15 +168,24 @@ const getUserTasksOrderByPriority = async (uid, order) => {
         })
         
         return taskList
-    }).catch(err => {
+    })
+    .catch(err => {
         console.log('Error : ' + err.details)
-    }).finally(() => {
+    })
+    .finally(() => {
         console.log('Tasks for ' + uid + ' successfully loaded')
     })
 
 }
 
 const getProjects = async (type) => {
+    /**
+     * Get all projects
+     * @param {type} - type of projects like 'finished' or 'In Progress'
+     * 
+     * @returns {Set} - returns a set of project names
+     */
+
     let projectNames = new Set([])
 
     return db.collection('projects').get()
@@ -169,38 +199,100 @@ const getProjects = async (type) => {
         })
 
         return projectNames
-    }).catch(err => {
+    })
+    .catch(err => {
         console.log('Error : ' + err.details)
-    }).finally(() => {
+    })
+    .finally(() => {
         console.log('Projects loaded!')
     })
 }
 
 const getUserTasks = async (uid) => {
-    let taskList = []
-    
+
+    let taskList = new Set([])
+    let projects = new Set([])
+
     dbRef = db.collection('tasks').where('userID', '==', uid)
     return dbRef.get()
-    .then(data => {
-    
-        data.forEach(dt => {
-    
+    .then(async data => {
+        
+        data.forEach( dt => {
             if (dt.data().status != 'done') {
-                taskList.push(dt.data())
-            }
-    
+                taskList.add(dt.data())
+            } 
         })
-    
-        return taskList
+        await db.collection('projects').get()
+        .then(result=>{
+            result.forEach(res=>{
+                if(res.data().status==='finished'){
+                    projects.add(res.data().projectName)
+                }
+            })
+        })
+        taskList.forEach(task=>{
+            if(projects.has(task.projectName.toString())){
+                taskList.delete(task)
+            }
+        })
+        return sortingTask(Array.from(taskList))
     }).catch(err => {
         console.log('Error : ' + err.details)
-    }).finally(() => {
+    })
+    .finally(() => {
         console.log('Tasks for ' + uid + ' successfully loaded')
     })
+}
+
+const sortingTask=(taskList)=>{
+    /**
+     * Sorting an array from tasklist to its project based on priority
+     */
+    const all = {}
+    const high      = []
+    const medium    = []
+    const low       = []
+    let temp
+    
+    taskList.forEach(task=>{
+        if(task.priority==='HIGH'){
+            high.push(task)
+        }else if(task.priority==='MEDIUM'){
+            medium.push(task)
+        }else{
+            low.push(task)
+        }
+        
+        all[task.projectName] = []
+    })
+
+    temp = high.concat(medium,low)
+    temp.forEach(item=>{
+        all[item.projectName].push(item)
+    })
+
+    let res = []
+    for(let key of Object.keys(all)){
+        all[key].forEach(item=>{
+            res.push(item)
+        })
+    }
+
+    return res
+}
+
+const sortingProjects = (taskList)=>{
 
 }
 
 const getUserProjects = async (uid) => {
+    /**
+     * Get project(s) of a user
+     * 
+     * @param {uid} - userID of a user
+     * 
+     * @returns {Project List} - returns project list of a user in an Array
+     */
     let projectList = []
     dbRef = db.collection('projects').where('users', 'array-contains', uid)
     
@@ -220,104 +312,129 @@ const getUserProjects = async (uid) => {
         }
     
         return projectList
-    }).catch(err => {
+    })
+    .catch(err => {
         console.log('Error : ' + err.details)
-    }).finally(() => {
+    })
+    .finally(() => {
         console.log('Projects for ' + uid + ' successfully loaded')
     })
 }
 
 const getDate = () => {
-    const date = dateTime.create();
-    let timestamp = new Date(date.format('Y') + '/' + date.format('m') + '/' + date.format('d'))
+    /**
+     * Get current date
+     * 
+     * @returns {Object} - returns an object containing information below
+     * {
+     *      day   :01,
+     *      month :01,
+     *      year  :2001
+     *      timestamp:January, 01 2001 12:00 A.M
+     * }
+    */
+
+
+    const date    = dateTime.create();
+    let timestamp = new Date(date.format('Y') +'/'+date.format('m')+'/'+date.format('d'))
     
     return {
-        day: date.format('d'),
-        month: date.format('m'),
-        year: date.format('Y'),
+        day      : date.format('d'),
+        month    : date.format('m'),
+        year     : date.format('Y'),
         timestamp: timestamp
     }
 }
 
 const setAdmin = (userID) => {
+    /**
+     * Set a user as admin
+     * 
+     * @param {userID} - userID of a user who will be set as admin
+     */
+
     db.collection('users').doc(userID.toString())
-        .update({ type: 'admin' })
-        .catch(err => {
-            if (err) {
-                console.log('Error : ' + err.details)
-            }
-        })
-        .finally(() => {
-            console.log(userID + ' are successfully set as admin')
-        })
+    .update({ type: 'admin' })
+    .catch(err => {
+        if (err) {
+            console.log('Error : ' + err.details)
+        }
+    })
+    .finally(() => {
+        console.log(userID + ' are successfully set as admin')
+    })
 }
 
 
 const addTaskTransaction = async (data) => {
+    /**
+     * Add task(s) to tasks document in firebase 
+     * @param {data} - an object that contains information of task
+     * 
+     */
+    
     let taskIDs = []
-    let rep = {}
-    console.log(data)
+    let rep     = {}
+    
     for (dt of data) {
         rep[dt.userID] = {
-            done: [],
+            done      : [],
             inProgress: [],
-            info: [],
-            problems: []
+            info      : [],
+            problems  : []
         }
     }
-    console.log('data :')
-    console.log(data)
+
     for (dt of data) {
-        let taskRef = db.collection('tasks').doc()
-        let taskID = taskRef.id
+        let taskRef       = db.collection('tasks').doc()
+        let taskID        = taskRef.id
         let { timestamp } = getDate()
+        let projectRef    = db.collection("projects").where("projectName", "==", dt.projectName)
         taskIDs.push(taskID)
-
-        let projectRef = db.collection("projects").where("projectName", "==", dt.projectName)
+        
         await projectRef.get()
-            .then(result => {
-                console.log(result.data)
-                result.forEach(item => {
-                    console.log(item.data())
-                    let temp = {}
-                    temp[dt.userID] = {}
-                    temp[dt.userID]['inProgress'] = admin.firestore.FieldValue.arrayUnion(dt.name)
+        .then(result => {
+            result.forEach(item => {
+                let temp = {}
+                temp[dt.userID] = {}
+                temp[dt.userID]['inProgress'] = admin.firestore.FieldValue.arrayUnion(dt.name)
 
 
-                    taskRef.set(
-                        {
-                            taskID: taskRef.id,
-                            name: dt.name,
-                            projectName: dt.projectName,
-                            status: 'In Progress',
-                            projectID: item.id,
-                            userID: dt.userID,
-                            date: timestamp,
-                            priority: dt.priority 
-                        }
-                    )
+                taskRef.set(
+                    {
+                        taskID     : taskRef.id,
+                        name       : dt.name,
+                        projectName: dt.projectName,
+                        status     : 'In Progress',
+                        projectID  : item.id,
+                        userID     : dt.userID,
+                        date       : timestamp,
+                        priority   : dt.priority 
+                    }
+                )
 
-                    db.collection('projects').doc(item.id)
-                        .update({ Task: admin.firestore.FieldValue.arrayUnion(taskRef) })
+                db.collection('projects').doc(item.id)
+                .update({ Task: admin.firestore.FieldValue.arrayUnion(taskRef) })
 
-                    db.collection('projects').doc(item.id)
-                        .update({ users: admin.firestore.FieldValue.arrayUnion(dt.userID) })
+                db.collection('projects').doc(item.id)
+                .update({ users: admin.firestore.FieldValue.arrayUnion(dt.userID) })
 
-                    db.collection('reports').doc(timestamp.toString()).get()
-                        .then(doc => {
-                            db.collection('reports').doc(timestamp.toString())
-                                .set(temp, { merge: true })
-                        })
-                     
+                db.collection('reports').doc(timestamp.toString()).get()
+                .then(doc => {
+                    db.collection('reports').doc(timestamp.toString())
+                    .set(temp, { merge: true })
                 })
-                //                db.collection('reports').doc(timestamp.toString()).set(rep,{merge:true})
-                
-            }).catch(err => {
-                console.log(err)
-            }).finally(() => {
-                console.log('Task successfully added')
-                console.log('Task ID : ' + taskID)
+                    
             })
+            
+        })
+        .catch(err => {
+            console.log(err)
+        })
+        .finally(() => {
+            console.log('Task successfully added')
+            console.log('Task ID : ' + taskID)
+        })
 
     }
     return taskIDs
@@ -330,21 +447,22 @@ const addProjects = (projects) => {
         let projectID = projectRef.id
         let { timestamp } = getDate()
         await projectRef
-            .set(
-                {
-                    projectName: project.projectName,
-                    date: timestamp,
-                    status: 'In Progress',
-                    Task: [],
-                    users: []
-                }
-            )
-            .catch(err => {
-                console.log('Add project failed, error : ' + err.details)
-            }).finally(() => {
-                console.log('Project successfully added')
-                console.log('Project ID : ' + projectID)
-            })
+        .set(
+            {
+                projectName: project.projectName,
+                date       : timestamp,
+                status     : 'In Progress',
+                Task       : [],
+                users      : []
+            }
+        )
+        .catch(err => {
+            console.log('Add project failed, error : ' + err.details)
+        })
+        .finally(() => {
+            console.log('Project successfully added')
+            console.log('Project ID : ' + projectID)
+        })
         pids.add(projectID)
     })
     return pids
@@ -358,7 +476,8 @@ const isUserExist = async (userID) => {
             } else {
                 return true
             }
-        }).catch(err => {
+        })
+        .catch(err => {
             console.log('Error : ' + err.details)
         })
 }
@@ -375,7 +494,8 @@ const isAdmin = async (userID) => {
             } else {
                 return 'User not available'
             }
-        }).catch(err => {
+        })
+        .catch(err => {
             console.log('Error : ' + err.details)
         })
 }
@@ -399,9 +519,11 @@ const assignUserToProjects = (projectName, userID) => {
                 db.collection('projects').doc(dt.id)
                 .update({ users: admin.firestore.FieldValue.arrayUnion(userID) })
             })
-        }).catch(err => {
+        })
+        .catch(err => {
             console.log('Error : ' + err.details)
-        }).finally(() => {
+        })
+        .finally(() => {
             console.log('Assign ' + userID + ' to ' + projectName + ' succeeded')
         })
 }
@@ -410,76 +532,56 @@ const editProjectName = (oldName, newName) => {
     let projectRef = db.collection('projects').where('projectName', '==', oldName)
 
     projectRef.get()
-        .then(data => {
-            data.forEach(dt => {
-                db.collection('projects').doc(dt.id).set({ projectName: newName }, { merge: true })
-            })
-        }).catch(e => {
-            console.log(e)
+    .then(data => {
+        data.forEach(dt => {
+            db.collection('projects').doc(dt.id).set({ projectName: newName }, { merge: true })
         })
+    })
+    .catch(e => {
+        console.log(e)
+    })
 }
 
 const deleteProject = async (projectName) => {
     let projectRef = db.collection('projects').where('projectName', '==', projectName)
     console.log(projectRef)
     return projectRef.get()
-        .then(data => {
-            // console.log(data)
-            let a = 0
-            data.forEach(dt => {
-                db.collection('projects').doc(dt.id).set(
-                    { status: 'finished' }, { merge: true }).then(a => {
-                })
-                a++
+    .then(data => {
+        // console.log(data)
+        let a = 0
+        
+        data.forEach(dt => {
+            db.collection('projects').doc(dt.id).set(
+                { status: 'finished' }, { merge: true }).then(a => {
             })
-            if (a < 1) {
-                return false
-            } else {
-                return true
-            }
-
-            /*        if(data.exists){
-            }else{
-                return false
-            }
-    */
-
-        }).catch(e => {
-            return 'gagal'
-        }).finally(e => {
-            return 'berhasil'
-            console.log('empat')
-            //   return 'finally'
+            a++
         })
+
+        if (a < 1) {
+            return false
+        } else {
+            return true
+        }
+
+        })
+        .catch(e => {
+            return 'Delete Project Failed'
+        })
+        .finally(e => {
+            return 'Delete Project Succeeded'
+        }
+    )
 }
-
-// const updateTaskStatus = (tasks) => {
-
-//     for (task of Object.keys(tasks)) {
-//         tasks[task].forEach(dt => {
-//             let { projectName, name, userID } = dt
-//             let taskRef = db.collection('tasks').where('projectName', '==', projectName)
-//                 .where('name', '==', name).where('userID', '==', userID)
-//             taskRef.get()
-//                 .then(data => {
-//                     data.forEach(dt => {
-//                         db.collection('tasks').doc(dt.id).update({ status:'done' })
-//                     })
-//                 }).catch(err => {
-//                     console.log('Error : ' + err)
-//                 })
-//                 .finally('Task ' + name + ' updated')
-//         })
-//     }
-// }
 
 const updateTaskStatus = (payload) => {
     Object.keys(payload).forEach(key => {
         items = payload[key]
         items.forEach(item => {
             const { projectName, userId: userID, name } = item
-            const taskReference = db.collection('tasks').where('projectName', '==', projectName)
-                .where('name', '==', name).where('userID', '==', userID)
+            const taskReference = db.collection('tasks')
+            .where('projectName', '==', projectName)
+            .where('name', '==', name).where('userID', '==', userID)
+            
             taskReference.get().then(results => {
                 results.forEach(result => {
                     db.collection('tasks').doc(result.id).update({ status: 'done' })
@@ -491,40 +593,34 @@ const updateTaskStatus = (payload) => {
     })
 }
 
-const deadlineDateGenerator = (days) => {
-    let date = new Date()
-    date.setDate(date.getDate() + days)
-    return date
-
-}
-
 const exportToExcel = async () => {
     const { year, month, day, timestamp } = getDate()
     let userIDs = new Set([])
     let usersReport = {}
     const reportList = []
     const report = [
-        ["Nama", "Done", "In Progress", "Info", "Problem", "project"]
+        ["Nama", "Done", "In Progress", "Info", "Problem", "Project"]
     ]
-    await getUsersData('all').then(async data => {
-        data.forEach(dt => {
-            userIDs.add(dt)
+
+    await getUsersData('all').then(async results => {
+        results.forEach(item => {
+            userIDs.add(item)
         })
     })
 
-    await getTodayReport().then(dt => {
-        usersReport = dt
+    await getTodayReport().then(result => {
+        usersReport = result
     })
 
-    await userIDs.forEach(dt => {
-        reportList.push(generateColumn(dt, usersReport))
+    await userIDs.forEach(result => {
+        reportList.push(generateColumn(result, usersReport))
     })
 
 
 
-    await Promise.all(reportList).then(d => {
-        d.forEach(dt => {
-            report.push(dt)
+    await Promise.all(reportList).then(results => {
+        results.forEach(result => {
+            report.push(result)
         })
     })
 
@@ -533,23 +629,24 @@ const exportToExcel = async () => {
 }
 
 const generateColumn = async (userData, todayReport) => {
-    const tmp = []
-    const report = {}
-    let getTask = []
-    let ipTemp = ''
-    let doneTemp = ''
-    let infoTemp = ''
+    const tmp       = []
+    const report    = {}
+    let getTask     = []
+    let ipTemp      = ''
+    let doneTemp    = ''
+    let infoTemp    = ''
     let problemTemp = ''
-    let project = ''
-    const inProgress = todayReport[userData['userID']].inProgress
-    const done = todayReport[userData['userID']].done
-    const info = todayReport[userData['userID']].info
-    const problem = todayReport[userData['userID']].problem
+    let project     = ''
+    const inProgress    = todayReport[userData['userID']].inProgress
+    const done          = todayReport[userData['userID']].done
+    const info          = todayReport[userData['userID']].info
+    const problem       = todayReport[userData['userID']].problem
+    
     tmp.push(userData['name'])
-
     if (done != undefined) {
         if (done.length > 1) {
             let counter = 1
+
             done.forEach(item => {
                 doneTemp = doneTemp.concat(counter + '. ' + item + '\n')
                 counter++
@@ -566,6 +663,7 @@ const generateColumn = async (userData, todayReport) => {
     if (inProgress != undefined) {
         if (inProgress.length > 1) {
             let counter = 1
+            
             inProgress.forEach((item) => {
                 ipTemp = ipTemp.concat(counter + '. ' + item + '\n')
                 getTask.push(getProjectByTask(item))
@@ -577,7 +675,7 @@ const generateColumn = async (userData, todayReport) => {
             getTask.push(getProjectByTask(ipTemp))
         }
     } else {
-        ipTemp = ' '
+        ipTemp  = ' '
         project = ' '
     }
     tmp.push(ipTemp)
@@ -585,6 +683,7 @@ const generateColumn = async (userData, todayReport) => {
     if (info != undefined) {
         if (info.length > 1) {
             let counter = 1
+            
             info.forEach(item => {
                 infoTemp = infoTemp.concat(counter + '. ' + item + '\n')
                 counter++
@@ -602,6 +701,7 @@ const generateColumn = async (userData, todayReport) => {
     if (problem != undefined) {
         if (problem.length > 1) {
             let counter = 1
+            
             problem.forEach(item => {
                 problemTemp = problemTemp.concat(counter + '. ' + item + '\n')
                 counter++
@@ -619,7 +719,6 @@ const generateColumn = async (userData, todayReport) => {
         let counter = 1
 
         res.forEach(r => {
-            console.log(r[0].projectName)
             project = project.concat(counter + '. ' + r[0].projectName + '\n')
             counter++
         })
@@ -632,64 +731,60 @@ const generateColumn = async (userData, todayReport) => {
 
 const getTodayReport = async () => {
     const { timestamp } = getDate()
+    
     return db.collection('reports').doc(timestamp.toString()).get()
-        .then(data => {
-            return data.data()
-        })
+    .then(data => {
+        return data.data()
+    })
 }
 
 const getProjectByTask = async (taskName) => {
     return db.collection('tasks').where('name', '==', taskName)
-        .get().then(results => {
-            let tmp = []
-            results.forEach(res => {
-                tmp.push(res.data())
-            })
-            return tmp
+    .get().then(results => {
+        let tmp = []
+        results.forEach(res => {
+            tmp.push(res.data())
         })
+        return tmp
+    })
 }
-/*
-const generateId = () => {
-    let timestamp = new Date()
-    timestamp = timestamp.getTime()
-    timestamp = timestamp.toString()
-    return timestamp.substring(timestamp.length - 3, timestamp.length) + Math.random().toString(36).substr(2, 6)
-}
-*/
+
 const getTaskCount = async () => {
     let temp = {}
+
     return db.collection('tasks').get()
-        .then(async results => {
+    .then(async results => {
 
-            await db.collection('projects').get()
-                .then(result => {
-                    result.forEach(item => {
-                        if (item.data().status != 'finished') {
-                            temp[item.data().projectName] = {
-                                taskDone: 0,
-                                allTask: 0
-                            }
+        await db.collection('projects').get()
+            .then(result => {
+                result.forEach(item => {
+                    if (item.data().status != 'finished') {
+                        temp[item.data().projectName] = {
+                            taskDone: 0,
+                            allTask: 0
                         }
-                    })
-                })
-            results.forEach(result => {
-                if (temp[result.data().projectName] != undefined) {
-                    if (result.data().status == 'done') {
-                        temp[result.data().projectName].taskDone++
                     }
-                    temp[result.data().projectName].allTask++
-                }
+                })
             })
-            return temp
+        results.forEach(result => {
+            if (temp[result.data().projectName] != undefined) {
+                if (result.data().status == 'done') {
+                    temp[result.data().projectName].taskDone++
+                }
+                temp[result.data().projectName].allTask++
+            }
         })
-
+        return temp
+    })
 }
 
 const takeOverTask = (payloads) => {
     payloads.forEach(payload =>{
         const {taskId:tid, receiverId:uidB, senderId:uidL} = payload
         db.collection('tasks').doc(tid).set({ userID: uidB }, { merge: true })
-        let ProjectRef = db.collection('projects').where('Task', 'array-contains', db.collection('tasks').doc(tid))
+        
+        let ProjectRef = db.collection('projects')
+        .where('Task', 'array-contains', db.collection('tasks').doc(tid))
     
         ProjectRef.get().then(results => {
             let counter = 0
@@ -698,12 +793,9 @@ const takeOverTask = (payloads) => {
                 tmp = res
                 counter++
             })
-            if (counter == 0) {
-                console.log('!ada')
-            } else {
+            if (counter != 0) {
                 let userExist = 0
                 for (let x of tmp.data().users) {
-                    console.log('user : ' + x + ':' + uidL)
                     if (x === uidL) {
                         userExist++
                     }
@@ -719,12 +811,108 @@ const takeOverTask = (payloads) => {
 
 }
 
+const generateTimestamp=(date)=>{
+    /**
+     * @param {String} date In format yyyy/mm/dd
+     */
+    const timestamp = new Date(date)
+    return timestamp
+}
+
+const addHoliday=({name,date})=>{
+    /**
+     * Function to set holiday in firebase document
+     * @param {Object}
+     * => {
+     *      name: 'Idul Fitri',
+     *      date:'yyyy/mm/dd'
+     *    }
+     * 
+     */
+    const timestamp = generateTimestamp(date)
+
+    db.collection('day-off').doc(timestamp.toString())
+    .set({name:name,type:'holiday',users:[]},{merge:true})
+    console.log(timestamp)
+}
+
+const userDayOff=async ({userID,startDate,long,reason})=>{
+    let start = generateTimestamp(startDate)
+    
+    for(let i=0;i < long;i++){
+        await insertDayOff(start,userID,reason)
+        start=generateTimestamp(dateCalc.add(start,1,'day'))
+    }
+    
+}
+
+const insertDayOff=async(date,userID,reason)=>{
+    return db.collection('day-off').doc(date.toString())
+    .get().then(async results=>{
+        if(results.data()===undefined){   
+            let schema = {
+                name:'cuti',
+                type:'day-off',
+                users:[]
+            }
+            
+            await db.collection('day-off').doc(date.toString())
+            .set(schema,{merge:true})
+            
+            await db.collection('day-off').doc(date.toString())
+            .update({ users:admin.firestore.FieldValue.arrayUnion({userID:userID,reason:reason}) })
+        }else{
+            console.log(results.data().type)
+            if(results.data().type!='holiday'){
+                db.collection('day-off').doc(date.toString())
+                .update({users:admin.firestore.FieldValue.arrayUnion({userID:userID,reason:reason}) })
+            } 
+        }
+        
+        console.log('result ')
+        console.log(results.data())
+    })
+    .catch(e=>{
+        console.log(e)
+        return e
+    })
+}
+
+const checkDayOff=async()=>{
+    /**
+     * Function to check user(s) who free today
+     * 
+     * @returns {Array} [] OR [userID,userID]
+     */
+
+    let {timestamp} = getDate()
+    todayDate = timestamp
+    let result = []
+
+    return db.collection('day-off').doc(todayDate.toString())
+    .get().then(results=>{
+        if(results.data()===undefined){
+            return []
+        }else{
+            results.data().users.forEach(res=>{
+                result.push(res.userID)
+            })
+        }
+        return result
+    })
+}
+
+const updateUser = (userID,payload)=>{
+    db.collection('users').doc(userID.toString()).set(payload,{merge:true})
+}
+
 load()
 
 module.exports = {
     load,
     listenProjects,
     listenUsers,
+    updateUser,
     addProjects,
     addTaskTransaction,
     deleteProject,
@@ -740,8 +928,8 @@ module.exports = {
     getUserTasksOrderByPriority,
     assignUserToProjects,
     updateTaskStatus,
+    checkDayOff,
     isAdmin,
     setAdmin,
     takeOverTask
-
 }

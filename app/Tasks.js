@@ -13,6 +13,7 @@ class Tasks extends App{
             this.selectUser.name
         ])
         this.addCache('userID',userID)
+        this.addCache('name', name)
         //add prefix to be guide what func will be use
         //addTasks or assignTasks
         this.addCache('prefix', prefix)
@@ -158,7 +159,7 @@ class Tasks extends App{
     }
 
     createTextForNotif(){
-        let text = `Kamu mendapatkan tasks dari ${this.cache.name} untuk project ${this.cache.projects[0]} berikut list tasks nya:\n\n`
+        let text = `Kamu mendapatkan tasks dari ${this.cache.name} untuk project ${this.cache.projects} berikut list tasks nya:\n\n`
         let i=0
         for(let task of this.cache.tasks){
             console.log(task)
