@@ -6,6 +6,8 @@ const { TakeOfferTask } = require('./app/TakeOfferTask')
 const lookUp        = {} 
 const bot           =  new TelegramBot(process.env.BOT_TOKEN, {polling:true})
 const {Tasks} = require('./app/Tasks.js')
+const {Menu} = require('./app/menu')
+const cron = require('node-cron')
 
 
 // global var
@@ -99,11 +101,11 @@ bot.onText(/\/showTasks/, async (context, match)=>{
 
 bot.on('callback_query', async query => {
     try {
-        const {from, message_id, data:command} = query
+        const {from, message, data:command} = query
         const [lookUpKey, action, address] = command.split('-')
         const currentApp = lookUp[lookUpKey]
         const response = await currentApp.listen(action,address)
-        handleRespond(response, from.id, message_id)
+        handleRespond(response, from.id, message.message_id)
         if(response && response.destroy==true){
             delete lookUp[currentApp.prefix]
         }
@@ -137,6 +139,14 @@ function handleRespond(response, to, message_id) {
                 message_id:message_id,
                 chat_id:to,
                 ...response.options
+            }).then(async context=>{
+                const {text, chat, message_id} = context
+                console.log(text)
+                if(text==='/offer'){
+                    const response = await initOfferTask(chat.id, chat.first_name, message_id)
+                    if(!response.active) await bot.sendMessage(chat.id, response.message,response.options)
+                    bot.deleteMessage(chat.id, message_id)
+                }
             })
         }
     }else if(type=="Delete"){
@@ -228,19 +238,7 @@ async function initUserReport(id, name){
 }
 
 
-bot.on('callback_query', async query => {
-    try {
-        const { from, message, data: command } = query
-        const [lookUpKey, action, address] = command.split('-')
-        const currentApp = lookUp[lookUpKey]
-        const response = await currentApp.listen(action, address)
-        //console.log(response)
-        await handleRespond(response, from.id, message.message_id)    
-    } catch (error) {
-        console.log(error.message)
-    }
-    
-})
+
 
 /**
  * Cron function for reminder every 9 A.M

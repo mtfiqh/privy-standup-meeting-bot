@@ -111,7 +111,7 @@ class Menu extends App{
             //Objects to trigger taufiq's function
             
             //Testing
-            message:'addTask'
+            message:'/addTasks'
         }
     }
 
@@ -141,7 +141,8 @@ class Menu extends App{
             //Object to trigger Jose's function
 
             //Testing
-            message:'OfferTask',
+            type:'Edit',
+            message:'/offer',
         }
     }
 
