@@ -111,6 +111,7 @@ class Menu extends App{
             //Objects to trigger taufiq's function
             
             //Testing
+            type:'Auto',
             message:'/addTasks'
         }
     }
@@ -122,6 +123,7 @@ class Menu extends App{
             //Objects to trigger taufiq's function
 
             //Testing
+            type:'Auto',
             message:'ListTask',
         }
     }
@@ -131,7 +133,8 @@ class Menu extends App{
         return {
 
             //Testing
-            message:'ReportTask'
+            type:'Auto',
+            message:'/report'
         }
     }
 
@@ -141,7 +144,7 @@ class Menu extends App{
             //Object to trigger Jose's function
 
             //Testing
-            type:'Edit',
+            type:'Auto',
             message:'/offer',
         }
     }
@@ -151,7 +154,8 @@ class Menu extends App{
         return {
             //Objects to trigger taufiq's function
             //Testing
-            message:'assignTask',
+            type:'Auto',
+            message:'/assignTasks',
         }
     }
 
@@ -174,7 +178,8 @@ class Menu extends App{
         return {
             //Objects to trigger taufiq's function
             //Testing
-            message:'addProject',
+            type:'Auto',
+            message:'/addProject',
         }
     }
 
@@ -183,7 +188,8 @@ class Menu extends App{
         return {
             //Objects to trigger taufiq's function
             //Testing
-            message:'editProject',
+            type:'Auto',
+            message:'/editProject',
         }
     }
 
@@ -192,7 +198,8 @@ class Menu extends App{
         return {
             //Objects to trigger taufiq's function
             //Testing
-            message:'deleteProject',
+            type:'Auto',
+            message:'/deleteProject',
         }
     }
 
@@ -201,7 +208,8 @@ class Menu extends App{
         return {
             //Objects to trigger taufiq's function
             //Testing
-            message:'listProject',
+            type:'Auto',
+            message:'/listProject',
         }
     }
 

@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/taufiq2810/privy-standup-meeting-bot#readme",
   "dependencies": {
+    "add-subtract-date": "^1.0.14",
     "firebase-admin": "^8.2.0",
     "google-spreadsheet": "^2.0.7",
     "googleapis": "^40.0.1",

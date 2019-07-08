@@ -139,14 +139,6 @@ function handleRespond(response, to, message_id) {
                 message_id:message_id,
                 chat_id:to,
                 ...response.options
-            }).then(async context=>{
-                const {text, chat, message_id} = context
-                console.log(text)
-                if(text==='/offer'){
-                    const response = await initOfferTask(chat.id, chat.first_name, message_id)
-                    if(!response.active) await bot.sendMessage(chat.id, response.message,response.options)
-                    bot.deleteMessage(chat.id, message_id)
-                }
             })
         }
     }else if(type=="Delete"){
@@ -156,10 +148,15 @@ function handleRespond(response, to, message_id) {
         handleRespond(sender, sender.id, message_id)
         handleRespond(receiver, receiver.id,message_id)
 
-    }else{
+    }else if(type=="Auto"){
+        handleAuto(response.message)
+        bot.sendMessage(to, response.message).then(async context=> await handleAuto(context) )
+    }
+    else{
         if(response.multiple===true){
             bot.sendMessage(response.to.userID, response.messageTo, response.options)   
         }
+        // bot action
         bot.sendMessage(to, response.message, response.options)
     }
     if(response.listenType===true){
@@ -185,6 +182,29 @@ bot.onText(/\/offer/, async context => {
     if(!response.active) await bot.sendMessage(id, response.message,response.options)
     bot.deleteMessage(id, message_id)
 })
+
+
+// handling tringer from 'bot'
+async function handleAuto(context){
+    const {text, chat, message_id} = context
+    let response;
+    switch (text){
+        case '/offer':
+            response = await initOfferTask(chat.id, chat.first_name, message_id)
+            if(!response.active) await bot.sendMessage(chat.id, response.message,response.options)
+            bot.deleteMessage(chat.id, message_id)
+            break
+        case '/report':
+            response = await initUserReport(chat.id, chat.first_name, message_id)
+            if(!response.active) await bot.sendMessage(chat.id, response.message,response.options)
+            bot.deleteMessage(chat.id, message_id)
+            break
+        default:
+            console.log("waiting...")
+            break
+
+    }
+}
 
 // Register Current User to lookUp as Report@userId
 async function initOfferTask(id, name){
