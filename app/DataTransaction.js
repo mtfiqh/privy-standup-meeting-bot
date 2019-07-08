@@ -209,34 +209,79 @@ const getProjects = async (type) => {
 }
 
 const getUserTasks = async (uid) => {
-    /**
-     * Get unfinished user tasks
-     * @param {uid} - userID of a user 
-     * 
-     * @returns {taskList} - returns task list of user in an Array
-     */
-    let taskList = []
-    
+
+    let taskList = new Set([])
+    let projects = new Set([])
+
     dbRef = db.collection('tasks').where('userID', '==', uid)
     return dbRef.get()
-    .then(data => {
-    
-        data.forEach(dt => {
-    
+    .then(async data => {
+        
+        data.forEach( dt => {
             if (dt.data().status != 'done') {
-                taskList.push(dt.data())
-            }
-    
+                taskList.add(dt.data())
+            } 
         })
-    
-        return taskList
-    })
-    .catch(err => {
+        await db.collection('projects').get()
+        .then(result=>{
+            result.forEach(res=>{
+                if(res.data().status==='finished'){
+                    projects.add(res.data().projectName)
+                }
+            })
+        })
+        taskList.forEach(task=>{
+            if(projects.has(task.projectName.toString())){
+                taskList.delete(task)
+            }
+        })
+        return sortingTask(Array.from(taskList))
+    }).catch(err => {
         console.log('Error : ' + err.details)
     })
     .finally(() => {
         console.log('Tasks for ' + uid + ' successfully loaded')
     })
+}
+
+const sortingTask=(taskList)=>{
+    /**
+     * Sorting an array from tasklist to its project based on priority
+     */
+    const all = {}
+    const high      = []
+    const medium    = []
+    const low       = []
+    let temp
+    
+    taskList.forEach(task=>{
+        if(task.priority==='HIGH'){
+            high.push(task)
+        }else if(task.priority==='MEDIUM'){
+            medium.push(task)
+        }else{
+            low.push(task)
+        }
+        
+        all[task.projectName] = []
+    })
+
+    temp = high.concat(medium,low)
+    temp.forEach(item=>{
+        all[item.projectName].push(item)
+    })
+
+    let res = []
+    for(let key of Object.keys(all)){
+        all[key].forEach(item=>{
+            res.push(item)
+        })
+    }
+
+    return res
+}
+
+const sortingProjects = (taskList)=>{
 
 }
 
@@ -791,17 +836,17 @@ const addHoliday=({name,date})=>{
     console.log(timestamp)
 }
 
-const userDayOff=async ({userID,startDate,long})=>{
+const userDayOff=async ({userID,startDate,long,reason})=>{
     let start = generateTimestamp(startDate)
     
     for(let i=0;i < long;i++){
-        await insertDayOff(start,userID)
+        await insertDayOff(start,userID,reason)
         start=generateTimestamp(dateCalc.add(start,1,'day'))
     }
     
 }
 
-const insertDayOff=async(date,userID)=>{
+const insertDayOff=async(date,userID,reason)=>{
     return db.collection('day-off').doc(date.toString())
     .get().then(async results=>{
         if(results.data()===undefined){   
@@ -815,12 +860,12 @@ const insertDayOff=async(date,userID)=>{
             .set(schema,{merge:true})
             
             await db.collection('day-off').doc(date.toString())
-            .update({ users:admin.firestore.FieldValue.arrayUnion(userID) })
+            .update({ users:admin.firestore.FieldValue.arrayUnion({userID:userID,reason:reason}) })
         }else{
             console.log(results.data().type)
             if(results.data().type!='holiday'){
                 db.collection('day-off').doc(date.toString())
-                .update({users:admin.firestore.FieldValue.arrayUnion(userID) })
+                .update({users:admin.firestore.FieldValue.arrayUnion({userID:userID,reason:reason}) })
             } 
         }
         
@@ -840,16 +885,25 @@ const checkDayOff=async()=>{
      * @returns {Array} [] OR [userID,userID]
      */
 
-    let todayDate = getDate()
+    let {timestamp} = getDate()
+    todayDate = timestamp
+    let result = []
 
     return db.collection('day-off').doc(todayDate.toString())
     .get().then(results=>{
         if(results.data()===undefined){
             return []
         }else{
-            return results.data().users
+            results.data().users.forEach(res=>{
+                result.push(res.userID)
+            })
         }
+        return result
     })
+}
+
+const updateUser = (userID,payload)=>{
+    db.collection('users').doc(userID.toString()).set(payload,{merge:true})
 }
 
 load()
@@ -858,6 +912,7 @@ module.exports = {
     load,
     listenProjects,
     listenUsers,
+    updateUser,
     addProjects,
     addTaskTransaction,
     deleteProject,
@@ -873,6 +928,7 @@ module.exports = {
     getUserTasksOrderByPriority,
     assignUserToProjects,
     updateTaskStatus,
+    checkDayOff,
     isAdmin,
     setAdmin,
     takeOverTask
