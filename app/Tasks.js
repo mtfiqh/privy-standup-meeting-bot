@@ -1,6 +1,6 @@
 const {addTaskTransaction, getUserProjects,getUsersData, isAdmin,getUserTasks, getProjects} = require("./DataTransaction")
 const {App} = require('../core/App')
-const {onTypeListenMessage, onPrioritySelected, onCancelMessage, onSelectProjects,onAssign, onSureMessage, onSaved, onSelectUser} = require('./Tasks.config')
+const {onTypeListenMessage,onShowTasks, onPrioritySelected, onCancelMessage, onSelectProjects,onAssign, onSureMessage, onSaved, onSelectUser} = require('./Tasks.config')
 
 class Tasks extends App{
     constructor(userID, prefix, name){
@@ -21,6 +21,24 @@ class Tasks extends App{
 
     }
     
+    async showTasks(from){
+        await this.listTasks(from)
+        return onShowTasks(this.text)
+    }
+
+    async listTasks(from){
+        const getTheTasks = function(tasks){
+            this.text="Berikut task yang kamu punya\n"
+            let i=1
+            for (let task of tasks){
+                let tempDate = task.date.toDate()
+                let readableDate = tempDate.getDate()+'/'+tempDate.getMonth()+'/'+tempDate.getFullYear()
+                this.text+=`\n<b>#${task.projectName}</b>\n${i}. ${task.name} [${task.priority}]\n${readableDate}\n`
+                i++
+            }
+        }
+        await getUserTasks(this.cache.userID).then(getTheTasks.bind(this))
+    }
     
     async onTypeListen(args){
         const{from, text}=args

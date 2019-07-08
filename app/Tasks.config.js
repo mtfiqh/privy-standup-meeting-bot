@@ -115,6 +115,19 @@ const onSelectUser=(users)=>{
         }
     }
 }
+
+const onShowTasks=(text)=>{
+    console.log(text)
+    return {
+        message:`${text}`,
+        options:{
+            parse_mode:'HTML',
+            reply_markup:{
+                remove_keyboard:true
+            }
+        }
+    }
+}
 module.exports={
     onTypeListenMessage,
     onCancelMessage,
@@ -123,5 +136,6 @@ module.exports={
     onSureMessage,
     onSaved,
     onSelectUser,
-    onAssign
+    onAssign,
+    onShowTasks
 }
