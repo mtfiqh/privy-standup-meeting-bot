@@ -75,14 +75,14 @@ bot.onText(/\/assignTasks/, (context, match)=>{
         console.log(e)
     }
 })
-bot.onText(/\/showTasks/, (context, match)=>{
+bot.onText(/\/showTasks/, async (context, match)=>{
     const {from}=context
     try{
         lookUp[`assignTasks@${from.id}`] = new Tasks(from.id, 'assignTasks')
         console.log(from.id, `created 'assignTasks@${from.id}' lookup`)
         let currentApp = lookUp[`assignTasks@${from.id}`]
-        let response = currentApp.showTasks(from)
-        handleRespond(response, from.id)
+        let response = await currentApp.showTasks(from)
+         handleRespond(response, from.id)
     }catch(e){
         console.log(e)
     }

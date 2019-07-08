@@ -27,13 +27,13 @@ class Tasks extends App{
     }
 
     async listTasks(from){
+        this.text="Berikut task yang kamu punya\n"
         const getTheTasks = function(tasks){
-            this.text="Berikut task yang kamu punya\n"
             let i=1
             for (let task of tasks){
                 let tempDate = task.date.toDate()
                 let readableDate = tempDate.getDate()+'/'+tempDate.getMonth()+'/'+tempDate.getFullYear()
-                this.text+=`\n<b>#${task.projectName}</b>\n${i}. ${task.name} [${task.priority}]\n${readableDate}\n`
+                this.text+=`\n<b>#${task.projectName}</b>\n${i}. ${task.name} [${task.priority}]\nDibuat pada: ${readableDate}\n`
                 i++
             }
         }
