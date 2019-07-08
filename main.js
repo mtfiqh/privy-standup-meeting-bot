@@ -28,12 +28,17 @@ bot.on("message", async context=>{
 
 })
 
+bot.on('polling_error',msg=>{
+    console.log(msg)
+})
+
 bot.onText(/\/menu/, (context, match)=>{
-    console.log("menu")
-    const {from} = context
-    bot.sendMessage(from.id, `Halo *${from.first_name}*!`, {
-        'parse_mode': 'Markdown',
-    })
+    const {from,chat} = context
+    
+    const menu = new Menu(bot,from.id)
+
+    lookUp[`Menu@${from.id}`] = menu
+    menu.onMain(context)
 })
 
 bot.onText(/\/addTasks/, (context, match)=>{
@@ -125,17 +130,22 @@ function handleRespond(response, to, message_id) {
     const {type} = response
     console.log(`message_id :${message_id}`)
     if(type=="Edit"){
-        bot.editMessageText(response.message,{
-            message_id:message_id,
-            chat_id:to,
-            ...response.options
-        })
+        if(response.message=='Back'){
+            bot.deleteMessage(to,message_id)
+        }else{
+            bot.editMessageText(response.message,{
+                message_id:message_id,
+                chat_id:to,
+                ...response.options
+            })
+        }
     }else if(type=="Delete"){
         bot.deleteMessage(response.id, message_id)
     }else if(type=="Confirm"){
         const {sender, receiver} = response
         handleRespond(sender, sender.id, message_id)
         handleRespond(receiver, receiver.id,message_id)
+
     }else{
         if(response.multiple===true){
             bot.sendMessage(response.to.userID, response.messageTo, response.options)   
@@ -216,3 +226,91 @@ async function initUserReport(id, name){
     })
     return response
 }
+
+
+bot.on('callback_query', async query => {
+    try {
+        const { from, message, data: command } = query
+        const [lookUpKey, action, address] = command.split('-')
+        const currentApp = lookUp[lookUpKey]
+        const response = await currentApp.listen(action, address)
+        //console.log(response)
+        await handleRespond(response, from.id, message.message_id)    
+    } catch (error) {
+        console.log(error.message)
+    }
+    
+})
+
+/**
+ * Cron function for reminder every 9 A.M
+ * The function get data from database and check if user is active or not
+ */
+cron.schedule('* * * * *',()=>{
+    getUsersData('all').then(results=>{
+        results.forEach(user=>{
+            let currentDate = new Date()
+            if(user.status==='active'){
+                bot.sendMessage(user.userID, 
+                `Selamat Pagi <a href='tg://user?id=${user.userID}'>${user.name}</a>, 
+                Laporkan progress mu saat ini`,{
+                    parse_mode:'HTML',
+                    reply_markup: {
+                        inline_keyboard:[
+                            [ 
+                                {
+                                    text: `${em.add} Add Task(s)`, 
+                                    callback_data: 'addTask-OnInsertTask-'+user.userID
+                                } 
+                            ],
+                            [ 
+                                {
+                                    text: `${em.laptop} Show Tasks`, 
+                                    callback_data: 'addTask-OnShowTask-'+user.userID
+                                }
+                            ]
+                        ]
+                    }
+                }).then(()=>{
+                    console.log('Send message to '+user.name+' at '+currentDate)
+                }).catch(e=>{
+                    console.log('Failed send message to '+user.name+' in '+currentDate)
+                    console.log('Caused by : '+e.message)
+                })        
+            }else{
+                console.log(user.name+' is inactive, not sending message')
+            }
+        })
+        console.log('\n')
+    })  
+})
+
+/**
+ * Function to send message every 1 P.M
+ * To remind users and check their progress
+ * Messages send to all users
+ */
+cron.schedule('* * 13 * * *',()=>{
+    //Implements function to send messages here
+})
+
+
+/**
+ * Set a user active or not based on day-off databases
+ * 
+ */
+cron.schedule('* * * * *',()=>{
+    checkDayOff().then(results=>{
+        getUsersData('all').then(result=>{
+            result.forEach(user=>{
+                if(results.includes(user.userID)){
+                    updateUser(user.userID,{status:'inactive'})
+                }else{
+                    updateUser(user.userID,{status:'active'})
+                }
+            })
+        })
+    })
+})
+
+
