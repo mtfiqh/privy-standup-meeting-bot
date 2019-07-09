@@ -10,7 +10,8 @@ class Tasks extends App{
             this.setPriority.name,
             this.selectProject.name,
             this.onSure.name,
-            this.selectUser.name
+            this.selectUser.name,
+            this.remindTask.name
         ])
         this.addCache('userID',userID)
         this.addCache('name', name)
@@ -23,6 +24,10 @@ class Tasks extends App{
 
     }
     
+    remindTask(){
+        console.log('Remind')
+    }
+
     async showTasks(from){
         await this.listTasks(from)
         return onShowTasks(this.text)

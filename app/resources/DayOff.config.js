@@ -1,5 +1,6 @@
 const {getUsersData}=require('../../app/DataTransaction')
 const em = require('./emoticons.config')
+const {spaces} = require('../helper/helper')
 
 const dateCalc  = require("add-subtract-date")
 
@@ -51,6 +52,25 @@ let calendar = [
         {text:`${em.right} Next`,callback_data:'-'}
     ]
 ]
+
+const dayOffMenu=(prefix)=>{
+    let space = spaces(9)
+    return {
+        reply_markup: {
+            inline_keyboard: [
+                [
+                    {text:`${space}Holiday${space}`,
+                    callback_data:`${prefix}-onSelectHoliday-`},
+                    {text:`${space}Vacation${space}\t`,
+                    callback_data:`${prefix}-onSelectDayOff-`}
+                ],
+                [
+                    {text:`${em.delete} Close`,callback_data:`${prefix}-onClose-`}
+                ]
+            ]
+        }
+    }
+}
 
 const calendarLayout=(prefix)=>{
     return generateCalendar(prefix,'now',0)
@@ -105,5 +125,6 @@ const reset=(prefix)=>{
 
 module.exports={
     calendarLayout,
-    generateCalendar
+    generateCalendar,
+    dayOffMenu
 }

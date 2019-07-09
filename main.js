@@ -20,9 +20,24 @@ const {DayOff} = require('./app/DayOff')
 const currentState={}
 
 bot.onText(/\/start/,context=>{
-    const {from} = context
+    const {from,chat,message_id} = context
+    currentState[`autostart@${from.id}`] = context
+
     db.saveUser(from.id,{name:`${from.first_name += from.last_name? ' '+from.last_name:''}`,
     status:'active',type:'user',userID:from.id,username:from.username})
+    bot.sendMessage(chat.id,`Selamat Datang ${from.first_name}\nTekan tombol Menu atau kirim */menu* untuk menggunakan fitur bot.`,
+    {
+        parse_mode:'Markdown',
+        reply_markup:{
+            inline_keyboard:[
+                [{text:'Menu',callback_data:'/menu'}]
+            ]
+        }
+    }).then((context)=>{
+        
+        currentState[`autostartBot@${context.chat.id}`] = context.message_id
+        bot.deleteMessage(chat.id, message_id)
+    })
 })
 
 /**
@@ -51,16 +66,23 @@ bot.on('polling_error',msg=>{
 })
 
 bot.onText(/\/menu/, async (context, match)=>{
+    currentState[`autostart@${context.from.id}`] = context
+    await initMenu(context.from.id)
+})
+
+async function initMenu(id){
+    const context = currentState[`autostart@${id}`]
     const {from,chat, message_id} = context
-    
     const menu = new Menu(bot,from.id)
+    const msg_bot = currentState[`autostartBot@${id}`]
 
     lookUp[`Menu@${from.id}`] = menu
     const res = await menu.onMain(context,true)
     console.log(res)
     handleRespond(res, from.id, message_id)
-    
-})
+    bot.deleteMessage(chat.id, msg_bot)
+    delete currentState[`autostart@${id}`]
+}
 
 bot.onText(/\/addTasks/, (context, match)=>{
     const {from} = context
@@ -115,7 +137,7 @@ bot.onText(/\/showTasks/, async (context, match)=>{
     }
 })
 
-bot.onText(/\/cuti/,async (context, match)=>{
+bot.onText(/\/dayOff/,async (context, match)=>{
     const {from,message_id} = context
     
     const dayOff = new DayOff(bot,from.id)
@@ -151,15 +173,15 @@ bot.on('callback_query', async query => {
     try {
         const {from, message, data:command} = query
         const [lookUpKey, action, address] = command.split('-')
+
+        if(command=='/menu') return await initMenu(from.id)
+
         const currentApp = lookUp[lookUpKey]
-
-        console.log('lookup before : '+lookUp[currentApp.prefix])
-
         const response = await currentApp.listen(action,address)
         handleRespond(response, from.id, message.message_id)
         if(response && response.destroy==true){
             delete lookUp[currentApp.prefix]
-            console.log('lookup after : '+lookUp[currentApp.prefix])
+            
         }
     } catch (error) {
         console.error("Error on bo.on('callback_query') (main.js)", error.message)
@@ -262,6 +284,12 @@ async function handleAuto(context){
             response = await currentApp.showTasks(chat)
             handleRespond(response, chat.id)
             break
+        case '/dayOff':
+            const dayOff = new DayOff(bot,chat.id)
+            lookUp[`DayOff@${chat.id}`] = dayOff
+            const res = await dayOff.onStart(context,true)
+            handleRespond(res, chat.id, message_id)
+            break
         default:
             console.log("waiting...")
             break
@@ -328,48 +356,31 @@ async function initUserReport(id, name){
  * Cron function for reminder every 9 A.M
  * The function get data from database and check if user is active or not
  */
-// cron.schedule('* * * * *',()=>{
-//     let today = new Date()
-//     if(today.getDay()!=0&&today.getDay()!=6){
-//         db.getUsersData('all').then(results=>{
-//             results.forEach(user=>{
-//                 let currentDate = new Date()
-//                 if(user.status==='active'){
-//                     bot.sendMessage(user.userID, 
-//                     `Selamat Pagi <a href='tg://user?id=${user.userID}'>${user.name}</a>, 
-//                     Laporkan progress mu saat ini`,{
-//                         parse_mode:'HTML',
-//                         reply_markup: {
-//                             inline_keyboard:[
-//                                 [ 
-//                                     {
-//                                         text: `${emoticon.add} Add Task(s)`, 
-//                                         callback_data: 'addTask-OnInsertTask-'+user.userID
-//                                     } 
-//                                 ],
-//                                 [ 
-//                                     {
-//                                         text: `${emoticon.laptop} Show Tasks`, 
-//                                         callback_data: 'addTask-OnShowTask-'+user.userID
-//                                     }
-//                                 ]
-//                             ]
-//                         }
-//                     }).then(()=>{
-//                         console.log('Send message to '+user.name+' at '+currentDate)
-//                     }).catch(e=>{
-//                         console.log('Failed send message to '+user.name+' in '+currentDate)
-//                         console.log('Caused by : '+e.message)
-//                     })        
-//                 }else{
-//                     console.log(user.name+' is inactive, not sending message')
-//                 }
-//             })
-//             console.log('\n')
-//         })  
-//     }
+cron.schedule('* * * * *',()=>{
+    let today = new Date()
+    if(today.getDay()!=0&&today.getDay()!=6){
+        db.getUsersData('all').then(results=>{
+            results.forEach(async user=>{
+                let currentDate = new Date()
+                if(user.status==='active'){
+                    bot.sendMessage(user.userID,`Selamat Pagi ${user.name}\nJangan lupa mengisi task hari ini. \nTekan tombol Menu atau kirim */menu* untuk menggunakan fitur bot.`,
+                    {
+                        parse_mode:'Markdown',
+                        reply_markup:{
+                            inline_keyboard:[
+                                [{text:'Menu',callback_data:'/menu'}]
+                            ]
+                        }
+                    })
+                }else{
+                    console.log(user.name+' is inactive, not sending message')
+                }
+            })
+            console.log('\n')
+        })  
+    }
     
-// })
+})
 
 // /**
 //  * Function to send message every 1 P.M

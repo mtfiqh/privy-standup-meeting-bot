@@ -14,7 +14,8 @@ const menuAdmin =(prefix,from)=>{
                     {text: `${em.tasks} Tasks`,callback_data:prefix+'-onTasksClicked-'+from.id+'@'+from.first_name}
                 ],
                 [ 
-                    {text: `${em.chart} Monitoring`, callback_data: prefix+'-onMonitoringClicked-'+from.id+'@'+from.first_name}
+                    {text: `${em.chart} Monitoring`, callback_data: prefix+'-onMonitoringClicked-'+from.id+'@'+from.first_name},
+                    {text: `${em.calendar} Day-Off`, callback_data: prefix+'-onDayOff-'+from.id+'@'+from.first_name}
                 ],
                 [
                     {text: `${em.save} Save to Excel`, callback_data: prefix+'-onSave-'+from.id+'@'+from.first_name}

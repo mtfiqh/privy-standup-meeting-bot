@@ -19,7 +19,7 @@ class Menu extends App{
             this.onBackPressed.name,
             this.onSave.name,
             this.onClose.name,
-
+            this.onDayOff.name,
             //Task Section
             this.onTasksClicked.name,
             this.onReportTasks.name,
@@ -88,6 +88,16 @@ class Menu extends App{
         
     }
     
+    onDayOff(){
+        return {
+            //Objects to trigger taufiq's function
+            
+            //Testing
+            type:'Auto',
+            message:'/dayOff'
+        }
+    }
+
     onClose(){
         return {
             destroy:true,

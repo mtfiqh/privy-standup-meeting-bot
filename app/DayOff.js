@@ -7,11 +7,15 @@ class DayOff extends App{
         super()
         this.register([
             this.onStart.name,
-            this.onChange.name
+            this.onChange.name,
+            this.onSelectHoliday.name,
+            this.onSelectDayOff.name,
+            this.onClose.name
         ])
 
         // Define Class variable here
         this.prefix = `${DayOff.name}@${userID}`
+        this.userID = userID
         this.state=[]
         this.bot=bot
     }
@@ -32,11 +36,11 @@ class DayOff extends App{
     onStart({from,chat},first = false){
         this.from = from
         this.chat = chat
-        const opts = msg.calendarLayout(this.prefix)
+        const opts = msg.dayOffMenu(this.prefix)
         return {
-            type:  first ? "Send": "Edit",
+            type: "Edit",
             id:this.userID,
-            message: `Silahkan pilih tanggal libur.`,
+            message: `Choose Categories`,
             options: opts 
         }
     }
@@ -53,6 +57,21 @@ class DayOff extends App{
         }
     }
 
+    onSelectHoliday(){
+
+    }
+
+    onSelectDayOff(){
+
+    }
+
+    onClose(){
+        return {
+            destroy:true,
+            id:this.userID,
+            type:"Delete"
+        }
+    }
 }
 
 module.exports={DayOff}
