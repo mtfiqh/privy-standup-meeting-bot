@@ -1,4 +1,4 @@
-const {addProjects, getProjects, deleteProject} = require('./DataTransaction')
+const {addProjects, getProjects, deleteProject, editProjectName,getTaskCount} = require('./DataTransaction')
 const{toggleCheck} = require('./helper/helper')
 const {
     onTypeListenMessage,
@@ -6,7 +6,10 @@ const {
     onSureMessage,
     onCreated,
     onSelectMessage,
-    onDeleted
+    onDeleted,
+    onUpdate,
+    updated,
+    onShowProjects,
 } = require('./CrudProject.config')
 const {App} = require('../core/App')
 
@@ -19,6 +22,9 @@ class CrudProject extends App{
             this.showKeyboard.name,
             this.onSelect.name,
             this.delete.name,
+            this.update.name,
+            this.read.name,
+            this.onClose.name,
         ])
         this.addCache('userID', userID)
         this.addCache('name', name)
@@ -28,6 +34,10 @@ class CrudProject extends App{
     }
     onTypeListen(context){
         const {text} = context
+        if(this.cache.prefix==='updateProjects'){
+            this.cache.updateProject = text
+            return this.onSure()
+        }
         if(text==="SAVE"){
             console.log(this.cache.userID, `${this.cache.prefix} - SAVE BUTTON CLICKED`)
             return this.onSure()
@@ -66,7 +76,9 @@ class CrudProject extends App{
                 i++
             })
         }else if(this.cache.prefix==='updateProjects'){
-
+            text=`${this.cache.projectsArray[this.cache.selectIdx]} akan diubah menjadi ${this.cache.updateProject}, apakah kamu yakin?`
+            action='update'
+            edit=false
         }else if(this.cache.prefix==='readProjects'){
 
         }
@@ -100,6 +112,13 @@ class CrudProject extends App{
         }
         await getProjects('In Progress').then(setAllProjects.bind(this))
     }
+    async getAllProjectsCounts(){
+        this.addCache('projects', {})
+        const setAllProjects = function(projects){
+            this.cache.projects=(projects)
+        }
+        await getTaskCount().then(setAllProjects.bind(this))
+    }
 
     async showKeyboard(next){
         console.log('next', next)
@@ -131,17 +150,41 @@ class CrudProject extends App{
             return
         }
         if(this.cache.select===undefined) this.addCache('select', new Set([]))
-        if(idx==='c') return onCancelMessage()
+        if(idx==='c') return onCancelMessage("Delete", this.cache.userID)
         if(idx==='s'){
             if(this.cache.select.size<1) return onSelectMessage(this.cache.keyboard, this.cache.userID, false, 'Kamu harus memilih projectnya')
+            if(this.cache.prefix==='updateProjects'){
+                return onUpdate(this.cache.userID, this.cache.prefix, this.cache.projectsArray[this.cache.selectIdx])
+            }
             return this.onSure()
         }
-        if(this.cache.select.has(this.cache.projectsArray[idx])){
-            this.cache.select.delete(this.cache.projectsArray[idx])
-            this.cache.keyboard[idx][0].text=toggleCheck(this.cache.keyboard[idx][0].text)
-        }else{
-            this.cache.select.add(this.cache.projectsArray[idx])
-            this.cache.keyboard[idx][0].text=toggleCheck(this.cache.keyboard[idx][0].text)
+        if(this.cache.prefix==="deleteProjects"){
+            if(this.cache.select.has(this.cache.projectsArray[idx])){
+                this.cache.select.delete(this.cache.projectsArray[idx])
+                this.cache.keyboard[idx][0].text=toggleCheck(this.cache.keyboard[idx][0].text)
+            }else{
+                this.cache.select.add(this.cache.projectsArray[idx])
+                this.cache.keyboard[idx][0].text=toggleCheck(this.cache.keyboard[idx][0].text)
+            }
+        }else if(this.cache.prefix==="updateProjects"){
+            console.log(this.cache.selectIdx)
+            console.log(idx)
+            if(this.cache.select.size>0){
+                console.log('msk')
+                this.cache.keyboard[this.cache.selectIdx][0].text=toggleCheck(this.cache.keyboard[this.cache.selectIdx][0].text)            
+                this.cache.select.delete(this.cache.projectsArray[this.cache.selectIdx])
+            }
+            if(this.cache.selectIdx!==idx){
+                console.log('masuk')
+                this.cache.selectIdx=idx
+                this.cache.keyboard[idx][0].text=toggleCheck(this.cache.keyboard[idx][0].text)            
+                this.cache.select.add(this.cache.projectsArray[idx])
+            }else{
+                if(this.cache.selectIdx === idx){
+                    this.cache.selectIdx=undefined
+                }
+            }
+            
         }
         return onSelectMessage(this.cache.keyboard, this.cache.userID, false)
     }
@@ -153,17 +196,57 @@ class CrudProject extends App{
             return
         }
         if(res==="N"){
-            return onCancelMessage()
+            return onCancelMessage("Delete", this.cache.userID)
         }
         this.cache.select.forEach(project=>{
             deleteProject(project)
         })
-        return onDeleted()
+        return onDeleted(this.cache.userID)
     }
 
+    update(args){
+        const [res, token]=args.split('@')
+        if(token!=='c'+this.cache.token){
+            console.log(this.cache.userID, `invalid token`)
+            return
+        }
+        if(res==="N"){
+            return onCancelMessage("Delete", this.cache.userID)
+        }
+        editProjectName(this.cache.projectsArray[this.cache.selectIdx], this.cache.updateProject)
+        return updated()
+    }
 
+    async read(){
+        await this.getAllProjectsCounts()
+        let message
+        console.log(this.cache.projects)
+        if(this.cache.projects.size<1){
+            message='Tidak ada project yang sedang berlangsung untuk saat ini'
+        }else{
+            message='Berikut projects yang sedang berlangsung untuk saat ini\n'
+            let i=1
+            Object.keys(this.cache.projects).forEach(project =>{
+                message+=`${i}. ${project} [${this.cache.projects[project].taskDone}/${this.cache.projects[project].allTask}]\n\n`
+                i++
+            })
+        }
 
+        return onShowProjects(message, this.prefix, 'cl'+this.cache.token)
+
+    }
     
+    onClose(token){
+        if(token!=='cl'+this.cache.token){
+            console.log('token invalid')
+            return
+        }
+        return{
+            destroy:true,
+            type:'Delete',
+            id:this.cache.userID
+        }
+    }
 }
 
 module.exports={CrudProject}

@@ -13,6 +13,7 @@ const cron = require('node-cron')
 
 // global var
 const currentState={}
+const history={}
 /**
  * accept any message
  * response has additional : done (boolean), 
@@ -131,6 +132,10 @@ bot.on('callback_query', async query => {
         handleRespond(response, from.id, message.message_id)
         if(response && response.destroy==true){
             delete lookUp[currentApp.prefix]
+        }
+        if(response && response.record===true){
+            if(history[from.id]===undefined) history[from.id]=new Set([])
+            history[from.id].add(message.message_id)
         }
     } catch (error) {
         console.error("Error on bo.on('callback_query') (main.js)", error.message)
@@ -308,12 +313,20 @@ bot.onText(/\/deleteProjects/, async context=>{
     const {chat} = context
     initProjects('deleteProjects', chat.id, chat.first_name)
 })
-
+bot.onText(/\/updateProjects/, async context=>{
+    const {chat} = context
+    initProjects('updateProjects', chat.id, chat.first_name)
+})
+bot.onText(/\/listProjects/, async context=>{
+    const {chat} = context
+    initProjects('readProjects', chat.id, chat.first_name)
+})
 async function initProjects(prefix, userID, name){
     try{
         lookUp[`${prefix}@${userID}`] = new CrudProject(userID, name, prefix)
         console.log(userID, `created '${prefix}@${userID}' lookup`)
-        
+        const currentApp = lookUp[`${prefix}@${userID}`]
+        let response
         if(prefix==="createProjects"){
             currentState[userID]=`${prefix}`
             console.log(userID, `lock user in state '${prefix}'`)
@@ -327,9 +340,11 @@ async function initProjects(prefix, userID, name){
                 }
             }
             return handleRespond(response, userID)
+        }else if(prefix==="readProjects"){
+            response = await currentApp.listen('read')
+            return handleRespond(response, userID)
         }
-        const currentApp = lookUp[`${prefix}@${userID}`]
-        const response = await currentApp.listen('showKeyboard')
+        response = await currentApp.listen('showKeyboard')
         return handleRespond(response, userID)    
 
     }catch(e){
