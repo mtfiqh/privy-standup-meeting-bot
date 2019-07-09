@@ -17,14 +17,14 @@ class CrudProject extends App{
     constructor(userID, name, prefix){
         super()
         this.register([
-            this.onTypeListen.name,
-            this.create.name,
-            this.showKeyboard.name,
-            this.onSelect.name,
-            this.delete.name,
-            this.update.name,
-            this.read.name,
-            this.onClose.name,
+            'onTypeListen',
+            'create',
+            'showKeyboard',
+            'onSelect',
+            'delete',
+            'update',
+            'read',
+            'onClose',
         ])
         this.addCache('userID', userID)
         this.addCache('name', name)

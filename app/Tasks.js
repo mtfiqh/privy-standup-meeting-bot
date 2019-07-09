@@ -6,11 +6,11 @@ class Tasks extends App{
     constructor(userID, prefix, name){
         super()
         this.register([
-            this.onTypeListen.name,
-            this.setPriority.name,
-            this.selectProject.name,
-            this.onSure.name,
-            this.selectUser.name,
+            'onTypeListen',
+            'setPriority',
+            'selectProject',
+            'onSure',
+            'selectUser',
         ])
         this.addCache('userID',userID)
         this.addCache('name', name)
