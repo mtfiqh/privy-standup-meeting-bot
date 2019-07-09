@@ -502,13 +502,19 @@ const isAdmin = async (userID) => {
 }
 
 const saveUser = (userID, data) => {
-    db.collection('users').doc(userID.toString()).set(data)
-        .catch(err => {
-            console.log('Error : ' + err.details)
-        })
-        .finally(result => {
-            console.log('result')
-        })
+    isUserExist(userID).then(res=>{
+        if(!res){
+            db.collection('users').doc(userID.toString()).set(data)
+            .catch(err => {
+                console.log('Error : ' + err.details)
+            })
+            .finally(result => {
+                console.log('result')
+            })
+        }else{
+            console.log(userID+' already registered!')
+        }
+    })
 }
 
 const assignUserToProjects = (projectName, userID) => {
@@ -590,6 +596,7 @@ const updateTaskStatus = (payload) => {
                     let temp = {}
                     temp[userID] = {}
                     temp[userID]['done'] = admin.firestore.FieldValue.arrayUnion(name)
+                    temp[userID]['inProgress'] = admin.firestore.FieldValue.arrayRemove(name)
 
                     db.collection('reports').doc(timestamp.toString()).get()
                     .then(doc => {

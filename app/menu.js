@@ -45,6 +45,7 @@ class Menu extends App{
         this.prefix = `${Menu.name}@${userID}`
         this.isAdmin={}
         this.state=[]
+        this.visited=new Set([])
         this.bot=bot
         this.userID= userID
         
@@ -71,12 +72,13 @@ class Menu extends App{
         }
 
         await isAdmin(from.id).then(load.bind(this))
-        this.state.push({func:this.onMain.name,args:{from,chat}})
+
         this.from = from
 
         let opts = this.getMessageOptionOnMenu(from.id)
         let greetings = this.generateGreetings()
-        
+        this.visited.clear()
+        this.onVisit(this.onMain.name,{from,chat})
         return {
             type:  first ? "Send": "Edit",
             id:this.userID,
@@ -96,7 +98,8 @@ class Menu extends App{
     
     async onSave(){
         try {
-           await exportToExcel()            
+           await exportToExcel()           
+           this.onVisit(this.onVisit.name) 
         } catch (error) {
             console.log(error)
             return {
@@ -106,29 +109,37 @@ class Menu extends App{
             }
         }
         return {
-            type:'Edit',
+            type:'Send',
             id:this.userID,
             message:'Success Export to Excel'
         } 
     }
 
     async onBackPressed(){
-        this.state.pop()
-        let {func,args} = this.state.pop()
+        let {func:tmp} = this.state.pop()
+        this.visited.delete(tmp)
+        console.log(this.visited)
 
+        let {func,args} = this.state.pop()
         
         const response = await this[func].call(this,args)
         return response
         
     }
         
+    onVisit(name,args){
+        if(!(this.visited.has(name))){
+            this.visited.add(name)
+            this.state.push({func:name,args:args})        
+        }
+    }
+
     //-----------------END SECTION----------------------------
 
 
     //-----------------TASK SECTION---------------------------
     onTasksClicked(){
-        this.state.push({func:this.onTasksClicked.name,args:{}})
-
+        this.onVisit('onTasksClicked')
         if(this.isAdmin){
             return menuTasksAdmin(this.prefix,this.from)
         }else{
@@ -137,8 +148,7 @@ class Menu extends App{
     }
 
     onAddTasks(){
-        this.state.push({func:this.onAddTasks.name,args:{}})
-
+        this.onVisit('onTasksClicked')
         return {
             //Objects to trigger taufiq's function
             
@@ -149,8 +159,8 @@ class Menu extends App{
     }
 
     onListTasks(){
-        this.state.push({func:this.onListTasks.name,args:{}})
-        
+        console.log('visited')
+        this.onVisit('onTasksClicked')
         return {
             //Objects to trigger taufiq's function
 
@@ -161,7 +171,7 @@ class Menu extends App{
     }
 
     onReportTasks(){
-        this.state.push({func:this.onReportTasks.name,args:{}})
+        this.onVisit('onTasksClicked')
         return {
 
             //Testing
@@ -171,7 +181,7 @@ class Menu extends App{
     }
 
     onOfferTasks(){
-        this.state.push({func:this.onOfferTasks.name,args:{}})
+        this.onVisit('onTasksClicked')
         return {
             //Object to trigger Jose's function
 
@@ -182,7 +192,7 @@ class Menu extends App{
     }
 
     onAssignTasks(){
-        this.state.push({func:this.onAssignTasks.name,args:{}})
+        this.onVisit('onTasksClicked')
         return {
             //Objects to trigger taufiq's function
             //Testing
@@ -196,8 +206,7 @@ class Menu extends App{
 
     //----------------PROJECT SECTION------------------------
     onProjectsClicked(){
-        this.state.push({func:this.onProjectsClicked.name,args:{}})
-
+        this.onVisit('onProjectsClicked')
         if(this.isAdmin){
             return menuProjectsAdmin(this.from,this.prefix)
         }else{
@@ -206,7 +215,7 @@ class Menu extends App{
     }
 
     onAddProjects(){
-        this.state.push({func:this.onAddProjects.name,args:{}})
+        this.onVisit('onAddProjects')
         return {
             //Objects to trigger taufiq's function
             //Testing
@@ -216,7 +225,7 @@ class Menu extends App{
     }
 
     onEditProjects(){
-        this.state.push({func:this.onEditProjects.name,args:{}})
+        this.onVisit('onEditProjects')
         return {
             //Objects to trigger taufiq's function
             //Testing
@@ -226,7 +235,7 @@ class Menu extends App{
     }
 
     onDeleteProjects(){
-        this.state.push({func:this.onDeleteProjects.name,args:{}})
+        this.onVisit('onDeleteProjects')
         return {
             //Objects to trigger taufiq's function
             //Testing
@@ -236,7 +245,7 @@ class Menu extends App{
     }
 
     onListProjects(){
-        this.state.push({func:this.onListProjects.name,args:{}})
+        this.onVisit('onListProjects')
         return {
             //Objects to trigger taufiq's function
             //Testing

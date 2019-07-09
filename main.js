@@ -329,58 +329,62 @@ async function initUserReport(id, name){
  * The function get data from database and check if user is active or not
  */
 // cron.schedule('* * * * *',()=>{
-//     db.getUsersData('all').then(results=>{
-//         results.forEach(user=>{
-//             let currentDate = new Date()
-//             if(user.status==='active'){
-//                 bot.sendMessage(user.userID, 
-//                 `Selamat Pagi <a href='tg://user?id=${user.userID}'>${user.name}</a>, 
-//                 Laporkan progress mu saat ini`,{
-//                     parse_mode:'HTML',
-//                     reply_markup: {
-//                         inline_keyboard:[
-//                             [ 
-//                                 {
-//                                     text: `${emoticon.add} Add Task(s)`, 
-//                                     callback_data: 'addTask-OnInsertTask-'+user.userID
-//                                 } 
-//                             ],
-//                             [ 
-//                                 {
-//                                     text: `${emoticon.laptop} Show Tasks`, 
-//                                     callback_data: 'addTask-OnShowTask-'+user.userID
-//                                 }
+//     let today = new Date()
+//     if(today.getDay()!=0&&today.getDay()!=6){
+//         db.getUsersData('all').then(results=>{
+//             results.forEach(user=>{
+//                 let currentDate = new Date()
+//                 if(user.status==='active'){
+//                     bot.sendMessage(user.userID, 
+//                     `Selamat Pagi <a href='tg://user?id=${user.userID}'>${user.name}</a>, 
+//                     Laporkan progress mu saat ini`,{
+//                         parse_mode:'HTML',
+//                         reply_markup: {
+//                             inline_keyboard:[
+//                                 [ 
+//                                     {
+//                                         text: `${emoticon.add} Add Task(s)`, 
+//                                         callback_data: 'addTask-OnInsertTask-'+user.userID
+//                                     } 
+//                                 ],
+//                                 [ 
+//                                     {
+//                                         text: `${emoticon.laptop} Show Tasks`, 
+//                                         callback_data: 'addTask-OnShowTask-'+user.userID
+//                                     }
+//                                 ]
 //                             ]
-//                         ]
-//                     }
-//                 }).then(()=>{
-//                     console.log('Send message to '+user.name+' at '+currentDate)
-//                 }).catch(e=>{
-//                     console.log('Failed send message to '+user.name+' in '+currentDate)
-//                     console.log('Caused by : '+e.message)
-//                 })        
-//             }else{
-//                 console.log(user.name+' is inactive, not sending message')
-//             }
-//         })
-//         console.log('\n')
-//     })  
+//                         }
+//                     }).then(()=>{
+//                         console.log('Send message to '+user.name+' at '+currentDate)
+//                     }).catch(e=>{
+//                         console.log('Failed send message to '+user.name+' in '+currentDate)
+//                         console.log('Caused by : '+e.message)
+//                     })        
+//                 }else{
+//                     console.log(user.name+' is inactive, not sending message')
+//                 }
+//             })
+//             console.log('\n')
+//         })  
+//     }
+    
 // })
 
-/**
- * Function to send message every 1 P.M
- * To remind users and check their progress
- * Messages send to all users
- */
-cron.schedule('* * 13 * * *',()=>{
-    //Implements function to send messages here
-})
+// /**
+//  * Function to send message every 1 P.M
+//  * To remind users and check their progress
+//  * Messages send to all users
+//  */
+// cron.schedule('* * 13 * * *',()=>{
+//     //Implements function to send messages here
+// })
 
 
-/**
- * Set a user active or not based on day-off databases
- * 
- */
+// /**
+//  * Set a user active or not based on day-off databases
+//  * 
+//  */
 // cron.schedule('* * * * *',()=>{
 //     db.checkDayOff().then(results=>{
 //         db.getUsersData('all').then(result=>{
