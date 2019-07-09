@@ -3,6 +3,7 @@ const db            = require('./app/DataTransaction')
 const helper        = require('./app/helper/helper')
 const { Report }    = require('./app/Report')
 const { TakeOfferTask } = require('./app/TakeOfferTask')
+const {CrudProject}            = require('./app/CrudProject')
 const lookUp        = {} 
 const bot           =  new TelegramBot(process.env.BOT_TOKEN, {polling:true})
 const {Tasks} = require('./app/Tasks.js')
@@ -20,12 +21,16 @@ const currentState={}
 bot.on("message", async context=>{
     const {from,chat,text}=context
     if(currentState[from.id]){
+        console.log(text)
         console.log(from.id, 'Type Listen')
         const currentApp = lookUp[`${currentState[from.id]}@${from.id}`]
         const response = await currentApp.listen('onTypeListen',context)
-        handleRespond(response, from.id, context.message_id)
         console.log(from.id, `currentState ${currentState[from.id]} deleted`)
+        if(response && response.destroy==true){
+            delete lookUp[`${currentState[from.id]}@${from.id}`]
+        }
         delete currentState[from.id]
+        handleRespond(response, from.id, context.message_id)
     }
 
 })
@@ -290,78 +295,107 @@ async function initUserReport(id, name){
     return response
 }
 
-
-
-
 /**
- * Cron function for reminder every 9 A.M
- * The function get data from database and check if user is active or not
+ * function for projects
  */
-cron.schedule('* * * * *',()=>{
-    getUsersData('all').then(results=>{
-        results.forEach(user=>{
-            let currentDate = new Date()
-            if(user.status==='active'){
-                bot.sendMessage(user.userID, 
-                `Selamat Pagi <a href='tg://user?id=${user.userID}'>${user.name}</a>, 
-                Laporkan progress mu saat ini`,{
-                    parse_mode:'HTML',
-                    reply_markup: {
-                        inline_keyboard:[
-                            [ 
-                                {
-                                    text: `${em.add} Add Task(s)`, 
-                                    callback_data: 'addTask-OnInsertTask-'+user.userID
-                                } 
-                            ],
-                            [ 
-                                {
-                                    text: `${em.laptop} Show Tasks`, 
-                                    callback_data: 'addTask-OnShowTask-'+user.userID
-                                }
-                            ]
-                        ]
-                    }
-                }).then(()=>{
-                    console.log('Send message to '+user.name+' at '+currentDate)
-                }).catch(e=>{
-                    console.log('Failed send message to '+user.name+' in '+currentDate)
-                    console.log('Caused by : '+e.message)
-                })        
-            }else{
-                console.log(user.name+' is inactive, not sending message')
+
+bot.onText(/\/createProjects/, async context => {
+    const {chat} = context
+    initProjects('createProjects', chat.id, chat.first_name)
+})
+
+function initProjects(prefix, userID, name){
+    try{
+        lookUp[`${prefix}@${userID}`] = new CrudProject(userID, name, prefix)
+        currentState[userID]=`${prefix}`
+        console.log(userID, `created '${prefix}@${userID}' lookup`)
+        console.log(userID, `lock user in state '${prefix}'`)
+        const response={
+            message:`Silahkan ketik nama project yang akan di input`,
+            options:{
+                reply_markup:{
+                    resize_keyboard:true,
+                    keyboard:[['CANCEL']]
+                }   
             }
-        })
-        console.log('\n')
-    })  
-})
-
-/**
- * Function to send message every 1 P.M
- * To remind users and check their progress
- * Messages send to all users
- */
-cron.schedule('* * 13 * * *',()=>{
-    //Implements function to send messages here
-})
+        }
+        handleRespond(response, userID)
+    }catch(e){
+        console.log(e)
+    }
+}
 
 
-/**
- * Set a user active or not based on day-off databases
- * 
- */
-cron.schedule('* * * * *',()=>{
-    checkDayOff().then(results=>{
-        getUsersData('all').then(result=>{
-            result.forEach(user=>{
-                if(results.includes(user.userID)){
-                    updateUser(user.userID,{status:'inactive'})
-                }else{
-                    updateUser(user.userID,{status:'active'})
-                }
-            })
-        })
-    })
-})
+
+// /**
+//  * Cron function for reminder every 9 A.M
+//  * The function get data from database and check if user is active or not
+//  */
+// cron.schedule('* * * * *',()=>{
+//     getUsersData('all').then(results=>{
+//         results.forEach(user=>{
+//             let currentDate = new Date()
+//             if(user.status==='active'){
+//                 bot.sendMessage(user.userID, 
+//                 `Selamat Pagi <a href='tg://user?id=${user.userID}'>${user.name}</a>, 
+//                 Laporkan progress mu saat ini`,{
+//                     parse_mode:'HTML',
+//                     reply_markup: {
+//                         inline_keyboard:[
+//                             [ 
+//                                 {
+//                                     text: `${em.add} Add Task(s)`, 
+//                                     callback_data: 'addTask-OnInsertTask-'+user.userID
+//                                 } 
+//                             ],
+//                             [ 
+//                                 {
+//                                     text: `${em.laptop} Show Tasks`, 
+//                                     callback_data: 'addTask-OnShowTask-'+user.userID
+//                                 }
+//                             ]
+//                         ]
+//                     }
+//                 }).then(()=>{
+//                     console.log('Send message to '+user.name+' at '+currentDate)
+//                 }).catch(e=>{
+//                     console.log('Failed send message to '+user.name+' in '+currentDate)
+//                     console.log('Caused by : '+e.message)
+//                 })        
+//             }else{
+//                 console.log(user.name+' is inactive, not sending message')
+//             }
+//         })
+//         console.log('\n')
+//     })  
+// })
+
+// /**
+//  * Function to send message every 1 P.M
+//  * To remind users and check their progress
+//  * Messages send to all users
+//  */
+// cron.schedule('* * 13 * * *',()=>{
+//     //Implements function to send messages here
+// })
+
+
+// /**
+//  * Set a user active or not based on day-off databases
+//  * 
+//  */
+// cron.schedule('* * * * *',()=>{
+//     checkDayOff().then(results=>{
+//         getUsersData('all').then(result=>{
+//             result.forEach(user=>{
+//                 if(results.includes(user.userID)){
+//                     updateUser(user.userID,{status:'inactive'})
+//                 }else{
+//                     updateUser(user.userID,{status:'active'})
+//                 }
+//             })
+//         })
+//     })
+// })
 
 
