@@ -1,4 +1,4 @@
-const {isAdmin} = require("./DataTransaction")
+const {isAdmin,exportToExcel} = require("./DataTransaction")
 const {
         menuAdmin,
         menuUser,
@@ -17,7 +17,9 @@ class Menu extends App{
             //Basic Section
             this.onMain.name,
             this.onBackPressed.name,
-            
+            this.onSave.name,
+            this.onClose.name,
+
             //Task Section
             this.onTasksClicked.name,
             this.onReportTasks.name,
@@ -37,11 +39,14 @@ class Menu extends App{
 
         ])
 
+
+
         // Define Class variable here
         this.prefix = `${Menu.name}@${userID}`
         this.isAdmin={}
         this.state=[]
         this.bot=bot
+        this.userID= userID
         
     }
 
@@ -58,36 +63,49 @@ class Menu extends App{
 
 
     //----------------BASIC SECTION-----------------------------------------
-    async onMain({from,chat}){
-        const load = result=>{
+
+    async onMain({from,chat},first = false){
+        this.message = ""
+        const load = result => {
             this.isAdmin = result
-            this.from = from
-            let opts = this.getMessageOptionOnMenu(from.id)
-            let greetings = this.generateGreetings()
-            
-            
-            this.bot.sendMessage(chat.id,   
-                `Selamat ${greetings} ${from.first_name},\nSilahkan gunakan tombol dibawah ini.`,
-                opts)
-            
         }
+
         await isAdmin(from.id).then(load.bind(this))
-        
         this.state.push({func:this.onMain.name,args:{from,chat}})
+        this.from = from
+
+        let opts = this.getMessageOptionOnMenu(from.id)
+        let greetings = this.generateGreetings()
+        
+        return {
+            type:  first ? "Send": "Edit",
+            id:this.userID,
+            message: `Selamat ${greetings} ${from.first_name},\nSilahkan gunakan tombol dibawah ini.`,
+            options: opts 
+        }
         
     }
     
-    onBackPressed(){
+    onClose(){
+        return {
+            destroy:true,
+            id:this.userID,
+            type:"Delete"
+        }
+    }
+    
+    async onSave(){
+        console.log("RES ")
+    }
+
+    async onBackPressed(){
         this.state.pop()
         let {func,args} = this.state.pop()
 
-        this[func].call(this,args)
-        return {
-            message:'Back',
-            type:'Edit',
-            from:this.prefix,
-            deleteLast:true
-        }
+        
+        const response = await this[func].call(this,args)
+        return response
+        
     }
         
     //-----------------END SECTION----------------------------
@@ -111,7 +129,8 @@ class Menu extends App{
             //Objects to trigger taufiq's function
             
             //Testing
-            message:'addTask'
+            type:'Auto',
+            message:'/addTasks'
         }
     }
 
@@ -122,7 +141,8 @@ class Menu extends App{
             //Objects to trigger taufiq's function
 
             //Testing
-            message:'ListTask',
+            type:'Auto',
+            message:'/showTasks',
         }
     }
 
@@ -131,7 +151,8 @@ class Menu extends App{
         return {
 
             //Testing
-            message:'ReportTask'
+            type:'Auto',
+            message:'/report'
         }
     }
 
@@ -141,7 +162,8 @@ class Menu extends App{
             //Object to trigger Jose's function
 
             //Testing
-            message:'OfferTask',
+            type:'Auto',
+            message:'/offer',
         }
     }
 
@@ -150,7 +172,8 @@ class Menu extends App{
         return {
             //Objects to trigger taufiq's function
             //Testing
-            message:'assignTask',
+            type:'Auto',
+            message:'/assignTasks',
         }
     }
 
@@ -173,7 +196,8 @@ class Menu extends App{
         return {
             //Objects to trigger taufiq's function
             //Testing
-            message:'addProject',
+            type:'Auto',
+            message:'/addProject',
         }
     }
 
@@ -182,7 +206,8 @@ class Menu extends App{
         return {
             //Objects to trigger taufiq's function
             //Testing
-            message:'editProject',
+            type:'Auto',
+            message:'/editProject',
         }
     }
 
@@ -191,7 +216,8 @@ class Menu extends App{
         return {
             //Objects to trigger taufiq's function
             //Testing
-            message:'deleteProject',
+            type:'Auto',
+            message:'/deleteProject',
         }
     }
 
@@ -200,7 +226,8 @@ class Menu extends App{
         return {
             //Objects to trigger taufiq's function
             //Testing
-            message:'listProject',
+            type:'Auto',
+            message:'/listProject',
         }
     }
 

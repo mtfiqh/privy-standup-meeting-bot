@@ -13,6 +13,7 @@ module.exports = {
     man     :'🙍‍♂️',
     woman   :'🙍‍♀️',
     laptop  :'💻',
+    save    :'💾',
     home    :'🏠',
     right   :'➡️',
     left    :'⬅️'

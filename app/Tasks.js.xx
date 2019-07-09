@@ -10,7 +10,7 @@ const {App} = require('../core/App')
  *
  */
 
-class AddTasks extends App {
+class Tasks extends App {
     constructor(bot){
         super()
         this.bot=bot
@@ -20,9 +20,29 @@ class AddTasks extends App {
             this.onInsertPriority,
             this.onInsertProject,
             this.onMakeSure,
+            this.showButton,
             this.onCallbackInsertTask,
             this.onShowTasks,
         ])
+    }
+
+    showButton(from){
+        console.log(from.id, "show button tasks, checking is admin")
+        this.bot.sendMessage(from.id,"Mohon Tunggu sebentar ya....", this.messageOption()).then(()=>{
+            isAdmin(from.id).then(admin=>{
+                let keyboard=[
+                    [
+                        {text:'+ Add Tasks', callback_data:"tasks-onCallbackInsertTask-"+from.id+"@"+from.first_name}, 
+                        {text:'Show Tasks', callback_data:"tasks-onShowTasks-"+from.id}
+                    ]
+                ]
+                if(admin){
+    
+                }
+                this.bot.sendMessage(from.id, `Menu: Tasks`, this.messageOption("taskButton",keyboard))
+            })
+
+        })
     }
 
     reset(userID){
@@ -306,4 +326,4 @@ class AddTasks extends App {
 
 }
 
-module.exports = {AddTasks}
+module.exports = {Tasks}

@@ -13,6 +13,7 @@ class App {
             throw new Error("key is exist!")
         }
         this.cache[key] = payloads
+        return this
     }
     /**
      * Register the function in the instance class to the lookUp variable
