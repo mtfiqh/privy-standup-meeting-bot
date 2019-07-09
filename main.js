@@ -4,6 +4,7 @@ const helper        = require('./app/helper/helper')
 const { Report }    = require('./app/Report')
 const { TakeOfferTask } = require('./app/TakeOfferTask')
 const lookUp        = {} 
+const emoticon            = require('./app/resources/emoticons.config')
 const bot           =  new TelegramBot(process.env.BOT_TOKEN, {polling:true})
 const {Tasks} = require('./app/Tasks.js')
 const {Menu} = require('./app/menu')
@@ -199,6 +200,7 @@ bot.onText(/\/offer/, async context => {
     const response = await initOfferTask(id, name, message_id)
     if(!response.active) await bot.sendMessage(id, response.message,response.options)
     bot.deleteMessage(id, message_id)
+    console.log(lookUp)
 })
 
 
@@ -229,7 +231,7 @@ async function handleAuto(context){
             bot.deleteMessage(chat.id, message_id)
             lookUp[`showTasks@${chat.id}`] = new Tasks(chat.id, 'showTasks', chat.name)
             const currentApp=lookUp[`showTasks@${chat.id}`]
-            let response = await currentApp.showTasks(chat)
+            response = await currentApp.showTasks(chat)
             handleRespond(response, chat.id)
             break
         default:
@@ -298,7 +300,7 @@ async function initUserReport(id, name){
  * The function get data from database and check if user is active or not
  */
 cron.schedule('* * * * *',()=>{
-    getUsersData('all').then(results=>{
+    db.getUsersData('all').then(results=>{
         results.forEach(user=>{
             let currentDate = new Date()
             if(user.status==='active'){
@@ -310,13 +312,13 @@ cron.schedule('* * * * *',()=>{
                         inline_keyboard:[
                             [ 
                                 {
-                                    text: `${em.add} Add Task(s)`, 
+                                    text: `${emoticon.add} Add Task(s)`, 
                                     callback_data: 'addTask-OnInsertTask-'+user.userID
                                 } 
                             ],
                             [ 
                                 {
-                                    text: `${em.laptop} Show Tasks`, 
+                                    text: `${emoticon.laptop} Show Tasks`, 
                                     callback_data: 'addTask-OnShowTask-'+user.userID
                                 }
                             ]
@@ -351,13 +353,13 @@ cron.schedule('* * 13 * * *',()=>{
  * 
  */
 cron.schedule('* * * * *',()=>{
-    checkDayOff().then(results=>{
-        getUsersData('all').then(result=>{
+    db.checkDayOff().then(results=>{
+        db.getUsersData('all').then(result=>{
             result.forEach(user=>{
                 if(results.includes(user.userID)){
-                    updateUser(user.userID,{status:'inactive'})
+                    db.updateUser(user.userID,{status:'inactive'})
                 }else{
-                    updateUser(user.userID,{status:'active'})
+                    db.updateUser(user.userID,{status:'active'})
                 }
             })
         })
