@@ -29,21 +29,13 @@ class Report extends App {
         // address : item@index
         const pressedButtonPosition  = parseInt(address.split('@').pop())
         const { projectId, taskId }  = this.cache[this.prefix][address]
-        const { options, message }   = { ...dict.select.success }
-
-        options.reply_markup = {
-            inline_keyboard : this.toggleSelectedTask(
-                projectId, 
-                taskId,
-                pressedButtonPosition
-            )
-        }
+        const keyboard = this.toggleSelectedTask( projectId, taskId,pressedButtonPosition)
         
         return {
             id: this.id,
             type :"Edit",
-            message: `Halo *${this.name}*, ${message}`,
-            options:  options
+            message:  dict.select.success.getMessage(this.name),
+            options:  dict.select.success.getOptions(keyboard)
         }
     }
 
@@ -53,7 +45,8 @@ class Report extends App {
                 destroy:true,
                 id:this.id,
                 type: "Edit",
-                ...dict.send.failed
+                message: dict.send.failed.getMessage(),
+                options: dict.send.failed.getOptions()
             }
 
         const dataTosend = {}
@@ -80,13 +73,13 @@ class Report extends App {
         delete this.cache[this.prefix]
 
         // response
-        const {message, options} = dict.send.success
+        const taskList  =  helper.selectedButtonToString(dataTosend[this.id],"Done")
         return {
             destroy:true,
             id:this.id,
             type: "Edit",
-            message : helper.selectedButtonToString(dataTosend[this.id],"Done",message),
-            options
+            message : dict.send.success.getMessage(taskList),
+            options : dict.send.success.getOptions()
         }
         
     }

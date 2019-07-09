@@ -22,7 +22,7 @@ const onTypeListenMessage=(task, prefix, userID, token)=>{
 
 const onPrioritySelected= (priority,userID,prefix)=>{
     return {
-        // type:"Edit",
+        // type:"Delete",
         listenType:true,
         userID,
         prefix,
@@ -57,6 +57,7 @@ const onSelectProjects = (projects) =>{
 const onCancelMessage=()=>{
     return {
         message:`permintaan dibatalkan`,
+        destroy:true,
         options:{
             reply_markup:{remove_keyboard:true}
         },

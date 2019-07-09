@@ -16,5 +16,6 @@ module.exports = {
     save    :'💾',
     home    :'🏠',
     right   :'➡️',
+    close   :'🚪',
     left    :'⬅️'
 }

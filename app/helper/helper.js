@@ -34,7 +34,6 @@
   * @param {string} falseAction     :callback_data and text label button rekect-action
   */
 function generateTasksKeyboard(projects, prefix, trueAction="Send", falseAction="Cancel") {
-    console.log("Projects", projects)
     const inlineKeyboard = []
     const addrs  = {}
     let counter = 0

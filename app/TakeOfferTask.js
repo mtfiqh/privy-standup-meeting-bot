@@ -176,7 +176,7 @@ class TakeOfferTask extends App {
         console.log("Respond Yes")
         if(this.friend==null) return
         const friend = this.friend
-        const taskList = helper.selectedButtonToString(this.bucket, "tranfered")
+        const taskList = helper.selectedButtonToString(this.bucket, "transfered")
         
         db.takeOverTask(this.bucket)
         
