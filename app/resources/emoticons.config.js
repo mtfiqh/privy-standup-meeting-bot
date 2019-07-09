@@ -12,5 +12,6 @@ module.exports = {
     assign  :'🤏',
     man     :'🙍‍♂️',
     woman   :'🙍‍♀️',
-    laptop  :'💻'
+    laptop  :'💻',
+    save    :'💾'
 }

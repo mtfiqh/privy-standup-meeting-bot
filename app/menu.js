@@ -1,4 +1,4 @@
-const {isAdmin} = require("./DataTransaction")
+const {isAdmin,exportToExcel} = require("./DataTransaction")
 const {
         menuAdmin,
         menuUser,
@@ -17,7 +17,7 @@ class Menu extends App{
             //Basic Section
             this.onMain.name,
             this.onBackPressed.name,
-            
+            this.onSave.name,
             //Task Section
             this.onTasksClicked.name,
             this.onReportTasks.name,
@@ -36,6 +36,8 @@ class Menu extends App{
             // Add new section here
 
         ])
+
+
 
         // Define Class variable here
         this.prefix = `${Menu.name}@${userID}`
@@ -58,36 +60,40 @@ class Menu extends App{
 
 
     //----------------BASIC SECTION-----------------------------------------
-    async onMain({from,chat}){
-        const load = result=>{
-        this.isAdmin = result
+    async onMain({from,chat},first = false){
+        this.message = ""
+        const load = result => {
+            this.isAdmin = result
+        }
+
+        await isAdmin(from.id).then(load.bind(this))
+        this.state.push({func:this.onMain.name,args:{from,chat}})
         this.from = from
+
         let opts = this.getMessageOptionOnMenu(from.id)
         let greetings = this.generateGreetings()
         
-        
-        this.bot.sendMessage(chat.id,   
-            `Selamat ${greetings} ${from.first_name},\nSilahkan gunakan tombol dibawah ini.`,
-            opts)
-            
+        return {
+            type:  first ? "Send": "Edit",
+            id:this.userID,
+            message: `Selamat ${greetings} ${from.first_name},\nSilahkan gunakan tombol dibawah ini.`,
+            options: opts 
         }
-        await isAdmin(from.id).then(load.bind(this))
-        
-        this.state.push({func:this.onMain.name,args:{from,chat}})
         
     }
     
-    onBackPressed(){
+    async onSave(){
+        console.log("RES ")
+    }
+
+    async onBackPressed(){
         this.state.pop()
         let {func,args} = this.state.pop()
 
-        this[func].call(this,args)
-        return {
-            message:'Back',
-            type:'Edit',
-            from:this.prefix,
-            deleteLast:true
-        }
+        
+        const response = await this[func].call(this,args)
+        return response
+        
     }
         
     //-----------------END SECTION----------------------------

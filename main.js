@@ -35,13 +35,15 @@ bot.on('polling_error',msg=>{
     console.log(msg)
 })
 
-bot.onText(/\/menu/, (context, match)=>{
-    const {from,chat} = context
+bot.onText(/\/menu/, async (context, match)=>{
+    const {from,chat, message_id} = context
     
     const menu = new Menu(bot,from.id)
 
     lookUp[`Menu@${from.id}`] = menu
-    menu.onMain(context)
+    const res = await menu.onMain(context,true)
+    handleRespond(res, from.id, message_id)
+    
 })
 
 bot.onText(/\/addTasks/, (context, match)=>{
@@ -151,15 +153,11 @@ function handleRespond(response, to, message_id) {
     const {type} = response
     console.log(`message_id :${message_id}`)
     if(type=="Edit"){
-        if(response.message=='Back'){
-            bot.deleteMessage(to,message_id)
-        }else{
-            bot.editMessageText(response.message,{
-                message_id:message_id,
-                chat_id:to,
-                ...response.options
-            })
-        }
+        bot.editMessageText(response.message,{
+            message_id:message_id,
+            chat_id:to,
+            ...response.options
+        })
     }else if(type=="Delete"){
         bot.deleteMessage(response.id, message_id)
     }else if(type=="Confirm"){
@@ -299,44 +297,44 @@ async function initUserReport(id, name){
  * Cron function for reminder every 9 A.M
  * The function get data from database and check if user is active or not
  */
-cron.schedule('* * * * *',()=>{
-    db.getUsersData('all').then(results=>{
-        results.forEach(user=>{
-            let currentDate = new Date()
-            if(user.status==='active'){
-                bot.sendMessage(user.userID, 
-                `Selamat Pagi <a href='tg://user?id=${user.userID}'>${user.name}</a>, 
-                Laporkan progress mu saat ini`,{
-                    parse_mode:'HTML',
-                    reply_markup: {
-                        inline_keyboard:[
-                            [ 
-                                {
-                                    text: `${emoticon.add} Add Task(s)`, 
-                                    callback_data: 'addTask-OnInsertTask-'+user.userID
-                                } 
-                            ],
-                            [ 
-                                {
-                                    text: `${emoticon.laptop} Show Tasks`, 
-                                    callback_data: 'addTask-OnShowTask-'+user.userID
-                                }
-                            ]
-                        ]
-                    }
-                }).then(()=>{
-                    console.log('Send message to '+user.name+' at '+currentDate)
-                }).catch(e=>{
-                    console.log('Failed send message to '+user.name+' in '+currentDate)
-                    console.log('Caused by : '+e.message)
-                })        
-            }else{
-                console.log(user.name+' is inactive, not sending message')
-            }
-        })
-        console.log('\n')
-    })  
-})
+// cron.schedule('* * * * *',()=>{
+//     db.getUsersData('all').then(results=>{
+//         results.forEach(user=>{
+//             let currentDate = new Date()
+//             if(user.status==='active'){
+//                 bot.sendMessage(user.userID, 
+//                 `Selamat Pagi <a href='tg://user?id=${user.userID}'>${user.name}</a>, 
+//                 Laporkan progress mu saat ini`,{
+//                     parse_mode:'HTML',
+//                     reply_markup: {
+//                         inline_keyboard:[
+//                             [ 
+//                                 {
+//                                     text: `${emoticon.add} Add Task(s)`, 
+//                                     callback_data: 'addTask-OnInsertTask-'+user.userID
+//                                 } 
+//                             ],
+//                             [ 
+//                                 {
+//                                     text: `${emoticon.laptop} Show Tasks`, 
+//                                     callback_data: 'addTask-OnShowTask-'+user.userID
+//                                 }
+//                             ]
+//                         ]
+//                     }
+//                 }).then(()=>{
+//                     console.log('Send message to '+user.name+' at '+currentDate)
+//                 }).catch(e=>{
+//                     console.log('Failed send message to '+user.name+' in '+currentDate)
+//                     console.log('Caused by : '+e.message)
+//                 })        
+//             }else{
+//                 console.log(user.name+' is inactive, not sending message')
+//             }
+//         })
+//         console.log('\n')
+//     })  
+// })
 
 /**
  * Function to send message every 1 P.M
@@ -352,18 +350,17 @@ cron.schedule('* * 13 * * *',()=>{
  * Set a user active or not based on day-off databases
  * 
  */
-cron.schedule('* * * * *',()=>{
-    db.checkDayOff().then(results=>{
-        db.getUsersData('all').then(result=>{
-            result.forEach(user=>{
-                if(results.includes(user.userID)){
-                    db.updateUser(user.userID,{status:'inactive'})
-                }else{
-                    db.updateUser(user.userID,{status:'active'})
-                }
-            })
-        })
-    })
-})
-
+// cron.schedule('* * * * *',()=>{
+//     db.checkDayOff().then(results=>{
+//         db.getUsersData('all').then(result=>{
+//             result.forEach(user=>{
+//                 if(results.includes(user.userID)){
+//                     db.updateUser(user.userID,{status:'inactive'})
+//                 }else{
+//                     db.updateUser(user.userID,{status:'active'})
+//                 }
+//             })
+//         })
+//     })
+// })
 

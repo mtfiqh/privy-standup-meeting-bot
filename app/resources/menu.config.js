@@ -4,7 +4,9 @@ const menuAdmin =(prefix,from)=>{
     return {
         type:'Edit',
         from:prefix,
+        id:from.id,
         parse_mode:'HTML',
+        message:'Pilih Menu Dibawah ini',
         reply_markup: {
             inline_keyboard:[
                 [ 
@@ -13,7 +15,11 @@ const menuAdmin =(prefix,from)=>{
                 ],
                 [ 
                     {text: `${em.chart} Monitoring`, callback_data: prefix+'-onMonitoringClicked-'+from.id+'@'+from.first_name}
+                ],
+                [
+                    {text: `${em.save} Save to Excel`, callback_data: prefix+'-onSave-'+from.id+'@'+from.first_name}
                 ]
+
             ]
         },
         deleteLast:true
@@ -25,6 +31,7 @@ const menuUser = (prefix,from)=>{
         type:'Edit',
         from:prefix,
         parse_mode:'HTML',
+        message:'Pilih Menu Dibawah ini',
         reply_markup: {
             inline_keyboard:[
                 [ 
@@ -40,6 +47,7 @@ const menuUser = (prefix,from)=>{
 const menuProjectsAdmin = (from,prefix)=>{
     return {
         type:'Edit',
+        id:from.id,
         from:prefix,
         message:'Silahkan pilih menu dibawah ini',
         options:{
@@ -67,7 +75,7 @@ const menuProjectsAdmin = (from,prefix)=>{
                 ]
             }
         },
-        deleteLast:true
+        // deleteLast:true
     }
 }
 
@@ -91,7 +99,7 @@ const menuProjectsUser = (from,prefix)=>{
                 ]
             }
         },
-        deleteLast:true
+        // deleteLast:true
     }
 }
 
@@ -134,7 +142,7 @@ const menuTasksUser = (prefix,from)=>{
                 ]
             }
         },
-        deleteLast:true
+        // deleteLast:true
     }
 }
 
@@ -184,7 +192,7 @@ const menuTasksAdmin = (prefix,from)=>{
                 ]
             }
         },
-        deleteLast:true
+        // deleteLast:true
     }
 }
 
