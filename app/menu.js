@@ -20,6 +20,7 @@ class Menu extends App{
             this.onSave.name,
             this.onClose.name,
             this.onDayOff.name,
+            'cron',
             //Task Section
             this.onTasksClicked.name,
             this.onReportTasks.name,
@@ -64,6 +65,11 @@ class Menu extends App{
 
 
     //----------------BASIC SECTION-----------------------------------------
+
+    async cron(address){
+        const {from } = this.cache[`from@${this.userID}`]
+        return await this.onMain({from:from,chat:undefined})
+    }
 
     async onMain({from,chat},first = false){
         this.message = ""

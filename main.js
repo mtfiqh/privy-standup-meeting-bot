@@ -66,6 +66,11 @@ bot.on('polling_error',msg=>{
 })
 
 bot.onText(/\/menu/, async (context, match)=>{
+    const prefix = `Menu@${context.from.id}`
+    if(prefix in lookUp){
+        bot.deleteMessage(context.from.id, context.message_id)
+        return 
+    }
     currentState[`autostart@${context.from.id}`] = context
     await initMenu(context.from.id)
 })
@@ -74,14 +79,27 @@ async function initMenu(id){
     const context = currentState[`autostart@${id}`]
     const {from,chat, message_id} = context
     const menu = new Menu(bot,from.id)
-    const msg_bot = currentState[`autostartBot@${id}`]
-
+    const msg_bot = currentState[`autostartBot@${id}`]==undefined ? message_id: currentState[`autostartBot@${id}`]
+    
     lookUp[`Menu@${from.id}`] = menu
     const res = await menu.onMain(context,true)
-    console.log(res)
     handleRespond(res, from.id, message_id)
     bot.deleteMessage(chat.id, msg_bot)
     delete currentState[`autostart@${id}`]
+}
+
+async function initMenuCron(context, msg){
+    const {from,chat} = context
+    bot.sendMessage(from.id,msg,
+    {
+        parse_mode:'Markdown',
+        reply_markup:{
+            inline_keyboard:[
+                [{text:'Menu',callback_data:`Menu@${from.id}-cron`}]
+            ]
+        }
+    })
+
 }
 
 bot.onText(/\/addTasks/, (context, match)=>{
@@ -349,29 +367,31 @@ async function initUserReport(id, name){
     return response
 }
 
+function reminder(type){
 
-
-
-/**
- * Cron function for reminder every 9 A.M
- * The function get data from database and check if user is active or not
- */
-cron.schedule('* * * * *',()=>{
     let today = new Date()
     if(today.getDay()!=0&&today.getDay()!=6){
         db.getUsersData('all').then(results=>{
             results.forEach(async user=>{
-                let currentDate = new Date()
+            
+                let message = `Selamat Pagi ${user.name}\nJangan lupa mengisi task hari ini. \nTekan tombol Menu atau kirim */menu* untuk menggunakan fitur bot.`
+                if(type==13){
+                    message=`Selamat Siang ${user.name}\nJangan lupa melaporkan task hari ini yang sudah *Done*. \nTekan tombol Menu atau kirim */menu* untuk menggunakan fitur bot.`
+                }
+
                 if(user.status==='active'){
-                    bot.sendMessage(user.userID,`Selamat Pagi ${user.name}\nJangan lupa mengisi task hari ini. \nTekan tombol Menu atau kirim */menu* untuk menggunakan fitur bot.`,
-                    {
-                        parse_mode:'Markdown',
-                        reply_markup:{
-                            inline_keyboard:[
-                                [{text:'Menu',callback_data:'/menu'}]
-                            ]
-                        }
-                    })
+                    const from = {
+                        id:user.userID,
+                        first_name:user.name
+                    }
+                    const context = {
+                        from:from,
+                        chat:undefined
+                    }
+                    const menu = new Menu(bot,from.id).addCache(`from@${from.id}`,{from:from})
+                    
+                    lookUp[`Menu@${from.id}`] = menu
+                    initMenuCron(context,message)
                 }else{
                     console.log(user.name+' is inactive, not sending message')
                 }
@@ -379,17 +399,27 @@ cron.schedule('* * * * *',()=>{
             console.log('\n')
         })  
     }
-    
-})
+}
+
+
+/**
+ * Cron function for reminder every 9 A.M
+ * The function get data from database and check if user is active or not
+ */
+// cron.schedule('* * * * *',()=>{
+//     reminder(10)
+// })
 
 // /**
 //  * Function to send message every 1 P.M
 //  * To remind users and check their progress
 //  * Messages send to all users
 //  */
-// cron.schedule('* * 13 * * *',()=>{
+// cron.schedule('*/5 * * * * *',()=>{
+//     reminder(13)
 //     //Implements function to send messages here
 // })
+
 
 
 // /**

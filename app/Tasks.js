@@ -11,7 +11,6 @@ class Tasks extends App{
             this.selectProject.name,
             this.onSure.name,
             this.selectUser.name,
-            this.remindTask.name
         ])
         this.addCache('userID',userID)
         this.addCache('name', name)
@@ -22,10 +21,6 @@ class Tasks extends App{
         this.addCache('token', Math.random().toString(36).substring(8))
         this.addCache('countTasks',0)
 
-    }
-    
-    remindTask(){
-        console.log('Remind')
     }
 
     async showTasks(from){
