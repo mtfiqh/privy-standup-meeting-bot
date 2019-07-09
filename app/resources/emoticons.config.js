@@ -12,5 +12,11 @@ module.exports = {
     assign  :'🤏',
     man     :'🙍‍♂️',
     woman   :'🙍‍♀️',
-    laptop  :'💻'
+    laptop  :'💻',
+    save    :'💾',
+    home    :'🏠',
+    right   :'➡️',
+    close   :'🚪',
+    left    :'⬅️',
+    calendar:'📅'
 }

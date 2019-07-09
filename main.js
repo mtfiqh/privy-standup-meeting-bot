@@ -3,17 +3,43 @@ const db            = require('./app/DataTransaction')
 const helper        = require('./app/helper/helper')
 const { Report }    = require('./app/Report')
 const { TakeOfferTask } = require('./app/TakeOfferTask')
-const {CrudProject}            = require('./app/CrudProject')
 const lookUp        = {} 
+const emoticon            = require('./app/resources/emoticons.config')
 const bot           =  new TelegramBot(process.env.BOT_TOKEN, {polling:true})
 const {Tasks} = require('./app/Tasks.js')
 const {Menu} = require('./app/menu')
+
 const cron = require('node-cron')
+
+const {DayOff} = require('./app/DayOff')
+
 
 
 // global var
 const currentState={}
 const history={}
+
+bot.onText(/\/start/,context=>{
+    const {from,chat,message_id} = context
+    currentState[`autostart@${from.id}`] = context
+
+    db.saveUser(from.id,{name:`${from.first_name += from.last_name? ' '+from.last_name:''}`,
+    status:'active',type:'user',userID:from.id,username:from.username})
+    bot.sendMessage(chat.id,`Selamat Datang ${from.first_name}\nTekan tombol Menu atau kirim */menu* untuk menggunakan fitur bot.`,
+    {
+        parse_mode:'Markdown',
+        reply_markup:{
+            inline_keyboard:[
+                [{text:'Menu',callback_data:'/menu'}]
+            ]
+        }
+    }).then((context)=>{
+        
+        currentState[`autostartBot@${context.chat.id}`] = context.message_id
+        bot.deleteMessage(chat.id, message_id)
+    })
+})
+
 /**
  * accept any message
  * response has additional : done (boolean), 
@@ -22,14 +48,13 @@ const history={}
 bot.on("message", async context=>{
     const {from,chat,text}=context
     if(currentState[from.id]){
-        console.log(text)
         console.log(from.id, 'Type Listen')
         const currentApp = lookUp[`${currentState[from.id]}@${from.id}`]
         const response = await currentApp.listen('onTypeListen',context)
-        console.log(from.id, `currentState ${currentState[from.id]} deleted`)
         if(response && response.destroy==true){
-            delete lookUp[`${currentState[from.id]}@${from.id}`]
+            delete lookUp[currentApp.prefix]
         }
+        console.log(from.id, `currentState ${currentState[from.id]} deleted`)
         delete currentState[from.id]
         handleRespond(response, from.id, context.message_id)
     }
@@ -40,14 +65,42 @@ bot.on('polling_error',msg=>{
     console.log(msg)
 })
 
-bot.onText(/\/menu/, (context, match)=>{
-    const {from,chat} = context
-    
-    const menu = new Menu(bot,from.id)
-
-    lookUp[`Menu@${from.id}`] = menu
-    menu.onMain(context)
+bot.onText(/\/menu/, async (context, match)=>{
+    const prefix = `Menu@${context.from.id}`
+    if(prefix in lookUp){
+        bot.deleteMessage(context.from.id, context.message_id)
+        return 
+    }
+    currentState[`autostart@${context.from.id}`] = context
+    await initMenu(context.from.id)
 })
+
+async function initMenu(id){
+    const context = currentState[`autostart@${id}`]
+    const {from,chat, message_id} = context
+    const menu = new Menu(bot,from.id)
+    const msg_bot = currentState[`autostartBot@${id}`]==undefined ? message_id: currentState[`autostartBot@${id}`]
+    
+    lookUp[`Menu@${from.id}`] = menu
+    const res = await menu.onMain(context,true)
+    handleRespond(res, from.id, message_id)
+    bot.deleteMessage(chat.id, msg_bot)
+    delete currentState[`autostart@${id}`]
+}
+
+async function initMenuCron(context, msg){
+    const {from,chat} = context
+    bot.sendMessage(from.id,msg,
+    {
+        parse_mode:'Markdown',
+        reply_markup:{
+            inline_keyboard:[
+                [{text:'Menu',callback_data:`Menu@${from.id}-cron`}]
+            ]
+        }
+    })
+
+}
 
 bot.onText(/\/addTasks/, (context, match)=>{
     const {from} = context
@@ -102,6 +155,17 @@ bot.onText(/\/showTasks/, async (context, match)=>{
     }
 })
 
+bot.onText(/\/dayOff/,async (context, match)=>{
+    const {from,message_id} = context
+    
+    const dayOff = new DayOff(bot,from.id)
+
+    lookUp[`DayOff@${from.id}`] = dayOff
+    
+    const res = await dayOff.onStart(context,true)
+    handleRespond(res, from.id, message_id)
+})
+
 function initTasks(prefix, userID, name){
     try{
         lookUp[`${prefix}@${userID}`] = new Tasks(userID, prefix, name)
@@ -127,11 +191,14 @@ bot.on('callback_query', async query => {
     try {
         const {from, message, data:command} = query
         const [lookUpKey, action, address] = command.split('-')
+
+        if(command=='/menu') return await initMenu(from.id)
+
         const currentApp = lookUp[lookUpKey]
         const response = await currentApp.listen(action,address)
         handleRespond(response, from.id, message.message_id)
         if(response && response.destroy==true){
-            delete lookUp[currentApp.prefix]
+            delete lookUp[currentApp.prefix]   
         }
         if(response && response.record===true){
             if(history[from.id]===undefined) history[from.id]=new Set([])
@@ -154,21 +221,17 @@ function handleRespond(response, to, message_id) {
      *     agrs : any
      * }
      */
-
+    console.log(response)
     if(!response) return
 
     const {type} = response
     console.log(`message_id :${message_id}`)
     if(type=="Edit"){
-        if(response.message=='Back'){
-            bot.deleteMessage(to,message_id)
-        }else{
-            bot.editMessageText(response.message,{
-                message_id:message_id,
-                chat_id:to,
-                ...response.options
-            })
-        }
+        bot.editMessageText(response.message,{
+            message_id:message_id,
+            chat_id:to,
+            ...response.options
+        })
     }else if(type=="Delete"){
         bot.deleteMessage(response.id, message_id)
     }else if(type=="Confirm"){
@@ -239,8 +302,17 @@ async function handleAuto(context){
             bot.deleteMessage(chat.id, message_id)
             lookUp[`showTasks@${chat.id}`] = new Tasks(chat.id, 'showTasks', chat.name)
             const currentApp=lookUp[`showTasks@${chat.id}`]
-            let response = await currentApp.showTasks(chat)
+            response = await currentApp.showTasks(chat)
             handleRespond(response, chat.id)
+            break
+        case '/dayOff':
+            const dayOff = new DayOff(bot,chat.id)
+            lookUp[`DayOff@${chat.id}`] = dayOff
+            const res = await dayOff.onStart(context,true)
+            handleRespond(res, chat.id, message_id)
+            break
+        case '/createProjects':
+            initProjects('createProjects', chat.id, chat.first_name)
             break
         default:
             console.log("waiting...")
@@ -252,7 +324,8 @@ async function handleAuto(context){
 // Register Current User to lookUp as Report@userId
 async function initOfferTask(id, name){
     const prefix = `TakeOfferTask@${id}`
-    // user report was regitered
+    // user was regitered
+    if(prefix in lookUp) return {active:true}
     const  response = {
         message:`Halo *${name}* semua task Anda sudah *Done*.`,
         options:{
@@ -300,10 +373,7 @@ async function initUserReport(id, name){
     return response
 }
 
-/**
- * function for projects
- */
-
+//function for crud projects
 bot.onText(/\/createProjects/, async context => {
     const {chat} = context
     initProjects('createProjects', chat.id, chat.first_name)
@@ -313,14 +383,17 @@ bot.onText(/\/deleteProjects/, async context=>{
     const {chat} = context
     initProjects('deleteProjects', chat.id, chat.first_name)
 })
+
 bot.onText(/\/updateProjects/, async context=>{
     const {chat} = context
     initProjects('updateProjects', chat.id, chat.first_name)
 })
+
 bot.onText(/\/listProjects/, async context=>{
     const {chat} = context
     initProjects('readProjects', chat.id, chat.first_name)
 })
+
 async function initProjects(prefix, userID, name){
     try{
         lookUp[`${prefix}@${userID}`] = new CrudProject(userID, name, prefix)
@@ -352,49 +425,47 @@ async function initProjects(prefix, userID, name){
     }
 }
 
+function reminder(type){
+
+    let today = new Date()
+    if(today.getDay()!=0&&today.getDay()!=6){
+        db.getUsersData('all').then(results=>{
+            results.forEach(async user=>{
+            
+                let message = `Selamat Pagi ${user.name}\nJangan lupa mengisi task hari ini. \nTekan tombol Menu atau kirim */menu* untuk menggunakan fitur bot.`
+                if(type==13){
+                    message=`Selamat Siang ${user.name}\nJangan lupa melaporkan task hari ini yang sudah *Done*. \nTekan tombol Menu atau kirim */menu* untuk menggunakan fitur bot.`
+                }
+
+                if(user.status==='active'){
+                    const from = {
+                        id:user.userID,
+                        first_name:user.name
+                    }
+                    const context = {
+                        from:from,
+                        chat:undefined
+                    }
+                    const menu = new Menu(bot,from.id).addCache(`from@${from.id}`,{from:from})
+                    
+                    lookUp[`Menu@${from.id}`] = menu
+                    initMenuCron(context,message)
+                }else{
+                    console.log(user.name+' is inactive, not sending message')
+                }
+            })
+            console.log('\n')
+        })  
+    }
+}
 
 
-// /**
-//  * Cron function for reminder every 9 A.M
-//  * The function get data from database and check if user is active or not
-//  */
+/**
+ * Cron function for reminder every 9 A.M
+ * The function get data from database and check if user is active or not
+ */
 // cron.schedule('* * * * *',()=>{
-//     getUsersData('all').then(results=>{
-//         results.forEach(user=>{
-//             let currentDate = new Date()
-//             if(user.status==='active'){
-//                 bot.sendMessage(user.userID, 
-//                 `Selamat Pagi <a href='tg://user?id=${user.userID}'>${user.name}</a>, 
-//                 Laporkan progress mu saat ini`,{
-//                     parse_mode:'HTML',
-//                     reply_markup: {
-//                         inline_keyboard:[
-//                             [ 
-//                                 {
-//                                     text: `${em.add} Add Task(s)`, 
-//                                     callback_data: 'addTask-OnInsertTask-'+user.userID
-//                                 } 
-//                             ],
-//                             [ 
-//                                 {
-//                                     text: `${em.laptop} Show Tasks`, 
-//                                     callback_data: 'addTask-OnShowTask-'+user.userID
-//                                 }
-//                             ]
-//                         ]
-//                     }
-//                 }).then(()=>{
-//                     console.log('Send message to '+user.name+' at '+currentDate)
-//                 }).catch(e=>{
-//                     console.log('Failed send message to '+user.name+' in '+currentDate)
-//                     console.log('Caused by : '+e.message)
-//                 })        
-//             }else{
-//                 console.log(user.name+' is inactive, not sending message')
-//             }
-//         })
-//         console.log('\n')
-//     })  
+//     reminder(10)
 // })
 
 // /**
@@ -402,9 +473,11 @@ async function initProjects(prefix, userID, name){
 //  * To remind users and check their progress
 //  * Messages send to all users
 //  */
-// cron.schedule('* * 13 * * *',()=>{
+// cron.schedule('*/5 * * * * *',()=>{
+//     reminder(13)
 //     //Implements function to send messages here
 // })
+
 
 
 // /**
@@ -412,17 +485,15 @@ async function initProjects(prefix, userID, name){
 //  * 
 //  */
 // cron.schedule('* * * * *',()=>{
-//     checkDayOff().then(results=>{
-//         getUsersData('all').then(result=>{
+//     db.checkDayOff().then(results=>{
+//         db.getUsersData('all').then(result=>{
 //             result.forEach(user=>{
 //                 if(results.includes(user.userID)){
-//                     updateUser(user.userID,{status:'inactive'})
+//                     db.updateUser(user.userID,{status:'inactive'})
 //                 }else{
-//                     updateUser(user.userID,{status:'active'})
+//                     db.updateUser(user.userID,{status:'active'})
 //                 }
 //             })
 //         })
 //     })
 // })
-
-

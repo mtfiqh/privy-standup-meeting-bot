@@ -10,10 +10,11 @@ class Tasks extends App{
             this.setPriority.name,
             this.selectProject.name,
             this.onSure.name,
-            this.selectUser.name
+            this.selectUser.name,
         ])
         this.addCache('userID',userID)
         this.addCache('name', name)
+        this.prefix=prefix
         //add prefix to be guide what func will be use
         //addTasks or assignTasks
         this.addCache('prefix', prefix)
@@ -21,7 +22,7 @@ class Tasks extends App{
         this.addCache('countTasks',0)
 
     }
-    
+
     async showTasks(from){
         await this.listTasks(from)
         return onShowTasks(this.text)
