@@ -8,7 +8,11 @@ const emoticon            = require('./app/resources/emoticons.config')
 const bot           =  new TelegramBot(process.env.BOT_TOKEN, {polling:true})
 const {Tasks} = require('./app/Tasks.js')
 const {Menu} = require('./app/menu')
+
 const cron = require('node-cron')
+
+const {DayOff} = require('./app/DayOff')
+
 
 
 // global var
@@ -99,6 +103,15 @@ bot.onText(/\/showTasks/, async (context, match)=>{
     }
 })
 
+bot.onText(/\/cuti/, (context, match)=>{
+    const {from,chat} = context
+    
+    const dayOff = new DayOff(bot,from.id)
+
+    lookUp[`DayOff@${from.id}`] = dayOff
+    dayOff.onStart(context)
+})
+
 function initTasks(prefix, userID, name){
     try{
         lookUp[`${prefix}@${userID}`] = new Tasks(userID, prefix, name)
@@ -147,7 +160,7 @@ function handleRespond(response, to, message_id) {
      *     agrs : any
      * }
      */
-
+    console.log(response)
     if(!response) return
 
     const {type} = response

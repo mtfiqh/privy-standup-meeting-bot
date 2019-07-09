@@ -63,6 +63,7 @@ class Menu extends App{
 
 
     //----------------BASIC SECTION-----------------------------------------
+
     async onMain({from,chat},first = false){
         this.message = ""
         const load = result => {

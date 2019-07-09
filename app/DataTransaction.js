@@ -12,6 +12,7 @@ const tasks     = new Set([])
 
 load = () => {
     //Using to testing
+    exportToExcel()
 }
 
 listenUsers = async () => {
@@ -574,6 +575,7 @@ const deleteProject = async (projectName) => {
 }
 
 const updateTaskStatus = (payload) => {
+    let {timestamp} = getDate()
     Object.keys(payload).forEach(key => {
         items = payload[key]
         items.forEach(item => {
@@ -585,7 +587,17 @@ const updateTaskStatus = (payload) => {
             taskReference.get().then(results => {
                 results.forEach(result => {
                     db.collection('tasks').doc(result.id).update({ status: 'done' })
+                    let temp = {}
+                    temp[userID] = {}
+                    temp[userID]['done'] = admin.firestore.FieldValue.arrayUnion(name)
+
+                    db.collection('reports').doc(timestamp.toString()).get()
+                    .then(doc => {
+                        db.collection('reports').doc(timestamp.toString())
+                        .set(temp, { merge: true })
+                    })
                 })
+
             }).catch(err => {
                 console.log("Error when updating task", err)
             }).finally(`Task ${name} Updated!`)
@@ -637,96 +649,111 @@ const generateColumn = async (userData, todayReport) => {
     let infoTemp    = ''
     let problemTemp = ''
     let project     = ''
-    const inProgress    = todayReport[userData['userID']].inProgress
-    const done          = todayReport[userData['userID']].done
-    const info          = todayReport[userData['userID']].info
-    const problem       = todayReport[userData['userID']].problem
+    let inProgress
+    let done
+    let info
+    let problem
+    if(todayReport[userData['userID']]!=undefined){
+        if(todayReport[userData['userID']].inProgress!=undefined){
+            inProgress    = todayReport[userData['userID']].inProgress
+        }
+        if(todayReport[userData['userID']].done!=undefined){
+            done          = todayReport[userData['userID']].done
+        }
+        if(todayReport[userData['userID']].info!=undefined){
+            info          = todayReport[userData['userID']].info
+        }
+        if(todayReport[userData['userID']].problem!=undefined){
+            problem          = todayReport[userData['userID']].problem
+        }
+        
+        tmp.push(userData['name'])
+        if (done != undefined) {
+            if (done.length > 1) {
+                let counter = 1
     
-    tmp.push(userData['name'])
-    if (done != undefined) {
-        if (done.length > 1) {
+                done.forEach(item => {
+                    doneTemp = doneTemp.concat(counter + '. ' + item + '\n')
+                    counter++
+                })
+            } else {
+                doneTemp = todayReport[userData['userID']].done[0]
+            }
+        } else {
+            doneTemp = ' '
+        }
+        tmp.push(doneTemp)
+    
+    
+        if (inProgress != undefined) {
+            if (inProgress.length > 1) {
+                let counter = 1
+                
+                inProgress.forEach((item) => {
+                    ipTemp = ipTemp.concat(counter + '. ' + item + '\n')
+                    getTask.push(getProjectByTask(item))
+                    counter++
+                })
+    
+            } else {
+                ipTemp = todayReport[userData['userID']].inProgress[0]
+                getTask.push(getProjectByTask(ipTemp))
+            }
+        } else {
+            ipTemp  = ' '
+            project = ' '
+        }
+        tmp.push(ipTemp)
+    
+        if (info != undefined) {
+            if (info.length > 1) {
+                let counter = 1
+                
+                info.forEach(item => {
+                    infoTemp = infoTemp.concat(counter + '. ' + item + '\n')
+                    counter++
+                })
+            } else {
+                infoTemp = todayReport[userData['userID']].info[0]
+            }
+    
+        } else {
+            infoTemp = ' '
+        }
+        tmp.push(infoTemp)
+    
+    
+        if (problem != undefined) {
+            if (problem.length > 1) {
+                let counter = 1
+                
+                problem.forEach(item => {
+                    problemTemp = problemTemp.concat(counter + '. ' + item + '\n')
+                    counter++
+                })
+            } else {
+                problemTemp = todayReport[userData['userID']].problem[0]
+            }
+    
+        } else {
+            problemTemp = ' '
+        }
+        tmp.push(problemTemp)
+    
+        await Promise.all(getTask).then(res => {
             let counter = 1
-
-            done.forEach(item => {
-                doneTemp = doneTemp.concat(counter + '. ' + item + '\n')
+    
+            res.forEach(r => {
+                project = project.concat(counter + '. ' + r[0].projectName + '\n')
                 counter++
             })
-        } else {
-            doneTemp = todayReport[userData['userID']].done[0]
-        }
-    } else {
-        doneTemp = ' '
-    }
-    tmp.push(doneTemp)
-
-
-    if (inProgress != undefined) {
-        if (inProgress.length > 1) {
-            let counter = 1
-            
-            inProgress.forEach((item) => {
-                ipTemp = ipTemp.concat(counter + '. ' + item + '\n')
-                getTask.push(getProjectByTask(item))
-                counter++
-            })
-
-        } else {
-            ipTemp = todayReport[userData['userID']].inProgress[0]
-            getTask.push(getProjectByTask(ipTemp))
-        }
-    } else {
-        ipTemp  = ' '
-        project = ' '
-    }
-    tmp.push(ipTemp)
-
-    if (info != undefined) {
-        if (info.length > 1) {
-            let counter = 1
-            
-            info.forEach(item => {
-                infoTemp = infoTemp.concat(counter + '. ' + item + '\n')
-                counter++
-            })
-        } else {
-            infoTemp = todayReport[userData['userID']].info[0]
-        }
-
-    } else {
-        infoTemp = ' '
-    }
-    tmp.push(infoTemp)
-
-
-    if (problem != undefined) {
-        if (problem.length > 1) {
-            let counter = 1
-            
-            problem.forEach(item => {
-                problemTemp = problemTemp.concat(counter + '. ' + item + '\n')
-                counter++
-            })
-        } else {
-            problemTemp = todayReport[userData['userID']].problem[0]
-        }
-
-    } else {
-        problemTemp = ' '
-    }
-    tmp.push(problemTemp)
-
-    await Promise.all(getTask).then(res => {
-        let counter = 1
-
-        res.forEach(r => {
-            project = project.concat(counter + '. ' + r[0].projectName + '\n')
-            counter++
         })
-    })
+    
+        tmp.push(project)
+    
+        return tmp
+    }
 
-    tmp.push(project)
-
-    return tmp
 }
 
 const getTodayReport = async () => {
@@ -918,11 +945,13 @@ module.exports = {
     addTaskTransaction,
     deleteProject,
     getTaskCount,
+    getDate,
     exportToExcel,
     getUserProjects,
     getUserTasks,
     editProjectName,
     getUsersData,
+    generateTimestamp,
     getProjects,
     saveUser,
     isUserExist,
