@@ -304,22 +304,34 @@ bot.onText(/\/createProjects/, async context => {
     initProjects('createProjects', chat.id, chat.first_name)
 })
 
-function initProjects(prefix, userID, name){
+bot.onText(/\/deleteProjects/, async context=>{
+    const {chat} = context
+    initProjects('deleteProjects', chat.id, chat.first_name)
+})
+
+async function initProjects(prefix, userID, name){
     try{
         lookUp[`${prefix}@${userID}`] = new CrudProject(userID, name, prefix)
-        currentState[userID]=`${prefix}`
         console.log(userID, `created '${prefix}@${userID}' lookup`)
-        console.log(userID, `lock user in state '${prefix}'`)
-        const response={
-            message:`Silahkan ketik nama project yang akan di input`,
-            options:{
-                reply_markup:{
-                    resize_keyboard:true,
-                    keyboard:[['CANCEL']]
-                }   
+        
+        if(prefix==="createProjects"){
+            currentState[userID]=`${prefix}`
+            console.log(userID, `lock user in state '${prefix}'`)
+            const response={
+                message:`Silahkan ketik nama project yang akan di input`,
+                options:{
+                    reply_markup:{
+                        resize_keyboard:true,
+                        keyboard:[['CANCEL']]
+                    }   
+                }
             }
+            return handleRespond(response, userID)
         }
-        handleRespond(response, userID)
+        const currentApp = lookUp[`${prefix}@${userID}`]
+        const response = await currentApp.listen('showKeyboard')
+        return handleRespond(response, userID)    
+
     }catch(e){
         console.log(e)
     }

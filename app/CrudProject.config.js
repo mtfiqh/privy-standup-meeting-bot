@@ -21,13 +21,14 @@ const onCancelMessage=()=>{
         message:`permintaan dibatalkan`,
         destroy:true,
         options:{
-            reply_markup:{remove_keyboard:true}
+            reply_markup:{remove_keyboard:true,}
         },
     }
 }
 
-const onSureMessage=(text, prefix, userID, action, token)=>{
+const onSureMessage=(text, prefix, userID, action, token, edit)=>{
     return {
+        type: edit ? 'Edit':'Send',
         message:`${text}`,
         options:{
             parse_mode:'HTML',
@@ -53,9 +54,36 @@ const onCreated=()=>{
         }
     }
 }
+
+const onDeleted=()=>{
+    return {
+        message:`Projects mu berhasil dihapus!`,
+        destroy:true,
+        options:{
+            parse_mode:'HTML',
+            reply_markup:{remove_keyboard:true}
+        }
+    }
+}
+
+const onSelectMessage=(keyboard, userID, first, msg)=>{
+    return{
+        type:first ? 'Send':'Edit',
+        id:userID,
+        message:`${msg ? msg: ''}\nBerikut list projects nya, pilih ya`,
+        options:{
+            parse_mode:'HTML',
+            reply_markup:{
+                inline_keyboard:keyboard
+            }
+        }
+    }
+}
 module.exports={
     onTypeListenMessage,
     onCancelMessage,
     onSureMessage,
-    onCreated
+    onCreated,
+    onSelectMessage,
+    onDeleted
 }
