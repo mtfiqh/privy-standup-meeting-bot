@@ -236,7 +236,7 @@ class Menu extends App{
             //Objects to trigger taufiq's function
             //Testing
             type:'Auto',
-            message:'/addProject',
+            message:'/createProjects',
         }
     }
 
@@ -246,7 +246,7 @@ class Menu extends App{
             //Objects to trigger taufiq's function
             //Testing
             type:'Auto',
-            message:'/editProject',
+            message:'/updateProjects',
         }
     }
 
@@ -256,7 +256,7 @@ class Menu extends App{
             //Objects to trigger taufiq's function
             //Testing
             type:'Auto',
-            message:'/deleteProject',
+            message:'/deleteProjects',
         }
     }
 
@@ -266,7 +266,7 @@ class Menu extends App{
             //Objects to trigger taufiq's function
             //Testing
             type:'Auto',
-            message:'/listProject',
+            message:'/listProjects',
         }
     }
 

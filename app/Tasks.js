@@ -52,9 +52,9 @@ class Tasks extends App{
             return onSelectProjects(this.dataProjects)
 
         }else if(text==="CANCEL"){
-            console.log()
+            const userID=this.cache.userID
             delete this.cache
-            return onCancelMessage()
+            return onCancelMessage(userID)
         }
         console.log(from.id, `${this.cache.prefix} - Insert Task(s)`)
         //if tasks not create yet
@@ -73,6 +73,7 @@ class Tasks extends App{
             console.log(this.cache.userID, 'clicked invalid button token')
             return
         }
+        if(priority==="CANCEL") return onCancelMessage(this.cache.userID)
         if(this.cache.priority===undefined){
             this.addCache('priority',[])
             console.log(this.cache.userID, `${this.cache.prefix} - cache priority created`)
@@ -125,7 +126,7 @@ class Tasks extends App{
         const [idx, token]=args.split('@')
         if(idx=="c"){
             delete this.cache
-            return onCancelMessage()
+            return onCancelMessage(this.cache.userID)
         }
 
         if(`p${this.cache.token}`!==token){
@@ -202,7 +203,7 @@ class Tasks extends App{
 
         }else if(ans==="N"){
             delete this.cache
-            return onCancelMessage()
+            return onCancelMessage(this.cache.userID)
         }
     }
 
@@ -215,7 +216,7 @@ class Tasks extends App{
         if(this.idx=='c'){
             console.log(this.cache.userID, `${this.cache.prefix} cancel action`)
             delete this.cache
-            return onCancelMessage()
+            return onCancelMessage(this.cache.userID)
         }
         this.cache.users=this.cache.users[idx]
         console.log(this.cache.users)

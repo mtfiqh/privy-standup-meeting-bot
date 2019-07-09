@@ -3,6 +3,7 @@ const db            = require('./app/DataTransaction')
 const helper        = require('./app/helper/helper')
 const { Report }    = require('./app/Report')
 const { TakeOfferTask } = require('./app/TakeOfferTask')
+const {CrudProject}            = require('./app/CrudProject')
 const lookUp        = {} 
 const emoticon            = require('./app/resources/emoticons.config')
 const bot           =  new TelegramBot(process.env.BOT_TOKEN, {polling:true})
@@ -313,6 +314,15 @@ async function handleAuto(context){
             break
         case '/createProjects':
             initProjects('createProjects', chat.id, chat.first_name)
+            break
+        case '/deleteProjects':
+            initProjects('deleteProjects', chat.id, chat.first_name)
+            break
+        case '/updateProjects':
+            initProjects('updateProjects', chat.id, chat.first_name)
+            break
+        case '/listProjects':
+            initProjects('readProjects', chat.id, chat.first_name)
             break
         default:
             console.log("waiting...")

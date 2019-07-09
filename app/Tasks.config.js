@@ -54,13 +54,28 @@ const onSelectProjects = (projects) =>{
         }
     }
 }
-const onCancelMessage=()=>{
+const onCancelMessage=(id)=>{
+    // return {
+    //     type:'Edit',
+    //     id,
+    //     message:`permintaan dibatalkan`,
+    //     destroy:true,
+    // }
     return {
-        message:`permintaan dibatalkan`,
-        destroy:true,
-        options:{
-            reply_markup:{remove_keyboard:true}
+        type:'Confirm',
+        sender:{
+            type:'Delete',
+            destroy:true,
+            id,
         },
+        receiver:{
+            type:'send',
+            id,
+            message:`permintaan dibatalkan`,
+            options:{
+                reply_markup:{remove_keyboard:true}
+            }
+        }
     }
 }
 
