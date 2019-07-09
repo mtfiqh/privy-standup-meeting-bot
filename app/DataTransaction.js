@@ -681,6 +681,9 @@ const generateColumn = async (userData, todayReport) => {
                 })
             } else {
                 doneTemp = todayReport[userData['userID']].done[0]
+                if(doneTemp==undefined){
+                    infoTemp = ' '
+                }
             }
         } else {
             doneTemp = ' '
@@ -688,21 +691,29 @@ const generateColumn = async (userData, todayReport) => {
         tmp.push(doneTemp)
     
     
+        console.log(inProgress.length)
         if (inProgress != undefined) {
             if (inProgress.length > 1) {
                 let counter = 1
                 
                 inProgress.forEach((item) => {
-                    ipTemp = ipTemp.concat(counter + '. ' + item + '\n')
-                    getTask.push(getProjectByTask(item))
-                    counter++
+                    if(item!=undefined){
+                        ipTemp = ipTemp.concat(counter + '. ' + item + '\n')
+                        getTask.push(getProjectByTask(item))
+                        counter++
+                    }
+                        
                 })
-    
             } else {
                 ipTemp = todayReport[userData['userID']].inProgress[0]
-                getTask.push(getProjectByTask(ipTemp))
+                if(ipTemp!=undefined){
+                    getTask.push(getProjectByTask(ipTemp))
+                }else{
+                    ipTemp=' '
+                }
             }
         } else {
+            console.log('bawah')
             ipTemp  = ' '
             project = ' '
         }
@@ -713,11 +724,16 @@ const generateColumn = async (userData, todayReport) => {
                 let counter = 1
                 
                 info.forEach(item => {
-                    infoTemp = infoTemp.concat(counter + '. ' + item + '\n')
-                    counter++
+                    if(item!=undefined){
+                        infoTemp = infoTemp.concat(counter + '. ' + item + '\n')
+                        counter++
+                    }
                 })
             } else {
                 infoTemp = todayReport[userData['userID']].info[0]
+                if(infoTemp==undefined){
+                    infoTemp = ' '
+                }
             }
     
         } else {
@@ -731,11 +747,16 @@ const generateColumn = async (userData, todayReport) => {
                 let counter = 1
                 
                 problem.forEach(item => {
-                    problemTemp = problemTemp.concat(counter + '. ' + item + '\n')
-                    counter++
+                    if(item!=undefined){
+                        problemTemp = problemTemp.concat(counter + '. ' + item + '\n')
+                        counter++
+                    }
                 })
             } else {
                 problemTemp = todayReport[userData['userID']].problem[0]
+                if(problemTemp==undefined){
+                    problemTemp = ' '
+                }
             }
     
         } else {

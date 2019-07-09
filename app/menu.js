@@ -98,6 +98,7 @@ class Menu extends App{
         try {
            await exportToExcel()            
         } catch (error) {
+            console.log(error)
             return {
                 type:'Edit',
                 id:this.userID,
