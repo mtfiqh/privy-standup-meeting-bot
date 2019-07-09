@@ -20,7 +20,7 @@ const menuAdmin =(prefix,from)=>{
                     {text: `${em.save} Save to Excel`, callback_data: prefix+'-onSave-'+from.id+'@'+from.first_name}
                 ],
                 [
-                    {text: `${em.delete} Close`, callback_data: prefix+'-onClose-'+from.id+'@'+from.first_name}
+                    {text: `${em.close} Close`, callback_data: prefix+'-onClose-'+from.id+'@'+from.first_name}
                 ]
 
             ]
@@ -40,10 +40,13 @@ const menuUser = (prefix,from)=>{
                 [ 
                     {text: `${em.project} Projects`, callback_data: prefix+'-onProjectsClicked-'+from.id+'@'+from.first_name},
                     {text: `${em.tasks} Tasks`,callback_data:prefix+'-onTasksClicked-'+from.id+'@'+from.first_name}
-                ] 
+                ],
+                [
+                    {text: `${em.close} Close`, callback_data: prefix+'-onClose-'+from.id+'@'+from.first_name}
+                ]
             ]
         },
-        deleteLast:true
+        
     }
 }
 
@@ -73,8 +76,9 @@ const menuProjectsAdmin = (from,prefix)=>{
                     ],
                     [
                         {text: `${em.back} Back`,callback_data:prefix+
-                        '-onBackPressed-'+from.id+'@'+from.first_name}
-                    ]                    
+                        '-onBackPressed-'+from.id+'@'+from.first_name},
+                        {text: `${em.close} Close`, callback_data: prefix+'-onClose-'+from.id+'@'+from.first_name}
+                    ]
                 ]
             }
         },
@@ -97,8 +101,9 @@ const menuProjectsUser = (from,prefix)=>{
                     ],
                     [
                         {text: `${em.back} Back`,callback_data:prefix+
-                        '-onBackPressed-'+from.id+'@'+from.first_name}
-                    ]                    
+                        '-onBackPressed-'+from.id+'@'+from.first_name},
+                        {text: `${em.close} Close`, callback_data: prefix+'-onClose-'+from.id+'@'+from.first_name}
+                    ]
                 ]
             }
         },
@@ -140,7 +145,8 @@ const menuTasksUser = (prefix,from)=>{
                     ],
                     [
                         {text: `${em.back} Back`,callback_data:prefix+
-                        '-onBackPressed-'+from.id+'@'+from.first_name}
+                        '-onBackPressed-'+from.id+'@'+from.first_name},
+                        {text: `${em.close} Close`, callback_data: prefix+'-onClose-'+from.id+'@'+from.first_name}
                     ]                    
                 ]
             }
@@ -190,8 +196,9 @@ const menuTasksAdmin = (prefix,from)=>{
                     ],
                     [
                         {text: `${em.back} Back`,callback_data:prefix+
-                        '-onBackPressed-'+from.id+'@'+from.first_name}
-                    ]                    
+                        '-onBackPressed-'+from.id+'@'+from.first_name},
+                        {text: `${em.close} Close`, callback_data: prefix+'-onClose-'+from.id+'@'+from.first_name}
+                    ],                 
                 ]
             }
         },
