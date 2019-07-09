@@ -95,7 +95,7 @@ class Menu extends App{
     }
     
     async onSave(){
-        console.log("RES ")
+        exportToExcel()
     }
 
     async onBackPressed(){

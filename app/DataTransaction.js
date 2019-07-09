@@ -933,7 +933,7 @@ const updateUser = (userID,payload)=>{
     db.collection('users').doc(userID.toString()).set(payload,{merge:true})
 }
 
-load()
+// load()
 
 
 module.exports = {
