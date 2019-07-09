@@ -60,15 +60,15 @@ class Menu extends App{
     //----------------BASIC SECTION-----------------------------------------
     async onMain({from,chat}){
         const load = result=>{
-        this.isAdmin = result
-        this.from = from
-        let opts = this.getMessageOptionOnMenu(from.id)
-        let greetings = this.generateGreetings()
-        
-        
-        this.bot.sendMessage(chat.id,   
-            `Selamat ${greetings} ${from.first_name},\nSilahkan gunakan tombol dibawah ini.`,
-            opts)
+            this.isAdmin = result
+            this.from = from
+            let opts = this.getMessageOptionOnMenu(from.id)
+            let greetings = this.generateGreetings()
+            
+            
+            this.bot.sendMessage(chat.id,   
+                `Selamat ${greetings} ${from.first_name},\nSilahkan gunakan tombol dibawah ini.`,
+                opts)
             
         }
         await isAdmin(from.id).then(load.bind(this))

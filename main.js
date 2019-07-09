@@ -12,6 +12,7 @@ const lookUp = {
 }
 
 const {Menu} = require('./app/menu')
+const {DayOff} = require('./app/DayOff')
 
 bot.on("message", context=>{
     const {from,chat,text}=context
@@ -40,6 +41,15 @@ bot.onText(/\/menu/, (context, match)=>{
     menu.onMain(context)
 })
 
+bot.onText(/\/cuti/, (context, match)=>{
+    const {from,chat} = context
+    
+    const dayOff = new DayOff(bot,from.id)
+
+    lookUp[`DayOff@${from.id}`] = dayOff
+    dayOff.onStart(context)
+})
+
 bot.onText(/\/Tasks/, (context, match)=>{
     try{
         const {from} = context
@@ -60,7 +70,7 @@ function handleRespond(response, to, message_id) {
      *     agrs : any
      * }
      */
-
+    console.log(response)
     if(!response) return
 
     const {type} = response
