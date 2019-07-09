@@ -14,6 +14,7 @@ class Tasks extends App{
         ])
         this.addCache('userID',userID)
         this.addCache('name', name)
+        this.prefix=prefix
         //add prefix to be guide what func will be use
         //addTasks or assignTasks
         this.addCache('prefix', prefix)

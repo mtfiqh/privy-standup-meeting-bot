@@ -29,6 +29,9 @@ bot.on("message", async context=>{
         console.log(from.id, 'Type Listen')
         const currentApp = lookUp[`${currentState[from.id]}@${from.id}`]
         const response = await currentApp.listen('onTypeListen',context)
+        if(response && response.destroy==true){
+            delete lookUp[currentApp.prefix]
+        }
         handleRespond(response, from.id, context.message_id)
         console.log(from.id, `currentState ${currentState[from.id]} deleted`)
         delete currentState[from.id]

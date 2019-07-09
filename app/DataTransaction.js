@@ -742,10 +742,11 @@ const generateColumn = async (userData, todayReport) => {
     
         await Promise.all(getTask).then(res => {
             let counter = 1
-    
             res.forEach(r => {
-                project = project.concat(counter + '. ' + r[0].projectName + '\n')
-                counter++
+                if(r.length!=0){
+                    project = project.concat(counter + '. ' + r[0].projectName + '\n')
+                    counter++
+                }
             })
         })
     

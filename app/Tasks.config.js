@@ -57,6 +57,7 @@ const onSelectProjects = (projects) =>{
 const onCancelMessage=()=>{
     return {
         message:`permintaan dibatalkan`,
+        destroy:true,
         options:{
             reply_markup:{remove_keyboard:true}
         },
