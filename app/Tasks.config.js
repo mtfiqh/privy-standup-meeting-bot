@@ -22,7 +22,7 @@ const onTypeListenMessage=(task, prefix, userID, token)=>{
 
 const onPrioritySelected= (priority,userID,prefix)=>{
     return {
-        // type:"Edit",
+        // type:"Delete",
         listenType:true,
         userID,
         prefix,
