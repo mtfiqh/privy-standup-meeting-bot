@@ -7,8 +7,6 @@ class DayOff extends App{
         super()
         this.register([
             this.onStart.name,
-            this.onNext.name,
-            this.onPrev.name,
             this.onChange.name
         ])
 
@@ -31,36 +29,28 @@ class DayOff extends App{
      */
 
      
-    onStart({from,chat}){
+    onStart({from,chat},first = false){
         this.from = from
         this.chat = chat
-        const opts = msg.startLayout(this.prefix,from,this)
-        this.bot.sendMessage(chat.id,'Cuti',opts)
-    }
-
-    onNext(params){
-        let tmp = new Date(params)
-        const opts = msg.generateLayout(tmp,this.prefix)
-        this.bot.sendMessage(this.chat.id,'Next',opts)
-    }
-
-    onPrev(params){        
-        let tmp = new Date(params)
-        const opts = msg.generateLayout(tmp,this.prefix)
-        this.bot.sendMessage(this.chat.id,'Prev',opts)
+        const opts = msg.calendarLayout(this.prefix)
+        return {
+            type:  first ? "Send": "Edit",
+            id:this.userID,
+            message: `Silahkan pilih tanggal libur.`,
+            options: opts 
+        }
     }
 
     onChange(params){        
         let [type,count] = params.split('#')
-        const opts = msg.generateLayout(this.prefix,type,count)
+        const opts = msg.generateCalendar(this.prefix,type,count)
         return {
             type:'Edit',
             id:this.userID,
-            message: "Silahkan pilih tanggal dibawah ini ",
+            message: "Silahkan pilih tanggal libur ",
             options:opts
 
         }
-//        this.bot.sendMessage(this.chat.id,'Prev',opts)
     }
 
 }

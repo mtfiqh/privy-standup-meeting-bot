@@ -46,6 +46,7 @@ bot.onText(/\/menu/, async (context, match)=>{
 
     lookUp[`Menu@${from.id}`] = menu
     const res = await menu.onMain(context,true)
+    console.log(res)
     handleRespond(res, from.id, message_id)
     
 })
@@ -103,13 +104,15 @@ bot.onText(/\/showTasks/, async (context, match)=>{
     }
 })
 
-bot.onText(/\/cuti/, (context, match)=>{
-    const {from,chat} = context
+bot.onText(/\/cuti/,async (context, match)=>{
+    const {from,message_id} = context
     
     const dayOff = new DayOff(bot,from.id)
 
     lookUp[`DayOff@${from.id}`] = dayOff
-    dayOff.onStart(context)
+    
+    const res = await dayOff.onStart(context,true)
+    handleRespond(res, from.id, message_id)
 })
 
 function initTasks(prefix, userID, name){

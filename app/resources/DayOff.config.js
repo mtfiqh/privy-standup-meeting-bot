@@ -1,4 +1,4 @@
-const {generateTimestamp,getDate}=require('../../app/DataTransaction')
+const {getUsersData}=require('../../app/DataTransaction')
 const em = require('./emoticons.config')
 
 const dateCalc  = require("add-subtract-date")
@@ -52,15 +52,12 @@ let calendar = [
     ]
 ]
 
-const startLayout=(prefix,from)=>{
-    
-    // let now = new Date()
-    // now = new Date(now.getFullYear(),now.getMonth()+1)
-    return generateLayout(prefix,'now',0)
+const calendarLayout=(prefix)=>{
+    return generateCalendar(prefix,'now',0)
 }
 
-const generateLayout = (prefix,option,count)=>{
-    reset()
+const generateCalendar = (prefix,option,count)=>{
+    reset(prefix)
     let w = 2
     date = new Date()
     date = new Date(date.getFullYear(),date.getMonth())
@@ -79,11 +76,11 @@ const generateLayout = (prefix,option,count)=>{
   
     let month = date.getMonth()
 
-    calendar[0][0] = {text:months[month]+' '+date.getFullYear(),callback_data:`${prefix}-on-`}
+    calendar[0][0] = {text:months[month]+' '+date.getFullYear(),callback_data:`${prefix}-onMonth-`}
     while(date.getMonth() === month){
         calendar[w][date.getDay()].text = date.getDate().toString() 
-        calendar[w][date.getDay()].callback_data = prefix+'-onMenu-'+date.getDate()+
-        '#'+w+'#'+date.getDay()
+        calendar[w][date.getDay()].callback_data = prefix+'-onDateClick-'
+        +date.getFullYear()+'/'+month+'/'+date.getDate()+'#'+w+'#'+date.getDay()
         date = new Date(dateCalc.add(date,1,'day'))
         if(date.getDay()==0){
             w++
@@ -91,7 +88,6 @@ const generateLayout = (prefix,option,count)=>{
     }
     calendar[8][0].callback_data = `${prefix}-onChange-${prevMonth}`
     calendar[8][2].callback_data = `${prefix}-onChange-${nextMonth}`
-    console.log(calendar)
     return {
         reply_markup: {
             inline_keyboard: calendar
@@ -99,15 +95,15 @@ const generateLayout = (prefix,option,count)=>{
     }
 }
 
-const reset=()=>{
+const reset=(prefix)=>{
     for(let i = 2;i<8;i++){
         for(let j = 0;j<7;j++){
-            calendar[i][j] = {text:'-',callback_data:'-'}
+            calendar[i][j] = {text:'-',callback_data:`${prefix}-onEmpty-`}
         }
     }
 }
 
 module.exports={
-    startLayout,
-    generateLayout
+    calendarLayout,
+    generateCalendar
 }

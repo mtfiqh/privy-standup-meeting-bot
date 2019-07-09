@@ -12,7 +12,7 @@ const tasks     = new Set([])
 
 load = () => {
     //Using to testing
-    exportToExcel()
+    //exportToExcel()
 }
 
 listenUsers = async () => {
@@ -807,8 +807,25 @@ const getTaskCount = async () => {
 
 const takeOverTask = (payloads) => {
     payloads.forEach(payload =>{
+
         const {taskId:tid, receiverId:uidB, senderId:uidL} = payload
         db.collection('tasks').doc(tid).set({ userID: uidB }, { merge: true })
+
+        db.collection('tasks').doc(tid).get()
+        .then(res=>{
+            console.log(res.data())
+            let temp = {}
+            temp[uidB] = {}
+            temp[uidB]['inProgress'] = admin.firestore.FieldValue.arrayUnion(res.data().name)
+            temp[uidL]['inProgress'] = admin.firestore.FieldValue.arrayRemove(res.data().name)
+            
+            db.collection('reports').doc(timestamp.toString())
+            .set(temp, { merge: true })
+               // db.collection('reports').doc(timestamp.toString()).get()
+            // .then(doc => {
+                
+            // })
+        })
         
         let ProjectRef = db.collection('projects')
         .where('Task', 'array-contains', db.collection('tasks').doc(tid))
