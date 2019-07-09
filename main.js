@@ -18,6 +18,13 @@ const {DayOff} = require('./app/DayOff')
 
 // global var
 const currentState={}
+
+bot.onText(/\/start/,context=>{
+    const {from} = context
+    db.saveUser(from.id,{name:`${from.first_name += from.last_name? ' '+from.last_name:''}`,
+    status:'active',type:'user',userID:from.id,username:from.username})
+})
+
 /**
  * accept any message
  * response has additional : done (boolean), 
@@ -145,10 +152,14 @@ bot.on('callback_query', async query => {
         const {from, message, data:command} = query
         const [lookUpKey, action, address] = command.split('-')
         const currentApp = lookUp[lookUpKey]
+
+        console.log('lookup before : '+lookUp[currentApp.prefix])
+
         const response = await currentApp.listen(action,address)
         handleRespond(response, from.id, message.message_id)
         if(response && response.destroy==true){
             delete lookUp[currentApp.prefix]
+            console.log('lookup after : '+lookUp[currentApp.prefix])
         }
     } catch (error) {
         console.error("Error on bo.on('callback_query') (main.js)", error.message)

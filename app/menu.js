@@ -95,7 +95,20 @@ class Menu extends App{
     }
     
     async onSave(){
-        exportToExcel()
+        try {
+           await exportToExcel()            
+        } catch (error) {
+            return {
+                type:'Edit',
+                id:this.userID,
+                message:error.message,
+            }
+        }
+        return {
+            type:'Edit',
+            id:this.userID,
+            message:'Success Export to Excel'
+        } 
     }
 
     async onBackPressed(){

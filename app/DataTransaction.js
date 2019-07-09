@@ -502,7 +502,7 @@ const isAdmin = async (userID) => {
 }
 
 const saveUser = (userID, data) => {
-    db.collection('users').doc(userID).set(data)
+    db.collection('users').doc(userID.toString()).set(data)
         .catch(err => {
             console.log('Error : ' + err.details)
         })
@@ -608,7 +608,7 @@ const updateTaskStatus = (payload) => {
 const exportToExcel = async () => {
     const { year, month, day, timestamp } = getDate()
     let userIDs = new Set([])
-    let usersReport = {}
+    let usersReport
     const reportList = []
     const report = [
         ["Nama", "Done", "In Progress", "Info", "Problem", "Project"]
@@ -642,7 +642,7 @@ const exportToExcel = async () => {
 
 const generateColumn = async (userData, todayReport) => {
     const tmp       = []
-    const report    = {}
+    const indexing    = {}
     let getTask     = []
     let ipTemp      = ''
     let doneTemp    = ''
@@ -653,6 +653,9 @@ const generateColumn = async (userData, todayReport) => {
     let done
     let info
     let problem
+    if(todayReport==undefined){
+        throw new Error('No Reports Today')
+    }
     if(todayReport[userData['userID']]!=undefined){
         if(todayReport[userData['userID']].inProgress!=undefined){
             inProgress    = todayReport[userData['userID']].inProgress
@@ -743,9 +746,14 @@ const generateColumn = async (userData, todayReport) => {
         await Promise.all(getTask).then(res => {
             let counter = 1
             res.forEach(r => {
+
                 if(r.length!=0){
-                    project = project.concat(counter + '. ' + r[0].projectName + '\n')
-                    counter++
+                    if(!(r[0].projectName in indexing)){
+                        indexing[r[0].projectName] = counter
+                        counter++
+                    }
+                    project = project.concat(indexing[r[0].projectName] + 
+                    '. ' + r[0].projectName + '\n')
                 }
             })
         })
@@ -807,6 +815,7 @@ const getTaskCount = async () => {
 }
 
 const takeOverTask = (payloads) => {
+    let {timestamp} = getDate()
     payloads.forEach(payload =>{
 
         const {taskId:tid, receiverId:uidB, senderId:uidL} = payload
@@ -817,6 +826,7 @@ const takeOverTask = (payloads) => {
             console.log(res.data())
             let temp = {}
             temp[uidB] = {}
+            temp[uidL] = {}
             temp[uidB]['inProgress'] = admin.firestore.FieldValue.arrayUnion(res.data().name)
             temp[uidL]['inProgress'] = admin.firestore.FieldValue.arrayRemove(res.data().name)
             
@@ -845,9 +855,9 @@ const takeOverTask = (payloads) => {
                         userExist++
                     }
                 }
-                if (userExist === 1) {
-                    tmp.ref.update({ users: admin.firestore.FieldValue.arrayRemove(uidL) })
-                }
+                // if (userExist === 1) {
+                //     tmp.ref.update({ users: admin.firestore.FieldValue.arrayRemove(uidL) })
+                // }
                 tmp.ref.update({ users: admin.firestore.FieldValue.arrayUnion(uidB) })
                 console.log('OK')
             }
