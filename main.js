@@ -198,7 +198,6 @@ bot.onText(/\/offer/, async context => {
     const response = await initOfferTask(id, name, message_id)
     if(!response.active) await bot.sendMessage(id, response.message,response.options)
     bot.deleteMessage(id, message_id)
-    console.log(lookUp)
 })
 
 
@@ -242,7 +241,8 @@ async function handleAuto(context){
 // Register Current User to lookUp as Report@userId
 async function initOfferTask(id, name){
     const prefix = `TakeOfferTask@${id}`
-    // user report was regitered
+    // user was regitered
+    if(prefix in lookUp) return {active:true}
     const  response = {
         message:`Halo *${name}* semua task Anda sudah *Done*.`,
         options:{

@@ -18,6 +18,9 @@ const menuAdmin =(prefix,from)=>{
                 ],
                 [
                     {text: `${em.save} Save to Excel`, callback_data: prefix+'-onSave-'+from.id+'@'+from.first_name}
+                ],
+                [
+                    {text: `${em.delete} Close`, callback_data: prefix+'-onClose-'+from.id+'@'+from.first_name}
                 ]
 
             ]

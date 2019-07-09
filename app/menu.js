@@ -18,6 +18,8 @@ class Menu extends App{
             this.onMain.name,
             this.onBackPressed.name,
             this.onSave.name,
+            this.onClose.name,
+
             //Task Section
             this.onTasksClicked.name,
             this.onReportTasks.name,
@@ -44,6 +46,7 @@ class Menu extends App{
         this.isAdmin={}
         this.state=[]
         this.bot=bot
+        this.userID= userID
         
     }
 
@@ -80,6 +83,14 @@ class Menu extends App{
             options: opts 
         }
         
+    }
+    
+    onClose(){
+        return {
+            destroy:true,
+            id:this.userID,
+            type:"Delete"
+        }
     }
     
     async onSave(){
