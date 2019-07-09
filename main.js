@@ -194,7 +194,6 @@ function handleRespond(response, to, message_id) {
      *     agrs : any
      * }
      */
-    console.log(response)
     if (!response) return
 
     const { type } = response
@@ -290,7 +289,7 @@ async function handleAuto(context) {
 async function initMenu(id) {
     const context = currentState[`autostart@${id}`]
     const { from, chat, message_id } = context
-    const menu = new Menu(bot, from.id)
+    const menu = new Menu(from.id)
     const msg_bot = currentState[`autostartBot@${id}`] == undefined ? message_id : currentState[`autostartBot@${id}`]
 
     lookUp[`Menu@${from.id}`] = menu
@@ -410,7 +409,7 @@ function reminder(type) {
                         },
                         chat: null
                     }
-                    const menu = new Menu(bot, user.userID).addCache(`from@${user.userID}`, { from: context.from })
+                    const menu = new Menu(user.userID).addCache(`from@${user.userID}`, { from: context.from })
                     lookUp[`Menu@${user.userID}`] = menu
                     initMenuCron(context, message)
                 } else {
