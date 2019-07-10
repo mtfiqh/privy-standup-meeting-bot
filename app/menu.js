@@ -231,7 +231,7 @@ class Menu extends App{
     }
 
     onAddProjects(){
-        this.onVisit('onAddProjects')
+        this.onVisit('onProjectsClicked')
         return {
             //Objects to trigger taufiq's function
             //Testing
@@ -241,7 +241,7 @@ class Menu extends App{
     }
 
     onEditProjects(){
-        this.onVisit('onEditProjects')
+        this.onVisit('onProjectsClicked')
         return {
             //Objects to trigger taufiq's function
             //Testing
@@ -251,7 +251,7 @@ class Menu extends App{
     }
 
     onDeleteProjects(){
-        this.onVisit('onDeleteProjects')
+        this.onVisit('onProjectsClicked')
         return {
             //Objects to trigger taufiq's function
             //Testing
@@ -261,7 +261,7 @@ class Menu extends App{
     }
 
     onListProjects(){
-        this.onVisit('onListProjects')
+        this.onVisit('onProjectsClicked')
         return {
             //Objects to trigger taufiq's function
             //Testing

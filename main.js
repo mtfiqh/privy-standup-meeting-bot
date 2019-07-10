@@ -53,11 +53,30 @@ bot.on("message", async context=>{
         const currentApp = lookUp[`${currentState[from.id]}@${from.id}`]
         const response = await currentApp.listen('onTypeListen',context)
         if(response && response.destroy==true){
+            if(history[currentApp.prefix]!==undefined){
+                history[currentApp.prefix].add(context.message_id)
+                deleteHistory(currentApp.prefix)
+            } 
+                
             delete lookUp[currentApp.prefix]
         }
+        if(response && response.record===true){
+            if(history[response.prefix+'@'+response.userID]===undefined) history[response.prefix+'@'+response.userID]=new Set([])
+            history[response.prefix+'@'+response.userID].add(context.message_id)
+        }
         console.log(from.id, `currentState ${currentState[from.id]} deleted`)
+
         delete currentState[from.id]
-        handleRespond(response, from.id, context.message_id)
+        bot.sendMessage(chat.id, 'Processing....',{reply_markup:{remove_keyboard:true}}).then(contextBot=>{
+            if(response && response.record===true){
+                if(history[response.prefix+'@'+response.userID]===undefined) history[response.prefix+'@'+response.userID]=new Set([])
+                history[response.prefix+'@'+response.userID].add(context.message_id)
+                if(response.type!=='Confirm'){
+                    bot.deleteMessage(from.id, contextBot.message_id)
+                }
+            }
+            handleRespond(response, from.id, contextBot.message_id)
+        })
     }
 
 })
@@ -170,11 +189,15 @@ bot.onText(/\/dayOff/,async (context, match)=>{
 function initTasks(prefix, userID, name){
     try{
         lookUp[`${prefix}@${userID}`] = new Tasks(userID, prefix, name)
+        history[`${prefix}@${userID}`] = new Set([])
         currentState[userID]=prefix
         console.log(userID, `created '${prefix}@${userID}' lookup`)
         console.log(userID, `lock user in state '${prefix}'`)
         const response={
+            record:true,
             message:`Silahkan ketik nama task(s) mu yang akan di assign`,
+            prefix,
+            userID,
             options:{
                 reply_markup:{
                     resize_keyboard:true,
@@ -199,12 +222,15 @@ bot.on('callback_query', async query => {
         const response = await currentApp.listen(action,address)
         handleRespond(response, from.id, message.message_id)
         if(response && response.destroy==true){
+            if(history[currentApp.prefix]!==undefined) deleteHistory(currentApp.prefix)
             delete lookUp[currentApp.prefix]   
         }
+
         if(response && response.record===true){
-            if(history[from.id]===undefined) history[from.id]=new Set([])
-            history[from.id].add(message.message_id)
+            if(history[response.prefix+'@'+response.userID]===undefined) history[response.prefix+'@'+response.userID]=new Set([])
+            history[response.prefix+'@'+response.userID].add(message.message_id)
         }
+        console.log('History ',history[response.prefix+'@'+response.userID])
     } catch (error) {
         console.error("Error on bo.on('callback_query') (main.js)", error.message)
     }
@@ -249,12 +275,19 @@ function handleRespond(response, to, message_id) {
             bot.sendMessage(response.to.userID, response.messageTo, response.options)   
         }
         // bot action
-        bot.sendMessage(to, response.message, response.options)
+        bot.sendMessage(to, response.message, response.options).then(ctx=>{
+            if(response && response.record===true){
+                if(history[response.prefix+'@'+response.userID]===undefined) history[response.prefix+'@'+response.userID]=new Set([])
+                history[response.prefix+'@'+response.userID].add(ctx.message_id)
+            }
+            console.log('History ',history[response.prefix+'@'+response.userID])    
+        })
     }
     if(response.listenType===true){
         currentState[response.userID]=response.prefix
         console.log(response.userID, `lock user in state '${response.prefix}'`)
     }
+    
 }
 
 //  UserReport trigger
@@ -313,15 +346,19 @@ async function handleAuto(context){
             handleRespond(res, chat.id, message_id)
             break
         case '/createProjects':
+            bot.deleteMessage(chat.id, message_id)
             initProjects('createProjects', chat.id, chat.first_name)
             break
         case '/deleteProjects':
+            bot.deleteMessage(chat.id, message_id)
             initProjects('deleteProjects', chat.id, chat.first_name)
             break
         case '/updateProjects':
+            bot.deleteMessage(chat.id, message_id)
             initProjects('updateProjects', chat.id, chat.first_name)
             break
         case '/listProjects':
+            bot.deleteMessage(chat.id, message_id)
             initProjects('readProjects', chat.id, chat.first_name)
             break
         default:
@@ -433,6 +470,16 @@ async function initProjects(prefix, userID, name){
     }catch(e){
         console.log(e)
     }
+}
+
+function deleteHistory(prefix){
+    console.log('masuk delete',history)
+    const [x, userID]=prefix.split('@')
+    history[`${prefix}`].forEach(message_id=>{
+        console.log('toDelete', message_id)
+        bot.deleteMessage(userID, message_id)
+    })
+    delete history[`${prefix}`]
 }
 
 function reminder(type){
