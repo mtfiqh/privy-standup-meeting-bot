@@ -177,6 +177,7 @@ bot.on('callback_query', async query => {
             if (history[from.id] === undefined) history[from.id] = new Set([])
             history[from.id].add(message.message_id)
         }
+        console.log('History ',history[response.prefix+'@'+response.userID])
     } catch (error) {
         console.error("Error on bo.on('callback_query') (main.js)", error.message)
     }
@@ -220,12 +221,19 @@ function handleRespond(response, to, message_id) {
             bot.sendMessage(response.to.userID, response.messageTo, response.options)
         }
         // bot action
-        bot.sendMessage(to, response.message, response.options)
+        bot.sendMessage(to, response.message, response.options).then(ctx=>{
+            if(response && response.record===true){
+                if(history[response.prefix+'@'+response.userID]===undefined) history[response.prefix+'@'+response.userID]=new Set([])
+                history[response.prefix+'@'+response.userID].add(ctx.message_id)
+            }
+            console.log('History ',history[response.prefix+'@'+response.userID])    
+        })
     }
     if (response.listenType === true) {
         currentState[response.userID] = response.prefix
         console.log(response.userID, `lock user in state '${response.prefix}'`)
     }
+    
 }
 
 // handling tringer from 'bot'
@@ -265,15 +273,19 @@ async function handleAuto(context) {
             handleRespond(res, chat.id, message_id)
             break
         case '/createProjects':
+            bot.deleteMessage(chat.id, message_id)
             initProjects('createProjects', chat.id, chat.first_name)
             break
         case '/deleteProjects':
+            bot.deleteMessage(chat.id, message_id)
             initProjects('deleteProjects', chat.id, chat.first_name)
             break
         case '/updateProjects':
+            bot.deleteMessage(chat.id, message_id)
             initProjects('updateProjects', chat.id, chat.first_name)
             break
         case '/listProjects':
+            bot.deleteMessage(chat.id, message_id)
             initProjects('readProjects', chat.id, chat.first_name)
             break
         default:

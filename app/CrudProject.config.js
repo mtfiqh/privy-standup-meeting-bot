@@ -2,6 +2,7 @@ const onTypeListenMessage=(project, userID, prefix)=>{
     return {
         userID,
         prefix,
+        record:true,
         listenType:true,
         message:`<b>${project}</b> ditambahkan ke data sementara`,
         options:{
@@ -16,13 +17,16 @@ const onTypeListenMessage=(project, userID, prefix)=>{
         }
     }
 }
-const onCancelMessage=(type, id)=>{
+const onCancelMessage=(type, id,prefix)=>{
     if(type===undefined){
         type="Send"
     }
     return {
         type:type,
         id,
+        prefix,
+        userID:id,
+        record:true,
         message:`permintaan dibatalkan`,
         destroy:true,
         options:{
@@ -36,6 +40,7 @@ const onUpdate=(userID, prefix, project)=>{
         listenType:true,
         userID,
         prefix,
+        record:true,
         message:`Silahkan inputkan ${project} akan dirubah menjadi apa?`,
         options:{
 
@@ -46,6 +51,9 @@ const onUpdate=(userID, prefix, project)=>{
 const onSureMessage=(text, prefix, userID, action, token, edit)=>{
     return {
         type: edit ? 'Edit':'Send',
+        record:true,
+        prefix,
+        userID,
         message:`${text}`,
         options:{
             parse_mode:'HTML',
@@ -63,8 +71,9 @@ const onSureMessage=(text, prefix, userID, action, token, edit)=>{
 
 const updated =()=>{
     return {
-        type:'Edit',
+        type:'Send',
         destroy:true,
+        record:true,
         message:`Project berhasil di ubah!`,
         options:{
             
@@ -76,6 +85,7 @@ const onCreated=()=>{
     return {
         message:`Projects mu berhasil disimpan!`,
         destroy:true,
+        record:true,
         options:{
             parse_mode:'HTML',
             reply_markup:{remove_keyboard:true}
@@ -88,6 +98,7 @@ const onDeleted=(id)=>{
         type:"Delete",
         message:`Projects mu berhasil dihapus!`,
         destroy:true,
+        record:true,
         id,
         options:{
             parse_mode:'HTML',
@@ -96,11 +107,14 @@ const onDeleted=(id)=>{
     }
 }
 
-const onSelectMessage=(keyboard, userID, first, msg)=>{
+const onSelectMessage=(keyboard, userID, first, msg, prefix)=>{
     return{
         type:first ? 'Send':'Edit',
         id:userID,
-        message:`${msg ? msg: ''}\nBerikut list projects nya, pilih ya`,
+        record:true,
+        prefix,
+        userID,
+        message:`Berikut list projects nya, pilih ya`,
         options:{
             parse_mode:'HTML',
             reply_markup:{
@@ -111,8 +125,13 @@ const onSelectMessage=(keyboard, userID, first, msg)=>{
 }
 
 const onShowProjects=(message, prefix, token)=>{
+    const [p, id] = prefix.split('@')
     return{
         message,
+        prefix:p,
+        id,
+        userID:id,
+        record:true,
         options:{
             reply_markup:{
                 inline_keyboard:[

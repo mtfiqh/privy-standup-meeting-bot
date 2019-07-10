@@ -43,7 +43,7 @@ class CrudProject extends App{
             return this.onSure()
         }else if(text==="CANCEL"){
             console.log(this.cache.userID, `${this.cache.prefix} - CANCEL BUTTON CLICKED`)
-            return onCancelMessage()            
+            return onCancelMessage("Send", this.cache.userID, this.cache.prefix)            
         }
         if(this.cache.projects===undefined){
             this.addCache('projects',[])
@@ -91,7 +91,7 @@ class CrudProject extends App{
         const [res, token] = args.split('@')
         if(res==='N'){
             console.log(this.cache.userID, `No button clicked`)
-            return onCancelMessage()
+            return onCancelMessage("Send", this.cache.userID, this.cache.prefix)
         }
 
         if(token!=='c'+this.cache.token){
@@ -140,7 +140,7 @@ class CrudProject extends App{
             text:'CANCEL',
             callback_data:`${this.cache.prefix}@${this.cache.userID}-onSelect-c@d${this.cache.token}`
         }])
-        return onSelectMessage(this.cache.keyboard, this.cache.userID, true, true)
+        return onSelectMessage(this.cache.keyboard, this.cache.userID, true, true, this.cache.prefix)
     }
 
     onSelect(args){
@@ -150,7 +150,7 @@ class CrudProject extends App{
             return
         }
         if(this.cache.select===undefined) this.addCache('select', new Set([]))
-        if(idx==='c') return onCancelMessage("Delete", this.cache.userID)
+        if(idx==='c') return onCancelMessage("Delete", this.cache.userID, this.cache.prefix)
         if(idx==='s'){
             if(this.cache.select.size<1) return onSelectMessage(this.cache.keyboard, this.cache.userID, false, 'Kamu harus memilih projectnya')
             if(this.cache.prefix==='updateProjects'){
@@ -196,7 +196,7 @@ class CrudProject extends App{
             return
         }
         if(res==="N"){
-            return onCancelMessage("Delete", this.cache.userID)
+            return onCancelMessage("Delete", this.cache.userID, this.cache.prefix)
         }
         this.cache.select.forEach(project=>{
             deleteProject(project)
@@ -211,7 +211,7 @@ class CrudProject extends App{
             return
         }
         if(res==="N"){
-            return onCancelMessage("Delete", this.cache.userID)
+            return onCancelMessage("Delete", this.cache.userID, this.cache.prefix)
         }
         editProjectName(this.cache.projectsArray[this.cache.selectIdx], this.cache.updateProject)
         return updated()

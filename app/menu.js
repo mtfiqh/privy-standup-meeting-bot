@@ -184,7 +184,7 @@ class Menu extends App{
     }
 
     onAddProjects(){
-        this.onVisit('onAddProjects')
+        this.onVisit('onProjectsClicked')
         return {
             type:'Auto',
             message:'/createProjects',
@@ -192,7 +192,7 @@ class Menu extends App{
     }
 
     onEditProjects(){
-        this.onVisit('onEditProjects')
+        this.onVisit('onProjectsClicked')
         return {
             type:'Auto',
             message:'/updateProjects',
@@ -200,7 +200,7 @@ class Menu extends App{
     }
 
     onDeleteProjects(){
-        this.onVisit('onDeleteProjects')
+        this.onVisit('onProjectsClicked')
         return {
             type:'Auto',
             message:'/deleteProjects',
@@ -208,7 +208,7 @@ class Menu extends App{
     }
 
     onListProjects(){
-        this.onVisit('onListProjects')
+        this.onVisit('onProjectsClicked')
         return {
             type:'Auto',
             message:'/listProjects',
