@@ -68,17 +68,31 @@ module.exports = {
         respondYes: {
             receiver: {
                 getMessage: tasklist => `*Terimakasih!* Task berhasil ditambahkan ke progress Anda.\n${tasklist}`,
-                getOptions: () => {
+                getOptions: (prefix, id) => {
                     return {
-                        "parse_mode": "Markdown"
+                        "parse_mode": "Markdown",
+                        "reply_markup":{
+                            "inline_keyboard":[
+                                [
+                                    {text:"Close", callback_data:`${prefix}-close-${id}`}
+                                ]
+                            ]
+                        }
                     }
                 }
             },
             sender: {
                 getMessage: tasklist => `*Selamat!*, Permintaan Anda diterima. Berikut Task anda yang berhasil di *Offer*:\n${tasklist}`,
-                getOptions: () => {
+                getOptions: (prefix, id) => {
                     return {
-                        "parse_mode": "Markdown"
+                        "parse_mode": "Markdown",
+                        "reply_markup":{
+                            "inline_keyboard":[
+                                [
+                                    {text:"Close", callback_data:`${prefix}-close-${id}`}
+                                ]
+                            ]
+                        }
                     }
                 }
             }
@@ -86,17 +100,31 @@ module.exports = {
         respondNo: {
             receiver: {
                 getMessage: () => `*Terimakasih!* Task tidak ditambahkan ke progress Anda.`,
-                getOptions: () => {
+                getOptions: (prefix, id) => {
                     return {
-                        "parse_mode": "Markdown"
+                        "parse_mode": "Markdown",
+                        "reply_markup":{
+                            "inline_keyboard":[
+                                [
+                                    {text:"Close", callback_data:`${prefix}-close-${id}`}
+                                ]
+                            ]
+                        }
                     }
                 }
             },
             sender: {
                 getMessage: () => `*Mohon Maaf!*, Permintaan Anda ditolak.`,
-                getOptions: () => {
+                getOptions: (prefix, id) => {
                     return {
-                        "parse_mode": "Markdown"
+                        "parse_mode": "Markdown",
+                        "reply_markup":{
+                            "inline_keyboard":[
+                                [
+                                    {text:"Close", callback_data:`${prefix}-close-${id}`}
+                                ]
+                            ]
+                        }
                     }
                 }
             }

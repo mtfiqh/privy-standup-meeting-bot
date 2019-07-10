@@ -20,6 +20,7 @@ class Menu extends App{
             'onClose',
             'onDayOff',
             'cron',
+            'closeChild',
             //Task Section
             'onTasksClicked',
             'onReportTasks',
@@ -80,6 +81,13 @@ class Menu extends App{
     onClose(){
         return {
             destroy:true,
+            id:this.userID,
+            type:"Delete"
+        }
+    }
+
+    closeChild(){
+        return {
             id:this.userID,
             type:"Delete"
         }

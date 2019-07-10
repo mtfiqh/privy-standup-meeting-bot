@@ -3,8 +3,17 @@ module.exports = {
         send:{
             success:{
                 getMessage:  taskList =>` *Terimakasih!* Berikut Task anda yang sudah *Done*. ${taskList}`,
-                getOptions:()=>{
-                    return { "parse_mode": "Markdown"}
+                getOptions: prefix => {
+                    return { 
+                        "parse_mode": "Markdown",
+                        "reply_markup":{
+                            "inline_keyboard":[
+                                [
+                                    {text:"Close", callback_data:`${prefix}-close`}
+                                ]
+                            ]
+                        }
+                    }
                 }
             },
             failed:{

@@ -170,6 +170,9 @@ bot.on('callback_query', async query => {
         if (response && response.destroy == true) {
             delete lookUp[currentApp.prefix]
         }
+        if(response && response.destroyBatch<=1){
+            delete lookUp[currentApp.prefix]
+        }
         if (response && response.record === true) {
             if (history[from.id] === undefined) history[from.id] = new Set([])
             history[from.id].add(message.message_id)
@@ -182,7 +185,6 @@ bot.on('callback_query', async query => {
 
 
 // ----------------------------------------- (Response Handler) ----------------------------------------------//
-
 function handleRespond(response, to, message_id) {
     /**
      * response = {
@@ -195,9 +197,8 @@ function handleRespond(response, to, message_id) {
      * }
      */
     if (!response) return
-
     const { type } = response
-    console.log(`message_id :${message_id}`)
+    console.log(`${to} - ${type} :: message_id :${message_id}`)
     if (type == "Edit") {
         bot.editMessageText(response.message, {
             message_id: message_id,
@@ -208,9 +209,8 @@ function handleRespond(response, to, message_id) {
         bot.deleteMessage(response.id, message_id)
     } else if (type == "Confirm") {
         const { sender, receiver } = response
-        handleRespond(sender, sender.id, message_id)
+        handleRespond(sender, sender.id, sender.special? message_id-1:message_id)
         handleRespond(receiver, receiver.id, message_id)
-
     } else if (type == "Auto") {
         handleAuto(response.message)
         bot.sendMessage(to, response.message).then(async context => await handleAuto(context))
@@ -323,11 +323,12 @@ function initTasks(prefix, userID, name) {
 // Register Current User to lookUp as Report@userId
 async function initOfferTask(id, name) {
     const prefix = `TakeOfferTask@${id}`
+    const injector = `Menu@${id}`
     // user was regitered
     if (prefix in lookUp) return { active: true }
     const response = {
         message: dict.initOfferTask.done.getMessage(name),
-        options: dict.initOfferTask.done.getOptions()
+        options:  dict.initOfferTask.done.getOptions(injector)
     }
     await db.getUserTasks(id).then(results => {
         if (results.length != 0) {
@@ -346,11 +347,12 @@ async function initOfferTask(id, name) {
 // Register Current User to lookUp as Report@userId
 async function initUserReport(id, name) {
     const prefix = `Report@${id}`
+    const injector = `Menu@${id}`
     // user report was regitered
     if (prefix in lookUp) return { active: true }
     const response = {
         message: dict.initUserReport.done.getMessage(name),
-        options: dict.initUserReport.done.ge
+        options: dict.initUserReport.done.getOptions(injector)
     }
     await db.getUserTasks(id).then(results => {
         if (results.length != 0) {

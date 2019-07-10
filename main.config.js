@@ -62,10 +62,16 @@ module.exports = {
         initOfferTask:{
             done: {
                 getMessage : name => `Halo *${name}* semua task Anda sudah *Done*.`,
-                getOptions: () => {
+                getOptions: prefix => {
                     return {
                         parse_mode: 'Markdown',
-                        reply_markup: {}
+                        reply_markup:{
+                            inline_keyboard:[
+                                [
+                                    {text:"Close", callback_data:`${prefix}-closeChild`}
+                                ]
+                            ]
+                        }
                     }
                 }
             },
@@ -84,10 +90,16 @@ module.exports = {
         initUserReport:{
             done:{
                 getMessage: name => `Halo *${name}* semua task Anda sudah *Done*.`,
-                getOptions: () => {
+                getOptions:  prefix => {
                     return {
                         parse_mode: 'Markdown',
-                        reply_markup: {}
+                        reply_markup: {
+                            inline_keyboard:[
+                                [
+                                    {text:"Close", callback_data:`${prefix}-closeChild`}
+                                ]
+                            ]
+                        }
                     }
                 }
             },
