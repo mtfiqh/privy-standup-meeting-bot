@@ -167,13 +167,21 @@ function toggleCheck(text){
     return text.includes(checkIcon) ? text.substr(checkIcon.length) : checkIcon + text
 }
 
+function spaces(num){
+    let sp = ''
+    for(let _ = 0; _ < num; _++){
+        sp+='\t'
+    }
+    return sp
+}
 
 module.exports = {
     generateTasksKeyboard,
     parseToReportFormat,
     generateInlineButtonForUser,
     toggleCheck,
-    selectedButtonToString
+    selectedButtonToString,
+    spaces
 }
 
 

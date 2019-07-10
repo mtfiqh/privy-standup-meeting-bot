@@ -17,5 +17,6 @@ module.exports = {
     home    :'🏠',
     right   :'➡️',
     close   :'🚪',
-    left    :'⬅️'
+    left    :'⬅️',
+    calendar:'📅'
 }

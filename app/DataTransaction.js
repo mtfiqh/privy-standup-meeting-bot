@@ -12,7 +12,7 @@ const tasks     = new Set([])
 
 load = () => {
     //Using to testing
-    exportToExcel()
+    //exportToExcel()
 }
 
 listenUsers = async () => {
@@ -502,13 +502,19 @@ const isAdmin = async (userID) => {
 }
 
 const saveUser = (userID, data) => {
-    db.collection('users').doc(userID).set(data)
-        .catch(err => {
-            console.log('Error : ' + err.details)
-        })
-        .finally(result => {
-            console.log('result')
-        })
+    isUserExist(userID).then(res=>{
+        if(!res){
+            db.collection('users').doc(userID.toString()).set(data)
+            .catch(err => {
+                console.log('Error : ' + err.details)
+            })
+            .finally(result => {
+                console.log('result')
+            })
+        }else{
+            console.log(userID+' already registered!')
+        }
+    })
 }
 
 const assignUserToProjects = (projectName, userID) => {
@@ -590,6 +596,7 @@ const updateTaskStatus = (payload) => {
                     let temp = {}
                     temp[userID] = {}
                     temp[userID]['done'] = admin.firestore.FieldValue.arrayUnion(name)
+                    temp[userID]['inProgress'] = admin.firestore.FieldValue.arrayRemove(name)
 
                     db.collection('reports').doc(timestamp.toString()).get()
                     .then(doc => {
@@ -608,7 +615,7 @@ const updateTaskStatus = (payload) => {
 const exportToExcel = async () => {
     const { year, month, day, timestamp } = getDate()
     let userIDs = new Set([])
-    let usersReport = {}
+    let usersReport
     const reportList = []
     const report = [
         ["Nama", "Done", "In Progress", "Info", "Problem", "Project"]
@@ -642,7 +649,7 @@ const exportToExcel = async () => {
 
 const generateColumn = async (userData, todayReport) => {
     const tmp       = []
-    const report    = {}
+    const indexing    = {}
     let getTask     = []
     let ipTemp      = ''
     let doneTemp    = ''
@@ -653,6 +660,9 @@ const generateColumn = async (userData, todayReport) => {
     let done
     let info
     let problem
+    if(todayReport==undefined){
+        throw new Error('No Reports Today')
+    }
     if(todayReport[userData['userID']]!=undefined){
         if(todayReport[userData['userID']].inProgress!=undefined){
             inProgress    = todayReport[userData['userID']].inProgress
@@ -678,6 +688,9 @@ const generateColumn = async (userData, todayReport) => {
                 })
             } else {
                 doneTemp = todayReport[userData['userID']].done[0]
+                if(doneTemp==undefined){
+                    infoTemp = ' '
+                }
             }
         } else {
             doneTemp = ' '
@@ -685,21 +698,29 @@ const generateColumn = async (userData, todayReport) => {
         tmp.push(doneTemp)
     
     
+        console.log(inProgress.length)
         if (inProgress != undefined) {
             if (inProgress.length > 1) {
                 let counter = 1
                 
                 inProgress.forEach((item) => {
-                    ipTemp = ipTemp.concat(counter + '. ' + item + '\n')
-                    getTask.push(getProjectByTask(item))
-                    counter++
+                    if(item!=undefined){
+                        ipTemp = ipTemp.concat(counter + '. ' + item + '\n')
+                        getTask.push(getProjectByTask(item))
+                        counter++
+                    }
+                        
                 })
-    
             } else {
                 ipTemp = todayReport[userData['userID']].inProgress[0]
-                getTask.push(getProjectByTask(ipTemp))
+                if(ipTemp!=undefined){
+                    getTask.push(getProjectByTask(ipTemp))
+                }else{
+                    ipTemp=' '
+                }
             }
         } else {
+            console.log('bawah')
             ipTemp  = ' '
             project = ' '
         }
@@ -710,11 +731,16 @@ const generateColumn = async (userData, todayReport) => {
                 let counter = 1
                 
                 info.forEach(item => {
-                    infoTemp = infoTemp.concat(counter + '. ' + item + '\n')
-                    counter++
+                    if(item!=undefined){
+                        infoTemp = infoTemp.concat(counter + '. ' + item + '\n')
+                        counter++
+                    }
                 })
             } else {
                 infoTemp = todayReport[userData['userID']].info[0]
+                if(infoTemp==undefined){
+                    infoTemp = ' '
+                }
             }
     
         } else {
@@ -728,11 +754,16 @@ const generateColumn = async (userData, todayReport) => {
                 let counter = 1
                 
                 problem.forEach(item => {
-                    problemTemp = problemTemp.concat(counter + '. ' + item + '\n')
-                    counter++
+                    if(item!=undefined){
+                        problemTemp = problemTemp.concat(counter + '. ' + item + '\n')
+                        counter++
+                    }
                 })
             } else {
                 problemTemp = todayReport[userData['userID']].problem[0]
+                if(problemTemp==undefined){
+                    problemTemp = ' '
+                }
             }
     
         } else {
@@ -743,9 +774,14 @@ const generateColumn = async (userData, todayReport) => {
         await Promise.all(getTask).then(res => {
             let counter = 1
             res.forEach(r => {
+
                 if(r.length!=0){
-                    project = project.concat(counter + '. ' + r[0].projectName + '\n')
-                    counter++
+                    if(!(r[0].projectName in indexing)){
+                        indexing[r[0].projectName] = counter
+                        counter++
+                    }
+                    project = project.concat(indexing[r[0].projectName] + 
+                    '. ' + r[0].projectName + '\n')
                 }
             })
         })
@@ -807,9 +843,28 @@ const getTaskCount = async () => {
 }
 
 const takeOverTask = (payloads) => {
+    let {timestamp} = getDate()
     payloads.forEach(payload =>{
+
         const {taskId:tid, receiverId:uidB, senderId:uidL} = payload
         db.collection('tasks').doc(tid).set({ userID: uidB }, { merge: true })
+
+        db.collection('tasks').doc(tid).get()
+        .then(res=>{
+            console.log(res.data())
+            let temp = {}
+            temp[uidB] = {}
+            temp[uidL] = {}
+            temp[uidB]['inProgress'] = admin.firestore.FieldValue.arrayUnion(res.data().name)
+            temp[uidL]['inProgress'] = admin.firestore.FieldValue.arrayRemove(res.data().name)
+            
+            db.collection('reports').doc(timestamp.toString())
+            .set(temp, { merge: true })
+               // db.collection('reports').doc(timestamp.toString()).get()
+            // .then(doc => {
+                
+            // })
+        })
         
         let ProjectRef = db.collection('projects')
         .where('Task', 'array-contains', db.collection('tasks').doc(tid))
@@ -828,9 +883,9 @@ const takeOverTask = (payloads) => {
                         userExist++
                     }
                 }
-                if (userExist === 1) {
-                    tmp.ref.update({ users: admin.firestore.FieldValue.arrayRemove(uidL) })
-                }
+                // if (userExist === 1) {
+                //     tmp.ref.update({ users: admin.firestore.FieldValue.arrayRemove(uidL) })
+                // }
                 tmp.ref.update({ users: admin.firestore.FieldValue.arrayUnion(uidB) })
                 console.log('OK')
             }

@@ -1,208 +1,249 @@
 const em = require('./emoticons.config')
 
-const menuAdmin =(prefix,from)=>{
-    return {
-        type:'Edit',
-        from:prefix,
-        id:from.id,
-        parse_mode:'HTML',
-        message:'Pilih Menu Dibawah ini',
-        reply_markup: {
-            inline_keyboard:[
-                [ 
-                    {text: `${em.project} Projects`, callback_data: prefix+'-onProjectsClicked-'+from.id+'@'+from.first_name},
-                    {text: `${em.tasks} Tasks`,callback_data:prefix+'-onTasksClicked-'+from.id+'@'+from.first_name}
-                ],
-                [ 
-                    {text: `${em.chart} Monitoring`, callback_data: prefix+'-onMonitoringClicked-'+from.id+'@'+from.first_name}
-                ],
-                [
-                    {text: `${em.save} Save to Excel`, callback_data: prefix+'-onSave-'+from.id+'@'+from.first_name}
-                ],
-                [
-                    {text: `${em.close} Close`, callback_data: prefix+'-onClose-'+from.id+'@'+from.first_name}
-                ]
+function callbackData(prefix, action, id, name) {
+    return `${prefix}-${action}-${id}@${name}`
+}
 
-            ]
-        },
-        deleteLast:true
+const Mapper = {
+    "project":{
+        text:"Projects",
+        icon:em.project,
+        action: "onProjectsClicked"
+    },
+    "task":{
+        text:"Tasks",
+        icon:em.tasks,
+        action: "onTasksClicked"
+    },
+    "monitoring":{
+        text:"Monitoring",
+        icon:em.chart,
+        action:"onMonitoringClicked"
+    },
+    "dayoff":{
+        text:"Day-Off",
+        icon:em.calendar,
+        action:"onDayOff"
+    },
+    "toexcel":{
+        text:"Save to Excel",
+        icon:em.save,
+        action:"onSave"
+    },
+    "close":{
+        text:"Close",
+        icon:em.close,
+        action:"onClose"
+    },
+    "addproject":{
+        text:"Add Projects",
+        icon:em.add,
+        action:"onAddProjects",
+    },
+    "editproject":{
+        text:"Edit Projects",
+        icon:em.edit,
+        action:"onEditProjects"
+    },
+    "listproject":{
+        text:"List Project",
+        icon:em.list,
+        action:"onListProjects"
+    },
+    "deleteproject":{
+        text:"Delete Project",
+        icon:em.delete,
+        action:"onDeleteProjects"
+    },
+    "back":{
+        text:"Back",
+        icon:em.back,
+        action:"onBackPressed"
+    },
+    "addtask":{
+        text:"Add Tasks",
+        icon:em.add,
+        action:"onAddTasks"
+    },
+    "listtask":{
+        text:"List Tasks",
+        icon:em.list,
+        action:"onListTasks"
+    },
+    "done":{
+        text:"Mark Task As Done",
+        icon:em.done,
+        action:"onReportTasks"
+    },
+    "offer":{
+        text:"Offer Tasks",
+        icon:em.offer,
+        action:"onOfferTasks"
+    },
+    "assignment":{
+        text:"Assign Tasks",
+        icon:`${em.tasks}${em.man}`,
+        action:"onAssignTasks"
+    }
+
+    
+}
+
+function getButton(prefix, key, args){
+    const {id, first_name:name} = args
+    const {icon, text, action} = Mapper[key]
+    return {
+        text: `${icon} ${text}`,
+        callback_data: callbackData(prefix,action, id, name)
     }
 }
 
-const menuUser = (prefix,from)=>{
+
+const menuAdmin = (prefix, from) => {
     return {
-        type:'Edit',
-        from:prefix,
-        parse_mode:'HTML',
-        message:'Pilih Menu Dibawah ini',
+        type: 'Edit',
+        id:from.id,
+        from: prefix,
+        parse_mode: 'Markdown',
+        message: 'Pilih Menu Dibawah ini',
         reply_markup: {
-            inline_keyboard:[
+            inline_keyboard: [
                 [ 
-                    {text: `${em.project} Projects`, callback_data: prefix+'-onProjectsClicked-'+from.id+'@'+from.first_name},
-                    {text: `${em.tasks} Tasks`,callback_data:prefix+'-onTasksClicked-'+from.id+'@'+from.first_name}
-                ],
-                [
-                    {text: `${em.close} Close`, callback_data: prefix+'-onClose-'+from.id+'@'+from.first_name}
+                    {...getButton(prefix, 'project', from)}, 
+                    {...getButton(prefix, 'task', from) }
+                ], [
+                    {...getButton(prefix, 'monitoring', from)},
+                    {...getButton(prefix, 'dayoff', from)}
+                ], [
+                    {...getButton(prefix, 'toexcel', from)}            
+                ], [
+                    {...getButton(prefix, 'close', from)}
                 ]
             ]
-        },
-        
+        }
     }
 }
 
-const menuProjectsAdmin = (from,prefix)=>{
+const menuUser = (prefix, from) => {
     return {
-        type:'Edit',
-        id:from.id,
-        from:prefix,
-        message:'Silahkan pilih menu dibawah ini',
-        options:{
-            parse_mode:'HTML',
+        type: 'Edit',
+        id: from.id,
+        from: prefix,
+        parse_mode: 'HTML',
+        message: 'Pilih Menu Dibawah ini',
+        reply_markup: {
+            inline_keyboard: [
+                [
+                    {...getButton(prefix, 'project', from)}, 
+                    {...getButton(prefix, 'task', from)}, 
+                ], [
+                    {...getButton(prefix, 'close', from)}
+                ]
+            ]
+        },
+
+    }
+}
+
+const menuProjectsAdmin = (from, prefix) => {
+    return {
+        type: 'Edit',
+        id: from.id,
+        from: prefix,
+        message: 'Silahkan pilih menu dibawah ini',
+        options: {
+            parse_mode: 'HTML',
             reply_markup: {
-                inline_keyboard:[
-                    [ 
-                        {text: `${em.add} Add Projects`, callback_data: prefix+'-onAddProjects-'+
-                        from.id+'@'+from.first_name},
-
-                        {text: `${em.edit} Edit Projects`,callback_data:prefix+'-onEditProjects-'+
-                        from.id+'@'+from.first_name}
-                    ],
-                    [ 
-                        {text: `${em.list} List Project`,callback_data:prefix+
-                        '-onListProjects-'+from.id+'@'+from.first_name},
-                        
-                        {text: `${em.delete} Delete Project`, callback_data: prefix+
-                        '-onDeleteProjects-'+from.id+'@'+from.first_name}
-                    ],
+                inline_keyboard: [
                     [
-                        {text: `${em.back} Back`,callback_data:prefix+
-                        '-onBackPressed-'+from.id+'@'+from.first_name},
-                        {text: `${em.close} Close`, callback_data: prefix+'-onClose-'+from.id+'@'+from.first_name}
+                        {...getButton(prefix, 'addproject',from)}, 
+                        {...getButton(prefix, "editproject", from)}
+                    ], [
+                        {...getButton(prefix,'listproject', from)},
+                        {...getButton(prefix,'deleteproject', from)}
+                    ], [
+                        {...getButton(prefix, "back", from)},
+                        {...getButton(prefix, "close", from)}
                     ]
                 ]
             }
-        },
-        // deleteLast:true
+        }
     }
 }
 
-const menuProjectsUser = (from,prefix)=>{
+const menuProjectsUser = (from, prefix) => {
     return {
-        type:'Edit',
-        from:prefix,
-        message:'Silahkan pilih menu dibawah ini',
-        options:{
-            parse_mode:'HTML',
+        type: 'Edit',
+        id: from.id,
+        from: prefix,
+        message: 'Silahkan pilih menu dibawah ini',
+        options: {
+            parse_mode: 'HTML',
             reply_markup: {
-                inline_keyboard:[
-                    [ 
-                        {text: `${em.list} List Project`,callback_data:prefix+
-                        '-onListProjects-'+from.id+'@'+from.first_name},
-                    ],
+                inline_keyboard: [
                     [
-                        {text: `${em.back} Back`,callback_data:prefix+
-                        '-onBackPressed-'+from.id+'@'+from.first_name},
-                        {text: `${em.close} Close`, callback_data: prefix+'-onClose-'+from.id+'@'+from.first_name}
+                        {...getButton(prefix,"listproject", from)}
+                    ], [
+                        {...getButton(prefix, "back", from)},
+                        {...getButton(prefix, "close",from)}
                     ]
                 ]
             }
-        },
-        // deleteLast:true
+        }
     }
 }
 
-const menuTasksUser = (prefix,from)=>{
+const menuTasksUser = (prefix, from) => {
     return {
-        type:'Edit',
-        from:prefix,
-        message:'Silahkan pilih menu dibawah ini',
-        options:{
-            parse_mode:'HTML',
+        type: 'Edit',
+        id: from.id,
+        from: prefix,
+        message: 'Silahkan pilih menu dibawah ini',
+        options: {
+            parse_mode: 'Markdown',
             reply_markup: {
-                inline_keyboard:[
-                    [ 
-                        {
-                            text: `${em.add} Add Tasks`,
-                            callback_data:prefix+"-onAddTasks-"+
-                            from.id+"@"+from.first_name
-                        },
-                        {
-                            text: `${em.list} List Tasks`,
-                            callback_data:prefix+"-onListTasks-"+from.id
-                        }
-                    ],
+                inline_keyboard: [
                     [
-                        {
-                            text: `${em.done} Mark Task As Done`,
-                            callback_data:prefix+
-                            '-onReportTasks-'+from.id+'@'+from.first_name
-                        },
-                        {
-                            text: `${em.offer} Offer Tasks`,
-                            callback_data:prefix+
-                            '-onOfferTasks-'+from.id+'@'+from.first_name
-                        }
-                    ],
-                    [
-                        {text: `${em.back} Back`,callback_data:prefix+
-                        '-onBackPressed-'+from.id+'@'+from.first_name},
-                        {text: `${em.close} Close`, callback_data: prefix+'-onClose-'+from.id+'@'+from.first_name}
-                    ]                    
+                        {...getButton(prefix, "addtask", from)}, 
+                        {...getButton(prefix, "listtask", from)}
+                    ], [
+                        {...getButton(prefix, "done", from)}, 
+                        {...getButton(prefix, "offer", from)}
+                    ], [
+                        {...getButton(prefix, "back", from)}, 
+                        {...getButton(prefix, 'close', from)}
+                    ]
                 ]
             }
-        },
-        // deleteLast:true
+        }
     }
 }
 
-const menuTasksAdmin = (prefix,from)=>{
+const menuTasksAdmin = (prefix, from) => {
     return {
-        type:'Edit',
-        from:prefix,
-        message:'Silahkan pilih menu dibawah ini',
-        options:{
-            parse_mode:'HTML',
+        type: 'Edit',
+        id: from.id,
+        from: prefix,
+        message: 'Silahkan pilih menu dibawah ini',
+        options: {
+            parse_mode: 'HTML',
             reply_markup: {
-                inline_keyboard:[
-                    [ 
-                        {
-                            text: `${em.add} Add Tasks`,
-                            callback_data:prefix+"-onAddTasks-"+
-                            from.id+"@"+from.first_name
-                        },
-                        {
-                            text: `${em.list} List Tasks`,
-                            callback_data:prefix+"-onListTasks-"+from.id
-                        }
-                    ],
+                inline_keyboard: [
                     [
-                        {
-                            text: `${em.done} Mark Tasks As Done`,
-                            callback_data:prefix+
-                            '-onReportTasks-'+from.id+'@'+from.first_name
-                        },
-                        {
-                            text: `${em.offer} Offer Tasks`,
-                            callback_data:prefix+
-                            '-onOfferTasks-'+from.id+'@'+from.first_name
-                        }
-                    ],
-                    [
-                        {
-                            text: `${em.tasks}${em.man} Assign Tasks`,
-                            callback_data:prefix+
-                            '-onAssignTasks-'+from.id+'@'+from.first_name
-                        }
-                    ],
-                    [
-                        {text: `${em.back} Back`,callback_data:prefix+
-                        '-onBackPressed-'+from.id+'@'+from.first_name},
-                        {text: `${em.close} Close`, callback_data: prefix+'-onClose-'+from.id+'@'+from.first_name}
-                    ],                 
+                        { ...getButton(prefix, 'addtask', from)},
+                        { ...getButton(prefix,"listtask", from) }
+                    ], [
+                        { ...getButton(prefix, "done", from)}, 
+                        { ...getButton(prefix, "offer", from)}
+                    ], [
+                        {...getButton(prefix, "assignment", from)}
+                    ], [
+                        { ...getButton(prefix, "back", from)}, 
+                        { ...getButton(prefix, "close", from)}
+                    ]
                 ]
             }
-        },
-        // deleteLast:true
+        }
     }
 }
 
