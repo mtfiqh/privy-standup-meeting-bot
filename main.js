@@ -144,11 +144,28 @@ bot.on("message", async context => {
         const currentApp = lookUp[`${currentState[from.id]}@${from.id}`]
         const response = await currentApp.listen('onTypeListen', context)
         if (response && response.destroy == true) {
+            if(history[currentApp.prefix]!==undefined){
+                history[currentApp.prefix].add(context.message_id)
+                deleteHistory(currentApp.prefix)
+            }
             delete lookUp[currentApp.prefix]
+        }
+        if(response && response.record===true){
+            if(history[response.prefix+'@'+response.userID]===undefined) history[response.prefix+'@'+response.userID]=new Set([])
+            history[response.prefix+'@'+response.userID].add(context.message_id)
         }
         console.log(from.id, `currentState ${currentState[from.id]} deleted`)
         delete currentState[from.id]
-        handleRespond(response, from.id, context.message_id)
+        bot.sendMessage(chat.id, 'Processing....',{reply_markup:{remove_keyboard:true}}).then(contextBot=>{
+            if(response && response.record===true){
+                if(history[response.prefix+'@'+response.userID]===undefined) history[response.prefix+'@'+response.userID]=new Set([])
+                history[response.prefix+'@'+response.userID].add(context.message_id)
+                if(response.type!=='Confirm'){
+                    bot.deleteMessage(from.id, contextBot.message_id)
+                }
+            }
+            handleRespond(response, from.id, contextBot.message_id)
+        })
     }
 
 })
@@ -168,15 +185,17 @@ bot.on('callback_query', async query => {
         const response = await currentApp.listen(action, address)
         handleRespond(response, from.id, message.message_id)
         if (response && response.destroy == true) {
+            if(history[currentApp.prefix]!==undefined) deleteHistory(currentApp.prefix)
             delete lookUp[currentApp.prefix]
         }
         if(response && response.destroyBatch<=1){
             delete lookUp[currentApp.prefix]
         }
         if (response && response.record === true) {
-            if (history[from.id] === undefined) history[from.id] = new Set([])
-            history[from.id].add(message.message_id)
+            if(history[response.prefix+'@'+response.userID]===undefined) history[response.prefix+'@'+response.userID]=new Set([])
+            history[response.prefix+'@'+response.userID].add(message.message_id)
         }
+        
         console.log('History ',history[response.prefix+'@'+response.userID])
     } catch (error) {
         console.error("Error on bo.on('callback_query') (main.js)", error.message)
@@ -323,6 +342,9 @@ function initTasks(prefix, userID, name) {
         console.log(userID, `created '${prefix}@${userID}' lookup`)
         console.log(userID, `lock user in state '${prefix}'`)
         const response = {
+            record:true,
+            prefix,
+            userID,
             message: dict.initTasks.getMessage(),
             options: dict.initTasks.getOptions()
         }
@@ -432,6 +454,17 @@ function reminder(type) {
             })
         })
     }
+}
+
+function deleteHistory(prefix){
+    console.log('masuk delete',history)
+    const [x, userID]=prefix.split('@')
+    history[`${prefix}`].forEach(message_id=>{
+        console.log('toDelete', message_id)
+        bot.deleteMessage(userID, message_id)
+    })
+    history[prefix].clear()
+    delete history[`${prefix}`]
 }
 
 

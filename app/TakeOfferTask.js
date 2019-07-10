@@ -73,7 +73,7 @@ class TakeOfferTask extends App {
         if(this.bucket.length==0) return {
             id: this.id,
             type: "Edit",
-            destroy:false,
+            destroy:true,
             message: dict.process.failed.getMessage(),
             options:dict.process.failed.getOptions()
         }
