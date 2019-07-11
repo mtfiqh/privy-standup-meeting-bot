@@ -41,15 +41,17 @@ class assignUsersProject extends App{
         this.projects.forEach(project=>{
             this.cache.keyboard.push([{
                 text:project,
-                callback_data:`${this.cache.prefix}-onSelection-${i}@${this.cache.token}`
+                callback_data:`${this.prefix}-onSelection-${i}@${this.cache.token}`
             }])
             i++
         })
-        console.log('keyboard', this.cache.keyboard)
+        return onStartMessage(this.cache.keyboard)
     }
 
-    onSelection(){
-
+    onSelection(args){
+        const [idx, token] = args.split('@')
+        if(token!==this.cache.token){console.log(this.prefix, 'token is invalid'); return}
+        console.log(this.projects[idx])
     }
 
 }
