@@ -76,7 +76,7 @@ const calendarLayout=(prefix)=>{
     return generateCalendar(prefix,'now',0)
 }
 
-const generateCalendar = (prefix,option,count)=>{
+const generateCalendar = (prefix,option,count,pos=null)=>{
     reset(prefix)
     let w = 2
     date = new Date()
@@ -104,8 +104,12 @@ const generateCalendar = (prefix,option,count)=>{
     calendar[0][0] = {text:months[month]+' '+date.getFullYear(),callback_data:`${prefix}-onMonth-`}
     while(date.getMonth() === month){
         calendar[w][date.getDay()].text = date.getDate().toString() 
-        calendar[w][date.getDay()].callback_data = prefix+'-onDateClicked-'
-        +date.getFullYear()+'/'+(month+1)+'/'+date.getDate()+'#'+w+'#'+date.getDay()
+        calendar[w][date.getDay()].callback_data = prefix+'-onDateClicked-' +date.getFullYear()+'/'+(month+1)+'/'+date.getDate()+'#'+w+'#'+date.getDay()
+        if(pos!=null){
+            if((w==pos.y)&&(date.getDay()==pos.x)){
+                calendar[w][date.getDay()].text = `${em.done}`
+            }
+        }
         date = new Date(dateCalc.add(date,1,'day'))
         if(date.getDay()==0){
             w++

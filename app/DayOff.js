@@ -24,8 +24,8 @@ class DayOff extends App{
         this.visited = new Set([])
         this.selectedDate = ''
         this.holiday = {
-            name,
-            date
+            name:{},
+            date:{}
         }
     }
 
@@ -105,7 +105,7 @@ class DayOff extends App{
         let [date,y,x] = params.split('#')
         let [year,month,day] = date.split('/')
         let today = new Date()
-        let opts = msg.generateCalendar(this.prefix,date,(parseInt(month)-1)                -today.getMonth())
+        let opts = msg.generateCalendar(this.prefix,date,(parseInt(month)-1)                -today.getMonth(),{x,y})
 
         this.selectedDate = date
         msg.generateSaveButton(date,this.prefix)
@@ -139,7 +139,14 @@ class DayOff extends App{
     onAddName(params){
         this.holiday.date = params
         
-        return
+        return {
+            type:'Edit',
+            id:this.userID,
+            message: `Hari yang dipilih *${this.getLocalDate(this.selectedDate)}*,\nMasukkan keterangan libur : `,
+            options:{
+                parse_mode:'Markdown'
+            }
+        }
     }
 
     onEmpty(){
