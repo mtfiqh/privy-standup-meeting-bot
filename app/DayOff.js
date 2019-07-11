@@ -6,14 +6,14 @@ class DayOff extends App{
     constructor(bot,userID){
         super()
         this.register([
-            this.onStart.name,
-            this.onChange.name,
-            this.onSelectType.name,
-            this.onDateClicked.name,
-            this.onClose.name,
-            this.onEmpty.name,
-            this.onAddName.name,
-            this.onBackPressed.name
+            'onStart',
+            'onChange',
+            'onSelectType',
+            'onDateClicked',
+            'onClose',
+            'onEmpty',
+            'onAddName',
+            'onBackPressed'
         ])
 
         // Define Class variable here
@@ -28,19 +28,6 @@ class DayOff extends App{
             date:{}
         }
     }
-
-
-    /**
-     * response = {
-     *     type : type case (ex."Edit") (required!)
-     *     from : prefix,
-     *     message: message
-     *     options: inlineKeyboardOption
-     *     deleteLast : boolean
-     *     agrs : any
-     * }
-     */
-
      
     onStart({from,chat},first = false){
         this.from = from

@@ -6,15 +6,15 @@ class Tasks extends App{
     constructor(userID, prefix, name){
         super()
         this.register([
-            this.onTypeListen.name,
-            this.setPriority.name,
-            this.selectProject.name,
-            this.onSure.name,
-            this.selectUser.name,
+            'onTypeListen',
+            'setPriority',
+            'selectProject',
+            'onSure',
+            'selectUser',
         ])
         this.addCache('userID',userID)
         this.addCache('name', name)
-        this.prefix=prefix
+        this.prefix=prefix+'@'+userID
         //add prefix to be guide what func will be use
         //addTasks or assignTasks
         this.addCache('prefix', prefix)
@@ -49,12 +49,13 @@ class Tasks extends App{
             console.log(from.id, `${this.cache.prefix} - load projects from firebase`)
             await this.setKeyboardOfUsersProject(from.id)
             console.log('dataprojects', this.dataProjects)
-            return onSelectProjects(this.dataProjects)
+            return onSelectProjects(this.dataProjects, this.cache.prefix, this.cache.userID)
 
         }else if(text==="CANCEL"){
             const userID=this.cache.userID
+            const prefix=this.cache.prefix
             delete this.cache
-            return onCancelMessage(userID)
+            return onCancelMessage(userID, prefix)
         }
         console.log(from.id, `${this.cache.prefix} - Insert Task(s)`)
         //if tasks not create yet
@@ -73,7 +74,7 @@ class Tasks extends App{
             console.log(this.cache.userID, 'clicked invalid button token')
             return
         }
-        if(priority==="CANCEL") return onCancelMessage(this.cache.userID)
+        if(priority==="CANCEL") return onCancelMessage(this.cache.userID, this.cache.prefix)
         if(this.cache.priority===undefined){
             this.addCache('priority',[])
             console.log(this.cache.userID, `${this.cache.prefix} - cache priority created`)
@@ -125,8 +126,10 @@ class Tasks extends App{
     async selectProject(args){
         const [idx, token]=args.split('@')
         if(idx=="c"){
+            const userID=this.cache.userID
+            const prefix = this.cache.prefix
             delete this.cache
-            return onCancelMessage(this.cache.userID)
+            return onCancelMessage(userID, prefix)
         }
 
         if(`p${this.cache.token}`!==token){
@@ -202,8 +205,10 @@ class Tasks extends App{
             return onSaved()
 
         }else if(ans==="N"){
+            let userID =this.cache.userID
+            let prefix =this.cache.prefix
             delete this.cache
-            return onCancelMessage(this.cache.userID)
+            return onCancelMessage(userID, prefix)
         }
     }
 
@@ -215,8 +220,9 @@ class Tasks extends App{
         }
         if(this.idx=='c'){
             console.log(this.cache.userID, `${this.cache.prefix} cancel action`)
+            let prefix=this.cache.prefix
             delete this.cache
-            return onCancelMessage(this.cache.userID)
+            return onCancelMessage(this.cache.userID,prefix)
         }
         this.cache.users=this.cache.users[idx]
         console.log(this.cache.users)

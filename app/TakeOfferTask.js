@@ -25,11 +25,13 @@ class TakeOfferTask extends App {
         this.userKeyboard = null
         this.prevFriend   = null
         this.friend       = null
+        this.destroyBatch = 2
 
         this.register([
             'select', 
             'cancel',
             'process',
+            'close',
             'offer',
             'selectUser',
             "respondYes",
@@ -71,7 +73,7 @@ class TakeOfferTask extends App {
         if(this.bucket.length==0) return {
             id: this.id,
             type: "Edit",
-            destroy:false,
+            destroy:true,
             message: dict.process.failed.getMessage(),
             options:dict.process.failed.getOptions()
         }
@@ -132,6 +134,7 @@ class TakeOfferTask extends App {
         return {
             type:"Confirm",
             receiver:{
+                type:"Send",
                 id:this.friend,
                 message :dict.offer.receiver.getMessage(this.name, taskList),
                 options :dict.offer.receiver.getOptions(this.prefix)
@@ -140,10 +143,22 @@ class TakeOfferTask extends App {
                 id:this.id,
                 type: "Edit",
                 message: dict.offer.sender.getMessage(),
-                options:dict.offer.sender.getOptions()
+                options:dict.offer.sender.getOptions(this.prefix)
             }
         }
 
+    }
+
+    close(params){
+        const id = parseInt(params)
+        console.log("close")
+        const count = this.destroyBatch
+        this.destroyBatch--
+        return {
+            id:id,
+            destroyBatch:count,
+            type:"Delete"
+        }
     }
 
     respondNo(){
@@ -154,18 +169,21 @@ class TakeOfferTask extends App {
 
         return {
             type:"Confirm",
-            destroy:true,
+            // destroy:true,
             receiver:{
                 id:friend,
                 type:"Edit",
                 message: dict.respondNo.receiver.getMessage(),
-                options: dict.respondNo.receiver.getOptions()
+                options: dict.respondNo.receiver.getOptions(this.prefix, friend),
+                special:true,
             },
             sender:{
                 id:this.id,
-                type: "Send",
+                type: "Edit",
                 message: dict.respondNo.sender.getMessage(),
-                options:dict.respondNo.sender.getOptions()
+                options:dict.respondNo.sender.getOptions(this.prefix, this.id),
+                special:true,
+
             }
         }
 
@@ -188,18 +206,20 @@ class TakeOfferTask extends App {
         console.log(taskList)
         return {
             type:"Confirm",
-            destroy:true,
+            // destroy:true,
             receiver:{
                 id:friend,
                 type:"Edit",
                 message: dict.respondYes.receiver.getMessage(taskList),
-                options: dict.respondYes.receiver.getOptions()
+                options: dict.respondYes.receiver.getOptions(this.prefix, friend),
+                special:true,
             },
             sender:{
                 id:this.id,
-                type:"Send",
+                type:"Edit",
                 message: dict.respondYes.sender.getMessage(taskList),
-                options:dict.respondYes.sender.getOptions()
+                options:dict.respondYes.sender.getOptions(this.prefix, this.id),
+                special:true,
             }
         }
 

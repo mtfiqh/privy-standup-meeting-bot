@@ -1,88 +1,65 @@
 const {isAdmin,exportToExcel} = require("./DataTransaction")
-const {
-        menuAdmin,
-        menuUser,
-        menuProjectsAdmin,
-        menuProjectsUser,
-        menuTasksUser,
-        menuTasksAdmin
-    } = require('./resources/menu.config')
-
 const {App} = require('../core/App')
+const {
+    menuAdmin,
+    menuUser,
+    menuProjectsAdmin,
+    menuProjectsUser,
+    menuTasksUser,
+    menuTasksAdmin
+} = require('./resources/menu.config')
 
 class Menu extends App{
-    constructor(bot,userID){
+    constructor(userID){
         super()
         this.register([
             //Basic Section
-            this.onMain.name,
-            this.onBackPressed.name,
-            this.onSave.name,
-            this.onClose.name,
-            this.onDayOff.name,
+            'onMain',
+            'onBackPressed',
+            'onSave',
+            'onClose',
+            'onDayOff',
             'cron',
+            'closeChild',
             //Task Section
-            this.onTasksClicked.name,
-            this.onReportTasks.name,
-            this.onAddTasks.name,
-            this.onListTasks.name,
-            this.onOfferTasks.name,
-            this.onAssignTasks.name,
-            
+            'onTasksClicked',
+            'onReportTasks',
+            'onAddTasks',
+            'onListTasks',
+            'onOfferTasks',
+            'onAssignTasks',
             //Project Section
-            this.onProjectsClicked.name,
-            this.onAddProjects.name,
-            this.onEditProjects.name,
-            this.onDeleteProjects.name,
-            this.onListProjects.name,
-            
-            // Add new section here
-
+            'onProjectsClicked',
+            'onAddProjects',
+            'onEditProjects',
+            'onDeleteProjects',
+            'onListProjects',
         ])
-
-
-
         // Define Class variable here
-        this.prefix = `${Menu.name}@${userID}`
-        this.isAdmin={}
-        this.state=[]
-        this.visited=new Set([])
-        this.bot=bot
-        this.userID= userID
+        this.prefix     = `${Menu.name}@${userID}`
+        this.userID     =  userID
+        this.isAdmin    = {}
+        this.state      = []
+        this.visited    = new Set([])
         
     }
-
-    /**
-     * response = {
-     *     type : type case (ex."Edit") (required!)
-     *     from : prefix,
-     *     message: message
-     *     options: inlineKeyboardOption
-     *     deleteLast : boolean
-     *     agrs : any
-     * }
-     */
 
 
     //----------------BASIC SECTION-----------------------------------------
 
-    async cron(address){
+    async cron(){
         const {from } = this.cache[`from@${this.userID}`]
         return await this.onMain({from:from,chat:undefined})
     }
 
     async onMain({from,chat},first = false){
         this.message = ""
-        const load = result => {
-            this.isAdmin = result
-        }
-
-        await isAdmin(from.id).then(load.bind(this))
-
         this.from = from
 
-        let opts = this.getMessageOptionOnMenu(from.id)
-        let greetings = this.generateGreetings()
+        const load = result => { this.isAdmin = result }
+        await isAdmin(from.id).then(load.bind(this))
+        const opts = this.getMessageOptionOnMenu(from.id)
+        const greetings = this.generateGreetings()
         this.visited.clear()
         this.onVisit(this.onMain.name,{from,chat})
         return {
@@ -96,9 +73,6 @@ class Menu extends App{
     
     onDayOff(){
         return {
-            //Objects to trigger taufiq's function
-            
-            //Testing
             type:'Auto',
             message:'/dayOff'
         }
@@ -111,13 +85,19 @@ class Menu extends App{
             type:"Delete"
         }
     }
+
+    closeChild(){
+        return {
+            id:this.userID,
+            type:"Delete"
+        }
+    }
     
     async onSave(){
         try {
            await exportToExcel()           
            this.onVisit(this.onVisit.name) 
         } catch (error) {
-            console.log(error)
             return {
                 type:'Edit',
                 id:this.userID,
@@ -132,55 +112,38 @@ class Menu extends App{
     }
 
     async onBackPressed(){
-        let {func:tmp} = this.state.pop()
-        this.visited.delete(tmp)
-        console.log(this.visited)
-
-        let {func,args} = this.state.pop()
-        
+        const {func:tmp} = this.state.pop()
+        const {func,args} = this.state.pop()
         const response = await this[func].call(this,args)
+        this.visited.delete(tmp)
         return response
-        
     }
         
     onVisit(name,args){
-        if(!(this.visited.has(name))){
+        if(!this.visited.has(name)){
             this.visited.add(name)
             this.state.push({func:name,args:args})        
         }
     }
 
-    //-----------------END SECTION----------------------------
-
-
     //-----------------TASK SECTION---------------------------
     onTasksClicked(){
         this.onVisit('onTasksClicked')
-        if(this.isAdmin){
-            return menuTasksAdmin(this.prefix,this.from)
-        }else{
-            return menuTasksUser(this.prefix,this.from)
-        }
+        if(this.isAdmin) return menuTasksAdmin(this.prefix,this.from)
+        return menuTasksUser(this.prefix,this.from)
     }
 
     onAddTasks(){
         this.onVisit('onTasksClicked')
         return {
-            //Objects to trigger taufiq's function
-            
-            //Testing
             type:'Auto',
             message:'/addTasks'
         }
     }
 
     onListTasks(){
-        console.log('visited')
         this.onVisit('onTasksClicked')
         return {
-            //Objects to trigger taufiq's function
-
-            //Testing
             type:'Auto',
             message:'/showTasks',
         }
@@ -189,8 +152,6 @@ class Menu extends App{
     onReportTasks(){
         this.onVisit('onTasksClicked')
         return {
-
-            //Testing
             type:'Auto',
             message:'/report'
         }
@@ -199,9 +160,6 @@ class Menu extends App{
     onOfferTasks(){
         this.onVisit('onTasksClicked')
         return {
-            //Object to trigger Jose's function
-
-            //Testing
             type:'Auto',
             message:'/offer',
         }
@@ -210,31 +168,24 @@ class Menu extends App{
     onAssignTasks(){
         this.onVisit('onTasksClicked')
         return {
-            //Objects to trigger taufiq's function
-            //Testing
             type:'Auto',
             message:'/assignTasks',
         }
     }
 
-    //----------------END SECTION----------------------------
-
 
     //----------------PROJECT SECTION------------------------
     onProjectsClicked(){
         this.onVisit('onProjectsClicked')
-        if(this.isAdmin){
+        if(this.isAdmin)
             return menuProjectsAdmin(this.from,this.prefix)
-        }else{
-            return menuProjectsUser(this.from,this.prefix)
-        }
+
+        return menuProjectsUser(this.from,this.prefix)
     }
 
     onAddProjects(){
         this.onVisit('onProjectsClicked')
         return {
-            //Objects to trigger taufiq's function
-            //Testing
             type:'Auto',
             message:'/createProjects',
         }
@@ -243,8 +194,6 @@ class Menu extends App{
     onEditProjects(){
         this.onVisit('onProjectsClicked')
         return {
-            //Objects to trigger taufiq's function
-            //Testing
             type:'Auto',
             message:'/updateProjects',
         }
@@ -253,8 +202,6 @@ class Menu extends App{
     onDeleteProjects(){
         this.onVisit('onProjectsClicked')
         return {
-            //Objects to trigger taufiq's function
-            //Testing
             type:'Auto',
             message:'/deleteProjects',
         }
@@ -263,55 +210,46 @@ class Menu extends App{
     onListProjects(){
         this.onVisit('onProjectsClicked')
         return {
-            //Objects to trigger taufiq's function
-            //Testing
             type:'Auto',
             message:'/listProjects',
         }
     }
-
-    //-----------------END SECTION------------------------------
-
 
     //-----------------SUPPORT FUNCTION-------------------------
     
     /**
      * Generate message option (button) based on user type (admin|user)
      * @param {int} userID - userID of a user
-     * 
      * @returns {Object} messageOption - Message that will be rendered as button
      */
     getMessageOptionOnMenu(userID){
-        if(this.isAdmin){
+        if(this.isAdmin)
             return menuAdmin(this.prefix,userID)
-        }else{
-            return menuUser(this.prefix,userID)
-        }
+
+        return menuUser(this.prefix,userID)
     }
 
     /**
      * Generate greetings based on local language and time
-     * 
      * @returns {String} message - {'Pagi'|'Siang'|'Sore'|'Malam'}
      */
     generateGreetings(){
+        const hour  = new Date().getHours()
 
-        let now = new Date()
-        let hour = now.getHours()
-        let message = ''
-        
-        if(hour>4&&hour<10){
-            message = 'Pagi'
-        }else if(hour>=10&&hour<15){
-            message = 'Siang'
-        }else if(hour>=15&&hour<19){
-            message = 'Sore'
-        }else{
-            message = 'Malam'
-        }
-        return message
+        if(hour>4&&hour<10) 
+            return 'Pagi'
+
+        else if(hour>=10&&hour<15)
+            return 'Siang'
+
+        else if(hour>=15&&hour<19)
+            return 'Sore'
+
+        return 'Malam'
     }
     
 }
 
-module.exports={Menu}
+module.exports={
+    Menu
+}

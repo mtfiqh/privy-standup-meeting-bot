@@ -22,7 +22,7 @@ class Report extends App {
         this.bucket     = []
         this.separator  = '::' // toggleSelectedTask
 
-        this.register(["select","send","cancel"])
+        this.register(["select","send","cancel","close"])
     }
 
     select(address){
@@ -75,11 +75,11 @@ class Report extends App {
         // response
         const taskList  =  helper.selectedButtonToString(dataTosend[this.id],"Done")
         return {
-            destroy:true,
+            // destroy:true,
             id:this.id,
             type: "Edit",
             message : dict.send.success.getMessage(taskList),
-            options : dict.send.success.getOptions()
+            options : dict.send.success.getOptions(this.prefix)
         }
         
     }
@@ -87,6 +87,15 @@ class Report extends App {
     cancel(){
         this.selected.clear()
         this.bucket.splice(0, this.bucket.length)
+        return {
+            destroy:true,
+            id:this.id,
+            type:"Delete"
+        }
+    }
+
+    close(){
+        console.log("close")
         return {
             destroy:true,
             id:this.id,
