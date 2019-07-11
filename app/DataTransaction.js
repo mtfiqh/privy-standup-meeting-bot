@@ -282,10 +282,6 @@ const sortingTask=(taskList)=>{
     return res
 }
 
-const sortingProjects = (taskList)=>{
-
-}
-
 const getUserProjects = async (uid) => {
     /**
      * Get project(s) of a user
@@ -860,10 +856,7 @@ const takeOverTask = (payloads) => {
             
             db.collection('reports').doc(timestamp.toString())
             .set(temp, { merge: true })
-               // db.collection('reports').doc(timestamp.toString()).get()
-            // .then(doc => {
-                
-            // })
+            
         })
         
         let ProjectRef = db.collection('projects')

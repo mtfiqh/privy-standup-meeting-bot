@@ -313,15 +313,19 @@ async function handleAuto(context){
             handleRespond(res, chat.id, message_id)
             break
         case '/createProjects':
+            bot.deleteMessage(chat.id, message_id)
             initProjects('createProjects', chat.id, chat.first_name)
             break
         case '/deleteProjects':
+           bot.deleteMessage(chat.id, message_id)
             initProjects('deleteProjects', chat.id, chat.first_name)
             break
         case '/updateProjects':
+            bot.deleteMessage(chat.id, message_id)
             initProjects('updateProjects', chat.id, chat.first_name)
             break
         case '/listProjects':
+            bot.deleteMessage(chat.id, message_id)
             initProjects('readProjects', chat.id, chat.first_name)
             break
         default:
