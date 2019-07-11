@@ -194,9 +194,10 @@ bot.on('callback_query', async query => {
         if (response && response.record === true) {
             if(history[response.prefix+'@'+response.userID]===undefined) history[response.prefix+'@'+response.userID]=new Set([])
             history[response.prefix+'@'+response.userID].add(message.message_id)
+        
+            console.log('History ',history[response.prefix+'@'+response.userID])
         }
         
-        console.log('History ',history[response.prefix+'@'+response.userID])
     } catch (error) {
         console.error("Error on bo.on('callback_query') (main.js)", error.message)
     }
@@ -457,12 +458,14 @@ function reminder(type) {
 }
 
 function deleteHistory(prefix){
+    console.log(prefix)
     console.log('masuk delete',history)
     const [x, userID]=prefix.split('@')
     history[`${prefix}`].forEach(message_id=>{
         console.log('toDelete', message_id)
         bot.deleteMessage(userID, message_id)
     })
+
     history[prefix].clear()
     delete history[`${prefix}`]
 }

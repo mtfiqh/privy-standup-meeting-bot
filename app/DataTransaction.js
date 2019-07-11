@@ -13,6 +13,7 @@ const tasks     = new Set([])
 load = () => {
     //Using to testing
     //exportToExcel()
+    listenTasks()
 }
 
 listenUsers = async () => {
@@ -87,7 +88,7 @@ listenTasks = async () => {
                 if (counter === 5) {
                     console.log('More tasks loading in background')
                 }
-                
+
                 counter++
             } else if (data.type === 'removed') {
                 
@@ -219,8 +220,8 @@ const getUserTasks = async (uid) => {
     .then(async data => {
         
         data.forEach( dt => {
-            if (dt.data().status != 'done') {
-                taskList.add(dt.data())
+            if (dt.data().status == 'In Progress') {
+                taskList.add(dt.data())            
             } 
         })
         await db.collection('projects').get()
@@ -608,6 +609,26 @@ const updateTaskStatus = (payload) => {
     })
 }
 
+const getPastTaskToExcel= ()=>{
+
+    return db.collection('tasks').get()
+    .then(result=>{
+        result.forEach(res=>{
+            if(res.data().status=='In Progress'){
+                let temp = {}
+                let {timestamp} = getDate()
+                temp[res.data().userID] = {}
+                temp[res.data().userID]['inProgress'] = admin.firestore.FieldValue.arrayUnion(res.data().name)
+                
+                db.collection('reports').doc(timestamp.toString())
+                .set(temp, { merge: true })    
+    
+            }
+        })
+    })
+
+}
+
 const exportToExcel = async () => {
     const { year, month, day, timestamp } = getDate()
     let userIDs = new Set([])
@@ -616,6 +637,8 @@ const exportToExcel = async () => {
     const report = [
         ["Nama", "Done", "In Progress", "Info", "Problem", "Project"]
     ]
+
+    await getPastTaskToExcel()
 
     await getUsersData('all').then(async results => {
         results.forEach(item => {
@@ -982,7 +1005,7 @@ const updateUser = (userID,payload)=>{
     db.collection('users').doc(userID.toString()).set(payload,{merge:true})
 }
 
-// load()
+ //load()
 
 
 module.exports = {

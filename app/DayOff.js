@@ -13,7 +13,10 @@ class DayOff extends App{
             'onClose',
             'onEmpty',
             'onAddName',
-            'onBackPressed'
+            'onBackPressed',
+            'onTypeListen',
+            'onSave',
+            'onCancel'
         ])
 
         // Define Class variable here
@@ -28,7 +31,7 @@ class DayOff extends App{
             date:{}
         }
     }
-     
+
     onStart({from,chat},first = false){
         this.from = from
         this.chat = chat
@@ -45,13 +48,10 @@ class DayOff extends App{
     }
 
     async onBackPressed(){
-        let {func:tmp} = this.state.pop()
-        this.visited.delete(tmp)
-        console.log(this.visited)
-
         let {func,args} = this.state.pop()
-        
+        this.visited.delete(func)
         const response = await this[func].call(this,args)
+        console.log(response)
         return response
         
     }
@@ -79,7 +79,6 @@ class DayOff extends App{
     onSelectType(params){
         const opts = msg.calendarLayout(this.prefix)
         this.type = params
-        this.onVisit('onSelectType',params)
         return {
             type:'Edit',
             id:this.userID,
@@ -106,6 +105,35 @@ class DayOff extends App{
 
     }
 
+    onTypeListen(context){
+        this.holiday.name = context.text
+        let opts = msg.generateSaveButton(this.selectedDate,this.prefix,'confirm')
+        return {
+            record:true,
+            prefix:'DayOff',
+            userID:this.userID,
+            type:'Send',
+            id:this.userID,
+            message:`Tanggal : *${this.getLocalDate(this.selectedDate)}*\nKeterangan : ${this.holiday.name}`,
+            options:opts   
+        }
+    }
+
+    onSave(){
+        let opts = msg.completeOptionClose(this.prefix)
+        return {
+            type:'Edit',
+            message:'Sukses!',
+            options:opts
+        }
+    }
+
+    onCancel(){
+        console.log('Cancel')
+        return this.onBackPressed()
+    }
+
+
     /**
      * Get locale date in id
      * 
@@ -127,6 +155,10 @@ class DayOff extends App{
         this.holiday.date = params
         
         return {
+            record:true,
+            prefix:'DayOff',
+            userID:this.userID,
+            listenType:true,
             type:'Edit',
             id:this.userID,
             message: `Hari yang dipilih *${this.getLocalDate(this.selectedDate)}*,\nMasukkan keterangan libur : `,
@@ -140,11 +172,11 @@ class DayOff extends App{
 
     }
 
-    onClose(){
+    onClose(){    
         return {
             destroy:true,
             id:this.userID,
-            type:"Delete"
+            prefix:this.prefix
         }
     }
 }

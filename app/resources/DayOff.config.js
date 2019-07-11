@@ -53,8 +53,10 @@ let calendar = [
     ]
 ]
 
+
 const dayOffMenu=(prefix)=>{
     let space = spaces(9)
+    this.prefix = prefix
     return {
         reply_markup: {
             inline_keyboard: [
@@ -64,7 +66,19 @@ const dayOffMenu=(prefix)=>{
                     {text:`${space}Day-Off${space}\t`,
                     callback_data:`${prefix}-onSelectType-Vacation`}
                 ],
-                [
+                [ 
+                    {text:`${em.delete} Close`,callback_data:`${this.prefix}-onClose-`}
+                ]
+            ]
+        }
+    }
+}
+
+const completeOptionClose =(prefix)=>{
+    return {
+        reply_markup: {
+            inline_keyboard: [
+                [ 
                     {text:`${em.delete} Close`,callback_data:`${prefix}-onClose-`}
                 ]
             ]
@@ -125,12 +139,31 @@ const generateCalendar = (prefix,option,count,pos=null)=>{
     }
 }
 
-const generateSaveButton =(date,prefix)=>{
-    let saveButton = [
-        {text:"Save",callback_data:`${prefix}-onAddName-${date}`}
-    ]
-    if(calendar.length==10) calendar.pop()
-    calendar.push(saveButton)
+const generateSaveButton =(date,prefix,dest='calendar')=>{
+    let saveButton
+    let space = spaces(6)
+    if(dest=='calendar'){
+        saveButton = [
+            {text:"Save",callback_data:`${prefix}-onAddName-${date}`}
+        ]
+        if(calendar.length==10) calendar.pop()
+        calendar.push(saveButton)
+    }else if(dest=='confirm'){
+        return {
+            parse_mode:'Markdown',
+            reply_markup: {
+                inline_keyboard: [
+                    [
+                        {text:`${space}Save${space}`,
+                        callback_data:`${prefix}-onSave-`},
+                        {text:`${space}Cancel${space}\t`,
+                        callback_data:`${prefix}-onCancel-`}
+                    ]
+                ]
+            }
+        }
+    }
+
 }
 
 const reset=(prefix)=>{
@@ -145,5 +178,6 @@ module.exports={
     calendarLayout,
     generateCalendar,
     dayOffMenu,
-    generateSaveButton
+    generateSaveButton,
+    completeOptionClose
 }
