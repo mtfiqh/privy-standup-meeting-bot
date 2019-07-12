@@ -1,4 +1,5 @@
 const {getUserTasks} = require('./app/DataTransaction')
+const em = require('./app/resources/emoticons.config')
 
 module.exports = {
     dictionary:{
@@ -16,12 +17,13 @@ module.exports = {
             }
         },
         initMenuCron:{
-            getOptions: id => {
+            getOptions: (id,name) => {
                 return {
                     parse_mode: 'Markdown',
                     reply_markup: {
                         inline_keyboard: [
-                            [{ text: 'Menu', callback_data: `Menu@${id}-cron` }]
+                            [{ text: `${em.add} Add Task(s)`, callback_data: `Menu@${id}-onAddTasks-${id}@${name}` }],
+                            [{ text: `${em.home} Menu`, callback_data: `Menu@${id}-cron-${id}@${name}` }]
                         ]
                     }
                 }
@@ -137,7 +139,7 @@ module.exports = {
                             listTask = listTask.concat(`${counter}. ${task.name}\n`)
                             counter++
                         })
-                        return  `Selamat Pagi ${name}\n${counter==1?`List Task kosong.`:`Berikut ini task kamu yang belum selesai \n${listTask}`} \nJangan lupa tambahkan task hari ini.  \nTekan tombol Menu atau kirim */menu* untuk menggunakan fitur bot.`  
+                        return  `Selamat Pagi ${name}\n${counter==1?'':`Berikut ini task kamu yang belum selesai \n${listTask}`} \nJangan lupa tambahkan task hari ini.`  
                     })
                 }
             },

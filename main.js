@@ -333,7 +333,7 @@ async function initMenu(id) {
 
 async function initMenuCron(context, message) {
     const { from } = context
-    bot.sendMessage(from.id, message, dict.initMenuCron.getOptions(from.id))
+    bot.sendMessage(from.id, message, dict.initMenuCron.getOptions(from.id,from.first_name))
 }
 
 function initTasks(prefix, userID, name) {
@@ -441,9 +441,18 @@ async function remindMessage(type,user){
             },
             chat: null
         }
-        // const menu = new Menu(user.userID).addCache(`from@${user.userID}`, { from: context.from })
-        // lookUp[`Menu@${user.userID}`] = menu
-        // initMenuCron(context, message)
+
+        // lookUp[`addTasks@${user.userID}`] = new Tasks(user.userID, 'addTasks', user.name)
+        // currentState[user.userID] = 'addTasks'
+        // const response = {
+        //     message: message,//dict.addTasks.getMessage(),
+        //     options: dict.addTasks.getOptions()
+        // }
+        // handleRespond(response, user.userID)
+
+        const menu = new Menu(user.userID).addCache(`from@${user.userID}`, { from: context.from })
+        lookUp[`Menu@${user.userID}`] = menu
+        initMenuCron(context, message)
     })
 }
 
@@ -486,7 +495,7 @@ function deleteHistory(prefix){
  * Cron function for reminder every 9 A.M
  * The function get data from database and check if user is active or not
  */
-cron.schedule('*/10 * * * * *',()=>{
+cron.schedule('* * * * *',()=>{
     reminder(10)
 })
 
