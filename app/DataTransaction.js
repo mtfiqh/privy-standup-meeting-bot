@@ -209,34 +209,79 @@ const getProjects = async (type) => {
 }
 
 const getUserTasks = async (uid) => {
-    /**
-     * Get unfinished user tasks
-     * @param {uid} - userID of a user 
-     * 
-     * @returns {taskList} - returns task list of user in an Array
-     */
-    let taskList = []
-    
+
+    let taskList = new Set([])
+    let projects = new Set([])
+
     dbRef = db.collection('tasks').where('userID', '==', uid)
     return dbRef.get()
-    .then(data => {
-    
-        data.forEach(dt => {
-    
+    .then(async data => {
+        
+        data.forEach( dt => {
             if (dt.data().status != 'done') {
-                taskList.push(dt.data())
-            }
-    
+                taskList.add(dt.data())
+            } 
         })
-    
-        return taskList
-    })
-    .catch(err => {
+        await db.collection('projects').get()
+        .then(result=>{
+            result.forEach(res=>{
+                if(res.data().status==='finished'){
+                    projects.add(res.data().projectName)
+                }
+            })
+        })
+        taskList.forEach(task=>{
+            if(projects.has(task.projectName.toString())){
+                taskList.delete(task)
+            }
+        })
+        return sortingTask(Array.from(taskList))
+    }).catch(err => {
         console.log('Error : ' + err.details)
     })
     .finally(() => {
         console.log('Tasks for ' + uid + ' successfully loaded')
     })
+}
+
+const sortingTask=(taskList)=>{
+    /**
+     * Sorting an array from tasklist to its project based on priority
+     */
+    const all = {}
+    const high      = []
+    const medium    = []
+    const low       = []
+    let temp
+    
+    taskList.forEach(task=>{
+        if(task.priority==='HIGH'){
+            high.push(task)
+        }else if(task.priority==='MEDIUM'){
+            medium.push(task)
+        }else{
+            low.push(task)
+        }
+        
+        all[task.projectName] = []
+    })
+
+    temp = high.concat(medium,low)
+    temp.forEach(item=>{
+        all[item.projectName].push(item)
+    })
+
+    let res = []
+    for(let key of Object.keys(all)){
+        all[key].forEach(item=>{
+            res.push(item)
+        })
+    }
+
+    return res
+}
+
+const sortingProjects = (taskList)=>{
 
 }
 
