@@ -1,235 +1,255 @@
-const {isAdmin} = require("./DataTransaction")
-const {
-        menuAdmin,
-        menuUser,
-        menuProjectsAdmin,
-        menuProjectsUser,
-        menuTasksUser,
-        menuTasksAdmin
-    } = require('./resources/menu.config')
-
+const {isAdmin,exportToExcel} = require("./DataTransaction")
 const {App} = require('../core/App')
+const {
+    menuAdmin,
+    menuUser,
+    menuProjectsAdmin,
+    menuProjectsUser,
+    menuTasksUser,
+    menuTasksAdmin
+} = require('./resources/menu.config')
 
 class Menu extends App{
-    constructor(bot,userID){
+    constructor(userID){
         super()
         this.register([
             //Basic Section
-            this.onMain,
-            this.onBackPressed,
-            
+            'onMain',
+            'onBackPressed',
+            'onSave',
+            'onClose',
+            'onDayOff',
+            'cron',
+            'closeChild',
             //Task Section
-            this.onTasksClicked,
-            this.onReportTasks,
-            this.onAddTasks,
-            this.onListTasks,
-            this.onOfferTasks,
-            this.onAssignTasks,
-            
+            'onTasksClicked',
+            'onReportTasks',
+            'onAddTasks',
+            'onListTasks',
+            'onOfferTasks',
+            'onAssignTasks',
             //Project Section
-            this.onProjectsClicked,
-            this.onAddProjects,
-            this.onEditProjects,
-            this.onDeleteProjects,
-            this.onListProjects,
-            
-            // Add new section here
-
+            'onProjectsClicked',
+            'onAddProjects',
+            'onEditProjects',
+            'onDeleteProjects',
+            'onListProjects',
         ])
-
         // Define Class variable here
-        this.prefix = `${Menu.name}@${userID}`
-        this.isAdmin={}
-        this.state=[]
-        this.bot=bot
+        this.prefix     = `${Menu.name}@${userID}`
+        this.userID     =  userID
+        this.isAdmin    = {}
+        this.state      = []
+        this.visited    = new Set([])
         
     }
 
 
     //----------------BASIC SECTION-----------------------------------------
-    async onMain({from,chat}){
-        const load = result=>{
-        this.isAdmin = result
+
+    async cron(){
+        const {from } = this.cache[`from@${this.userID}`]
+        return await this.onMain({from:from,chat:undefined})
+    }
+
+    async onMain({from,chat},first = false){
+        this.message = ""
         this.from = from
-        let opts = this.getMessageOptionOnMenu(from.id)
-        let greetings = this.generateGreetings()
-        
-        
-        this.bot.sendMessage(chat.id,   
-            `Selamat ${greetings} ${from.first_name},\nSilahkan gunakan tombol dibawah ini.`,
-            opts)
-            
-        }
+
+        const load = result => { this.isAdmin = result }
         await isAdmin(from.id).then(load.bind(this))
-        
-        this.state.push({func:this.onMain.name,args:{from,chat}})
+        const opts = this.getMessageOptionOnMenu(from.id)
+        const greetings = this.generateGreetings()
+        this.visited.clear()
+        this.onVisit(this.onMain.name,{from,chat})
+        return {
+            type:  first ? "Send": "Edit",
+            id:this.userID,
+            message: `Selamat ${greetings} ${from.first_name},\nSilahkan gunakan tombol dibawah ini.`,
+            options: opts 
+        }
         
     }
     
-    onBackPressed(){
-        this.state.pop()
-        let {func,args} = this.state.pop()
-
-        this[func].call(this,args)
-        return {deleteLast:true}
-    }
-        
-    //-----------------END SECTION----------------------------
-
-
-    //-----------------TASK SECTION---------------------------
-    onTasksClicked(){
-        this.state.push({func:this.onTasksClicked.name,args:{}})
-
-        if(this.isAdmin){
-            return menuTasksAdmin(this.prefix,this.from)
-        }else{
-            return menuTasksUser(this.prefix,this.from)
+    onDayOff(){
+        return {
+            type:'Auto',
+            message:'/dayOff'
         }
     }
 
-    onAddTasks(){
-        this.state.push({func:this.onAddTasks.name,args:{}})
-
+    onClose(){
         return {
-            //Objects to trigger taufiq's function
-            
-            //Testing
-            message:'addTask'
+            destroy:true,
+            id:this.userID,
+            type:"Delete"
+        }
+    }
+
+    closeChild(){
+        return {
+            id:this.userID,
+            type:"Delete"
+        }
+    }
+    
+    async onSave(){
+        try {
+           await exportToExcel()           
+           this.onVisit(this.onVisit.name) 
+        } catch (error) {
+            return {
+                type:'Edit',
+                id:this.userID,
+                message:error.message,
+            }
+        }
+        return {
+            type:'Send',
+            id:this.userID,
+            message:'Success Export to Excel'
+        } 
+    }
+
+    async onBackPressed(){
+        const {func:tmp} = this.state.pop()
+        const {func,args} = this.state.pop()
+        const response = await this[func].call(this,args)
+        this.visited.delete(tmp)
+        return response
+    }
+        
+    onVisit(name,args){
+        if(!this.visited.has(name)){
+            this.visited.add(name)
+            this.state.push({func:name,args:args})        
+        }
+    }
+
+    //-----------------TASK SECTION---------------------------
+    onTasksClicked(){
+        this.onVisit('onTasksClicked')
+        if(this.isAdmin) return menuTasksAdmin(this.prefix,this.from)
+        return menuTasksUser(this.prefix,this.from)
+    }
+
+    onAddTasks(){
+        this.onVisit('onTasksClicked')
+        return {
+            type:'Auto',
+            message:'/addTasks'
         }
     }
 
     onListTasks(){
-        this.state.push({func:this.onListTasks.name,args:{}})
-        
+        this.onVisit('onTasksClicked')
         return {
-            //Objects to trigger taufiq's function
-
-            //Testing
-            message:'ListTask',
+            type:'Auto',
+            message:'/showTasks',
         }
     }
 
     onReportTasks(){
-        this.state.push({func:this.onReportTasks.name,args:{}})
+        this.onVisit('onTasksClicked')
         return {
-
-            //Testing
-            message:'ReportTask'
+            type:'Auto',
+            message:'/report'
         }
     }
 
     onOfferTasks(){
-        this.state.push({func:this.onOfferTasks.name,args:{}})
+        this.onVisit('onTasksClicked')
         return {
-            //Object to trigger Jose's function
-
-            //Testing
-            message:'OfferTask',
+            type:'Auto',
+            message:'/offer',
         }
     }
 
     onAssignTasks(){
-        this.state.push({func:this.onAssignTasks.name,args:{}})
+        this.onVisit('onTasksClicked')
         return {
-            //Objects to trigger taufiq's function
-            //Testing
-            message:'assignTask',
+            type:'Auto',
+            message:'/assignTasks',
         }
     }
-
-    //----------------END SECTION----------------------------
 
 
     //----------------PROJECT SECTION------------------------
     onProjectsClicked(){
-        this.state.push({func:this.onProjectsClicked.name,args:{}})
-
-        if(this.isAdmin){
+        this.onVisit('onProjectsClicked')
+        if(this.isAdmin)
             return menuProjectsAdmin(this.from,this.prefix)
-        }else{
-            return menuProjectsUser(this.from,this.prefix)
-        }
+
+        return menuProjectsUser(this.from,this.prefix)
     }
 
     onAddProjects(){
-        this.state.push({func:this.onAddProjects.name,args:{}})
+        this.onVisit('onProjectsClicked')
         return {
-            //Objects to trigger taufiq's function
-            //Testing
-            message:'addProject',
+            type:'Auto',
+            message:'/createProjects',
         }
     }
 
     onEditProjects(){
-        this.state.push({func:this.onEditProjects.name,args:{}})
+        this.onVisit('onProjectsClicked')
         return {
-            //Objects to trigger taufiq's function
-            //Testing
-            message:'editProject',
+            type:'Auto',
+            message:'/updateProjects',
         }
     }
 
     onDeleteProjects(){
-        this.state.push({func:this.onDeleteProjects.name,args:{}})
+        this.onVisit('onProjectsClicked')
         return {
-            //Objects to trigger taufiq's function
-            //Testing
-            message:'deleteProject',
+            type:'Auto',
+            message:'/deleteProjects',
         }
     }
 
     onListProjects(){
-        this.state.push({func:this.onListProjects.name,args:{}})
+        this.onVisit('onProjectsClicked')
         return {
-            //Objects to trigger taufiq's function
-            //Testing
-            message:'listProject',
+            type:'Auto',
+            message:'/listProjects',
         }
     }
-
-    //-----------------END SECTION------------------------------
-
 
     //-----------------SUPPORT FUNCTION-------------------------
     
     /**
      * Generate message option (button) based on user type (admin|user)
      * @param {int} userID - userID of a user
-     * 
      * @returns {Object} messageOption - Message that will be rendered as button
      */
     getMessageOptionOnMenu(userID){
-        if(this.isAdmin){
+        if(this.isAdmin)
             return menuAdmin(this.prefix,userID)
-        }else{
-            return menuUser(this.prefix,userID)
-        }
+
+        return menuUser(this.prefix,userID)
     }
 
     /**
      * Generate greetings based on local language and time
-     * 
      * @returns {String} message - {'Pagi'|'Siang'|'Sore'|'Malam'}
      */
     generateGreetings(){
+        const hour  = new Date().getHours()
 
-        let now = new Date()
-        let hour = now.getHours()
-        let message = ''
-        
-        if(hour>4&&hour<10){
-            message = 'Pagi'
-        }else if(hour>=10&&hour<15){
-            message = 'Siang'
-        }else if(hour>=15&&hour<19){
-            message = 'Sore'
-        }else{
-            message = 'Malam'
-        }
-        return message
+        if(hour>4&&hour<10) 
+            return 'Pagi'
+
+        else if(hour>=10&&hour<15)
+            return 'Siang'
+
+        else if(hour>=15&&hour<19)
+            return 'Sore'
+
+        return 'Malam'
     }
     
 }
 
-module.exports={Menu}
+module.exports={
+    Menu
+}
