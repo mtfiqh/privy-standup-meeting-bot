@@ -635,7 +635,7 @@ const exportToExcel = async () => {
     let usersReport
     const reportList = []
     const report = [
-        ["Nama", "Done", "In Progress", "Info", "Problem", "Project"]
+        ["Nama", "In Progress","Done", "Problem", "Project"]
     ]
 
     await getPastTaskToExcel()
@@ -697,24 +697,7 @@ const generateColumn = async (userData, todayReport) => {
         }
         
         tmp.push(userData['name'])
-        if (done != undefined) {
-            if (done.length > 1) {
-                let counter = 1
-    
-                done.forEach(item => {
-                    doneTemp = doneTemp.concat(counter + '. ' + item + '\n')
-                    counter++
-                })
-            } else {
-                doneTemp = todayReport[userData['userID']].done[0]
-                if(doneTemp==undefined){
-                    infoTemp = ' '
-                }
-            }
-        } else {
-            doneTemp = ' '
-        }
-        tmp.push(doneTemp)
+        
     
     
         console.log(inProgress.length)
@@ -745,27 +728,48 @@ const generateColumn = async (userData, todayReport) => {
         }
         tmp.push(ipTemp)
     
-        if (info != undefined) {
-            if (info.length > 1) {
+
+        if (done != undefined) {
+            if (done.length > 1) {
                 let counter = 1
-                
-                info.forEach(item => {
-                    if(item!=undefined){
-                        infoTemp = infoTemp.concat(counter + '. ' + item + '\n')
-                        counter++
-                    }
+    
+                done.forEach(item => {
+                    doneTemp = doneTemp.concat(counter + '. ' + item + '\n')
+                    counter++
                 })
             } else {
-                infoTemp = todayReport[userData['userID']].info[0]
-                if(infoTemp==undefined){
+                doneTemp = todayReport[userData['userID']].done[0]
+                if(doneTemp==undefined){
                     infoTemp = ' '
                 }
             }
-    
         } else {
-            infoTemp = ' '
+            doneTemp = ' '
         }
-        tmp.push(infoTemp)
+        tmp.push(doneTemp)
+
+
+        // if (info != undefined) {
+        //     if (info.length > 1) {
+        //         let counter = 1
+                
+        //         info.forEach(item => {
+        //             if(item!=undefined){
+        //                 infoTemp = infoTemp.concat(counter + '. ' + item + '\n')
+        //                 counter++
+        //             }
+        //         })
+        //     } else {
+        //         infoTemp = todayReport[userData['userID']].info[0]
+        //         if(infoTemp==undefined){
+        //             infoTemp = ' '
+        //         }
+        //     }
+    
+        // } else {
+        //     infoTemp = ' '
+        // }
+        // tmp.push(infoTemp)
     
     
         if (problem != undefined) {
