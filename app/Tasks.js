@@ -34,7 +34,7 @@ class Tasks extends App{
             let i=1
             for (let task of tasks){
                 let tempDate = task.date.toDate()
-                let readableDate = tempDate.getDate()+'/'+tempDate.getMonth()+'/'+tempDate.getFullYear()
+                let readableDate = tempDate.getDate()+'/'+(tempDate.getMonth()+1)+'/'+tempDate.getFullYear()
                 this.text+=`\n<b>#${task.projectName}</b>\n${i}. ${task.name} [${task.priority}]\nDibuat pada: ${readableDate}\n`
                 i++
             }

@@ -13,7 +13,8 @@ const tasks     = new Set([])
 load = () => {
     //Using to testing
     //exportToExcel()
-    listenTasks()
+    // listenTasks()
+    resetStat()
 }
 
 listenUsers = async () => {
@@ -224,19 +225,20 @@ const getUserTasks = async (uid) => {
                 taskList.add(dt.data())            
             } 
         })
-        await db.collection('projects').get()
-        .then(result=>{
-            result.forEach(res=>{
-                if(res.data().status==='finished'){
-                    projects.add(res.data().projectName)
-                }
-            })
-        })
-        taskList.forEach(task=>{
-            if(projects.has(task.projectName.toString())){
-                taskList.delete(task)
-            }
-        })
+        //Code below to hide task of finished projects
+        // await db.collection('projects').get()
+        // .then(result=>{
+        //     result.forEach(res=>{
+        //         if(res.data().status==='finished'){
+        //             projects.add(res.data().projectName)
+        //         }
+        //     })
+        // })
+        // taskList.forEach(task=>{
+        //     if(projects.has(task.projectName.toString())){
+        //         taskList.delete(task)
+        //     }
+        // })
         return sortingTask(Array.from(taskList))
     }).catch(err => {
         console.log('Error : ' + err.details)
@@ -370,23 +372,13 @@ const addTaskTransaction = async (data) => {
      * @param {data} - an object that contains information of task
      * 
      */
-    
+    let { timestamp } = getDate()    
     let taskIDs = []
-    let rep     = {}
-    
+    let userID
     for (dt of data) {
-        rep[dt.userID] = {
-            done      : [],
-            inProgress: [],
-            info      : [],
-            problems  : []
-        }
-    }
-
-    for (dt of data) {
+        console.log(data)
         let taskRef       = db.collection('tasks').doc()
         let taskID        = taskRef.id
-        let { timestamp } = getDate()
         let projectRef    = db.collection("projects").where("projectName", "==", dt.projectName)
         taskIDs.push(taskID)
         
@@ -396,8 +388,8 @@ const addTaskTransaction = async (data) => {
                 let temp = {}
                 temp[dt.userID] = {}
                 temp[dt.userID]['inProgress'] = admin.firestore.FieldValue.arrayUnion(dt.name)
-
-
+                userID = dt.userID
+                
                 taskRef.set(
                     {
                         taskID     : taskRef.id,
@@ -417,11 +409,10 @@ const addTaskTransaction = async (data) => {
                 db.collection('projects').doc(item.id)
                 .update({ users: admin.firestore.FieldValue.arrayUnion(dt.userID) })
 
-                db.collection('reports').doc(timestamp.toString()).get()
-                .then(doc => {
-                    db.collection('reports').doc(timestamp.toString())
-                    .set(temp, { merge: true })
-                })
+                db.collection('reports').doc(timestamp.toString())
+                .set(temp, { merge: true })
+                
+                
                     
             })
             
@@ -435,6 +426,13 @@ const addTaskTransaction = async (data) => {
         })
 
     }
+    
+    db.collection('statistics').doc(timestamp.toString())
+    .get().then(results=>{
+        db.collection('statistics').doc(timestamp.toString())
+        .set({[userID.toString()]:{Added:results.data()[userID.toString()].Added+data.length}},{merge:true})
+    })
+
     return taskIDs
 }
 
@@ -579,8 +577,10 @@ const deleteProject = async (projectName) => {
 
 const updateTaskStatus = (payload) => {
     let {timestamp} = getDate()
+    let stat = {}
     Object.keys(payload).forEach(key => {
         items = payload[key]
+        stat[key] = 0
         items.forEach(item => {
             const { projectName, userId: userID, name } = item
             const taskReference = db.collection('tasks')
@@ -595,17 +595,24 @@ const updateTaskStatus = (payload) => {
                     temp[userID]['done'] = admin.firestore.FieldValue.arrayUnion(name)
                     temp[userID]['inProgress'] = admin.firestore.FieldValue.arrayRemove(name)
 
-                    db.collection('reports').doc(timestamp.toString()).get()
-                    .then(doc => {
-                        db.collection('reports').doc(timestamp.toString())
-                        .set(temp, { merge: true })
-                    })
+                    db.collection('reports').doc(timestamp.toString())
+                    .set(temp, { merge: true })
+
+                    stat[key]++
+
                 })
 
             }).catch(err => {
                 console.log("Error when updating task", err)
             }).finally(`Task ${name} Updated!`)
         })
+        
+        db.collection('statistics').doc(timestamp.toString())
+        .get().then(results=>{
+            db.collection('statistics').doc(timestamp.toString())
+            .set({[key.toString()]:{Done:results.data()[key.toString()].Done+stat[key]}},{merge:true})
+        })
+        
     })
 }
 
@@ -617,16 +624,34 @@ const getPastTaskToExcel= ()=>{
             if(res.data().status=='In Progress'){
                 let temp = {}
                 let {timestamp} = getDate()
+                
                 temp[res.data().userID] = {}
                 temp[res.data().userID]['inProgress'] = admin.firestore.FieldValue.arrayUnion(res.data().name)
-                
+
                 db.collection('reports').doc(timestamp.toString())
-                .set(temp, { merge: true })    
-    
+                .set(temp, { merge: true })  
             }
         })
     })
 
+}
+
+const resetStat = ()=>{
+    let {timestamp} = getDate()
+    getUsersData('all').then(results=>{
+        results.forEach(res=>{
+            db.collection('statistics').doc(timestamp.toString())
+            .set({[res.userID.toString()]:{Done:0,Added:0,Recurring:0}}, { merge: true }).then(()=>{
+                getUserTasks(res.userID).then(task=>{
+                    db.collection('statistics').doc(timestamp.toString())
+                    .get().then(results=>{
+                        db.collection('statistics').doc(timestamp.toString())
+                        .set({[res.userID.toString()]:{Recurring:results.data()[res.userID.toString()].Recurring+task.length}},{merge:true})
+                    })
+                })
+            })
+        })
+    })
 }
 
 const exportToExcel = async () => {
@@ -1009,7 +1034,7 @@ const updateUser = (userID,payload)=>{
     db.collection('users').doc(userID.toString()).set(payload,{merge:true})
 }
 
- //load()
+load()
 
 
 module.exports = {
