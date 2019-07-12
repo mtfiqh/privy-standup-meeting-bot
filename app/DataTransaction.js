@@ -12,6 +12,8 @@ const tasks     = new Set([])
 
 load = () => {
     //Using to testing
+    //exportToExcel()
+    listenTasks()
 }
 
 listenUsers = async () => {
@@ -86,7 +88,7 @@ listenTasks = async () => {
                 if (counter === 5) {
                     console.log('More tasks loading in background')
                 }
-                
+
                 counter++
             } else if (data.type === 'removed') {
                 
@@ -218,8 +220,8 @@ const getUserTasks = async (uid) => {
     .then(async data => {
         
         data.forEach( dt => {
-            if (dt.data().status != 'done') {
-                taskList.add(dt.data())
+            if (dt.data().status == 'In Progress') {
+                taskList.add(dt.data())            
             } 
         })
         await db.collection('projects').get()
@@ -279,10 +281,6 @@ const sortingTask=(taskList)=>{
     }
 
     return res
-}
-
-const sortingProjects = (taskList)=>{
-
 }
 
 const getUserProjects = async (uid) => {
@@ -501,13 +499,19 @@ const isAdmin = async (userID) => {
 }
 
 const saveUser = (userID, data) => {
-    db.collection('users').doc(userID).set(data)
-        .catch(err => {
-            console.log('Error : ' + err.details)
-        })
-        .finally(result => {
-            console.log('result')
-        })
+    isUserExist(userID).then(res=>{
+        if(!res){
+            db.collection('users').doc(userID.toString()).set(data)
+            .catch(err => {
+                console.log('Error : ' + err.details)
+            })
+            .finally(result => {
+                console.log('result')
+            })
+        }else{
+            console.log(userID+' already registered!')
+        }
+    })
 }
 
 const assignUserToProjects = (projectName, userID) => {
@@ -574,6 +578,7 @@ const deleteProject = async (projectName) => {
 }
 
 const updateTaskStatus = (payload) => {
+    let {timestamp} = getDate()
     Object.keys(payload).forEach(key => {
         items = payload[key]
         items.forEach(item => {
@@ -585,7 +590,18 @@ const updateTaskStatus = (payload) => {
             taskReference.get().then(results => {
                 results.forEach(result => {
                     db.collection('tasks').doc(result.id).update({ status: 'done' })
+                    let temp = {}
+                    temp[userID] = {}
+                    temp[userID]['done'] = admin.firestore.FieldValue.arrayUnion(name)
+                    temp[userID]['inProgress'] = admin.firestore.FieldValue.arrayRemove(name)
+
+                    db.collection('reports').doc(timestamp.toString()).get()
+                    .then(doc => {
+                        db.collection('reports').doc(timestamp.toString())
+                        .set(temp, { merge: true })
+                    })
                 })
+
             }).catch(err => {
                 console.log("Error when updating task", err)
             }).finally(`Task ${name} Updated!`)
@@ -593,14 +609,36 @@ const updateTaskStatus = (payload) => {
     })
 }
 
+const getPastTaskToExcel= ()=>{
+
+    return db.collection('tasks').get()
+    .then(result=>{
+        result.forEach(res=>{
+            if(res.data().status=='In Progress'){
+                let temp = {}
+                let {timestamp} = getDate()
+                temp[res.data().userID] = {}
+                temp[res.data().userID]['inProgress'] = admin.firestore.FieldValue.arrayUnion(res.data().name)
+                
+                db.collection('reports').doc(timestamp.toString())
+                .set(temp, { merge: true })    
+    
+            }
+        })
+    })
+
+}
+
 const exportToExcel = async () => {
     const { year, month, day, timestamp } = getDate()
     let userIDs = new Set([])
-    let usersReport = {}
+    let usersReport
     const reportList = []
     const report = [
         ["Nama", "Done", "In Progress", "Info", "Problem", "Project"]
     ]
+
+    await getPastTaskToExcel()
 
     await getUsersData('all').then(async results => {
         results.forEach(item => {
@@ -630,103 +668,148 @@ const exportToExcel = async () => {
 
 const generateColumn = async (userData, todayReport) => {
     const tmp       = []
-    const report    = {}
+    const indexing    = {}
     let getTask     = []
     let ipTemp      = ''
     let doneTemp    = ''
     let infoTemp    = ''
     let problemTemp = ''
     let project     = ''
-    const inProgress    = todayReport[userData['userID']].inProgress
-    const done          = todayReport[userData['userID']].done
-    const info          = todayReport[userData['userID']].info
-    const problem       = todayReport[userData['userID']].problem
+    let inProgress
+    let done
+    let info
+    let problem
+    if(todayReport==undefined){
+        throw new Error('No Reports Today')
+    }
+    if(todayReport[userData['userID']]!=undefined){
+        if(todayReport[userData['userID']].inProgress!=undefined){
+            inProgress    = todayReport[userData['userID']].inProgress
+        }
+        if(todayReport[userData['userID']].done!=undefined){
+            done          = todayReport[userData['userID']].done
+        }
+        if(todayReport[userData['userID']].info!=undefined){
+            info          = todayReport[userData['userID']].info
+        }
+        if(todayReport[userData['userID']].problem!=undefined){
+            problem          = todayReport[userData['userID']].problem
+        }
+        
+        tmp.push(userData['name'])
+        if (done != undefined) {
+            if (done.length > 1) {
+                let counter = 1
     
-    tmp.push(userData['name'])
-    if (done != undefined) {
-        if (done.length > 1) {
-            let counter = 1
-
-            done.forEach(item => {
-                doneTemp = doneTemp.concat(counter + '. ' + item + '\n')
-                counter++
-            })
+                done.forEach(item => {
+                    doneTemp = doneTemp.concat(counter + '. ' + item + '\n')
+                    counter++
+                })
+            } else {
+                doneTemp = todayReport[userData['userID']].done[0]
+                if(doneTemp==undefined){
+                    infoTemp = ' '
+                }
+            }
         } else {
-            doneTemp = todayReport[userData['userID']].done[0]
+            doneTemp = ' '
         }
-    } else {
-        doneTemp = ' '
-    }
-    tmp.push(doneTemp)
-
-
-    if (inProgress != undefined) {
-        if (inProgress.length > 1) {
-            let counter = 1
-            
-            inProgress.forEach((item) => {
-                ipTemp = ipTemp.concat(counter + '. ' + item + '\n')
-                getTask.push(getProjectByTask(item))
-                counter++
-            })
-
+        tmp.push(doneTemp)
+    
+    
+        console.log(inProgress.length)
+        if (inProgress != undefined) {
+            if (inProgress.length > 1) {
+                let counter = 1
+                
+                inProgress.forEach((item) => {
+                    if(item!=undefined){
+                        ipTemp = ipTemp.concat(counter + '. ' + item + '\n')
+                        getTask.push(getProjectByTask(item))
+                        counter++
+                    }
+                        
+                })
+            } else {
+                ipTemp = todayReport[userData['userID']].inProgress[0]
+                if(ipTemp!=undefined){
+                    getTask.push(getProjectByTask(ipTemp))
+                }else{
+                    ipTemp=' '
+                }
+            }
         } else {
-            ipTemp = todayReport[userData['userID']].inProgress[0]
-            getTask.push(getProjectByTask(ipTemp))
+            console.log('bawah')
+            ipTemp  = ' '
+            project = ' '
         }
-    } else {
-        ipTemp  = ' '
-        project = ' '
-    }
-    tmp.push(ipTemp)
-
-    if (info != undefined) {
-        if (info.length > 1) {
-            let counter = 1
-            
-            info.forEach(item => {
-                infoTemp = infoTemp.concat(counter + '. ' + item + '\n')
-                counter++
-            })
+        tmp.push(ipTemp)
+    
+        if (info != undefined) {
+            if (info.length > 1) {
+                let counter = 1
+                
+                info.forEach(item => {
+                    if(item!=undefined){
+                        infoTemp = infoTemp.concat(counter + '. ' + item + '\n')
+                        counter++
+                    }
+                })
+            } else {
+                infoTemp = todayReport[userData['userID']].info[0]
+                if(infoTemp==undefined){
+                    infoTemp = ' '
+                }
+            }
+    
         } else {
-            infoTemp = todayReport[userData['userID']].info[0]
+            infoTemp = ' '
         }
-
-    } else {
-        infoTemp = ' '
-    }
-    tmp.push(infoTemp)
-
-
-    if (problem != undefined) {
-        if (problem.length > 1) {
-            let counter = 1
-            
-            problem.forEach(item => {
-                problemTemp = problemTemp.concat(counter + '. ' + item + '\n')
-                counter++
-            })
+        tmp.push(infoTemp)
+    
+    
+        if (problem != undefined) {
+            if (problem.length > 1) {
+                let counter = 1
+                
+                problem.forEach(item => {
+                    if(item!=undefined){
+                        problemTemp = problemTemp.concat(counter + '. ' + item + '\n')
+                        counter++
+                    }
+                })
+            } else {
+                problemTemp = todayReport[userData['userID']].problem[0]
+                if(problemTemp==undefined){
+                    problemTemp = ' '
+                }
+            }
+    
         } else {
-            problemTemp = todayReport[userData['userID']].problem[0]
+            problemTemp = ' '
         }
+        tmp.push(problemTemp)
+    
+        await Promise.all(getTask).then(res => {
+            let counter = 1
+            res.forEach(r => {
 
-    } else {
-        problemTemp = ' '
-    }
-    tmp.push(problemTemp)
-
-    await Promise.all(getTask).then(res => {
-        let counter = 1
-
-        res.forEach(r => {
-            project = project.concat(counter + '. ' + r[0].projectName + '\n')
-            counter++
+                if(r.length!=0){
+                    if(!(r[0].projectName in indexing)){
+                        indexing[r[0].projectName] = counter
+                        counter++
+                    }
+                    project = project.concat(indexing[r[0].projectName] + 
+                    '. ' + r[0].projectName + '\n')
+                }
+            })
         })
-    })
+    
+        tmp.push(project)
+    
+        return tmp
+    }
 
-    tmp.push(project)
-
-    return tmp
 }
 
 const getTodayReport = async () => {
@@ -779,9 +862,25 @@ const getTaskCount = async () => {
 }
 
 const takeOverTask = (payloads) => {
+    let {timestamp} = getDate()
     payloads.forEach(payload =>{
+
         const {taskId:tid, receiverId:uidB, senderId:uidL} = payload
         db.collection('tasks').doc(tid).set({ userID: uidB }, { merge: true })
+
+        db.collection('tasks').doc(tid).get()
+        .then(res=>{
+            console.log(res.data())
+            let temp = {}
+            temp[uidB] = {}
+            temp[uidL] = {}
+            temp[uidB]['inProgress'] = admin.firestore.FieldValue.arrayUnion(res.data().name)
+            temp[uidL]['inProgress'] = admin.firestore.FieldValue.arrayRemove(res.data().name)
+            
+            db.collection('reports').doc(timestamp.toString())
+            .set(temp, { merge: true })
+            
+        })
         
         let ProjectRef = db.collection('projects')
         .where('Task', 'array-contains', db.collection('tasks').doc(tid))
@@ -800,9 +899,9 @@ const takeOverTask = (payloads) => {
                         userExist++
                     }
                 }
-                if (userExist === 1) {
-                    tmp.ref.update({ users: admin.firestore.FieldValue.arrayRemove(uidL) })
-                }
+                // if (userExist === 1) {
+                //     tmp.ref.update({ users: admin.firestore.FieldValue.arrayRemove(uidL) })
+                // }
                 tmp.ref.update({ users: admin.firestore.FieldValue.arrayUnion(uidB) })
                 console.log('OK')
             }
@@ -836,17 +935,17 @@ const addHoliday=({name,date})=>{
     console.log(timestamp)
 }
 
-const userDayOff=async ({userID,startDate,long})=>{
+const userDayOff=async ({userID,startDate,long,reason})=>{
     let start = generateTimestamp(startDate)
     
     for(let i=0;i < long;i++){
-        await insertDayOff(start,userID)
+        await insertDayOff(start,userID,reason)
         start=generateTimestamp(dateCalc.add(start,1,'day'))
     }
     
 }
 
-const insertDayOff=async(date,userID)=>{
+const insertDayOff=async(date,userID,reason)=>{
     return db.collection('day-off').doc(date.toString())
     .get().then(async results=>{
         if(results.data()===undefined){   
@@ -860,12 +959,12 @@ const insertDayOff=async(date,userID)=>{
             .set(schema,{merge:true})
             
             await db.collection('day-off').doc(date.toString())
-            .update({ users:admin.firestore.FieldValue.arrayUnion(userID) })
+            .update({ users:admin.firestore.FieldValue.arrayUnion({userID:userID,reason:reason}) })
         }else{
             console.log(results.data().type)
             if(results.data().type!='holiday'){
                 db.collection('day-off').doc(date.toString())
-                .update({users:admin.firestore.FieldValue.arrayUnion(userID) })
+                .update({users:admin.firestore.FieldValue.arrayUnion({userID:userID,reason:reason}) })
             } 
         }
         
@@ -886,26 +985,34 @@ const checkDayOff = async()=>{
      */
 
     let {timestamp} = getDate()
-    let todayDate = timestamp
+    todayDate = timestamp
+    let result = []
+
     return db.collection('day-off').doc(todayDate.toString())
     .get().then(results=>{
         if(results.data()===undefined){
             return []
         }else{
-            return {
-                    type:results.data().type,
-                    data:results.data().users
-                }
+            results.data().users.forEach(res=>{
+                result.push(res.userID)
+            })
         }
+        return result
     })
 }
 
-load()
+const updateUser = (userID,payload)=>{
+    db.collection('users').doc(userID.toString()).set(payload,{merge:true})
+}
+
+ //load()
+
 
 module.exports = {
     load,
     listenProjects,
     listenUsers,
+    updateUser,
     addProjects,
     addTaskTransaction,
     checkDayOff,
@@ -913,17 +1020,20 @@ module.exports = {
     userDayOff,
     deleteProject,
     getTaskCount,
+    getDate,
     exportToExcel,
     getUserProjects,
     getUserTasks,
     editProjectName,
     getUsersData,
+    generateTimestamp,
     getProjects,
     saveUser,
     isUserExist,
     getUserTasksOrderByPriority,
     assignUserToProjects,
     updateTaskStatus,
+    checkDayOff,
     isAdmin,
     setAdmin,
     takeOverTask
