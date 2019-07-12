@@ -1,3 +1,4 @@
+const {getUserTasks} = require('./app/DataTransaction')
 
 module.exports = {
     dictionary:{
@@ -126,12 +127,22 @@ module.exports = {
                 }
             }
         },
-        remainder:{
+        reminder:{
             first:{
-                getMessage : name => `Selamat Pagi ${name}\nJangan lupa mengisi task hari ini. \nTekan tombol Menu atau kirim */menu* untuk menggunakan fitur bot.`
+                getMessage : async (name,uid) =>{
+                    let listTask = ''
+                    let counter = 1
+                    return getUserTasks(parseInt(uid)).then(tasks=>{
+                        tasks.forEach(task=>{
+                            listTask = listTask.concat(`${counter}. ${task.name}\n`)
+                            counter++
+                        })
+                        return  `Selamat Pagi ${name}\n${counter==1?`List Task kosong.`:`Berikut ini task kamu yang belum selesai \n${listTask}`} \nJangan lupa tambahkan task hari ini.  \nTekan tombol Menu atau kirim */menu* untuk menggunakan fitur bot.`  
+                    })
+                }
             },
             second:{
-                getMessage: name => `Selamat Siang ${name}\nJangan lupa melaporkan task hari ini yang sudah *Done*. \nTekan tombol Menu atau kirim */menu* untuk menggunakan fitur bot.`
+                getMessage: name => `Selamat Siang ${name}\nJangan lupa melaporSkan task hari ini yang sudah *Done*. \nTekan tombol Menu atau kirim */menu* untuk menggunakan fitur bot.`
             }
         }
 

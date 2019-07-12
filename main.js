@@ -431,27 +431,38 @@ async function initProjects(prefix, userID, name) {
 
 // ----------------------------------------- (remainder function) ----------------------------------------------- //
 
+async function remindMessage(type,user){
+    await dict.reminder.first.getMessage(user.name,user.userID).then(message=>{
+        if (type == 13) message = dict.remainder.second.getMessage()
+        const context = {
+            from: {
+                id: user.userID,
+                first_name: user.name
+            },
+            chat: null
+        }
+        // const menu = new Menu(user.userID).addCache(`from@${user.userID}`, { from: context.from })
+        // lookUp[`Menu@${user.userID}`] = menu
+        // initMenuCron(context, message)
+    })
+}
+
 function reminder(type) {
     let today = new Date()
     if (today.getDay() != 0 && today.getDay() != 6) {
-        db.getUsersData('all').then(results => {
-            results.forEach(async user => {
-                let message = dict.remainder.first.getMessage()
-                if (type == 13) message = dict.remainder.second.getMessage()
+        db.getUsersData('all').then(async results => {
+            let arr = []
+            results.forEach(user => {
                 if (user.status === 'active') {
-                    const context = {
-                        from: {
-                            id: user.userID,
-                            first_name: user.name
-                        },
-                        chat: null
-                    }
-                    const menu = new Menu(user.userID).addCache(`from@${user.userID}`, { from: context.from })
-                    lookUp[`Menu@${user.userID}`] = menu
-                    initMenuCron(context, message)
+                    arr.push(remindMessage(type,user))
                 } else {
                     console.log(user.name + ' is inactive, not sending message')
                 }
+            })
+            await Promise.all(arr).then(e=>{
+                e.forEach(a=>{
+                    console.log(a)
+                })
             })
         })
     }
@@ -475,9 +486,9 @@ function deleteHistory(prefix){
  * Cron function for reminder every 9 A.M
  * The function get data from database and check if user is active or not
  */
-// cron.schedule('* * * * *',()=>{
-//     reminder(10)
-// })
+cron.schedule('*/10 * * * * *',()=>{
+    reminder(10)
+})
 
 // /**
 //  * Function to send message every 1 P.M
