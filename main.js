@@ -199,7 +199,7 @@ bot.on('callback_query', async query => {
         }
         
     } catch (error) {
-        console.error("Error on bo.on('callback_query') (main.js)", error.message)
+        console.error("Error on bo.on('callback_query') (main.js)", error)
     }
 
 })

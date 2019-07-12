@@ -1,58 +1,9 @@
 const {getUsersData}=require('../../app/DataTransaction')
 const em = require('./emoticons.config')
 const {spaces} = require('../helper/helper')
+const {calendar,months} = require('./calendar.config')
 
 const dateCalc  = require("add-subtract-date")
-
-let months = [
-    'January','February','March','April','May','June','July','August','September','October',
-    'November','December'
-]
-
-let calendar = [
-    [],
-    [
-        {text:'S',callback_data:'null'},{text:'M',callback_data:'null'},
-        {text:'T',callback_data:'null'},{text:'W',callback_data:'null'},
-        {text:'T',callback_data:'null'},{text:'F',callback_data:'null'},
-         {text:'S',callback_data:'null'}],
-    [
-        {text:'-',callback_data:'-'},{text:'-',callback_data:'-'},
-        {text:'-',callback_data:'-'},{text:'-',callback_data:'-'},
-        {text:'-',callback_data:'-'},{text:'-',callback_data:'-'},
-        {text:'-',callback_data:'-'}],//2
-    [
-        {text:'-',callback_data:'-'},{text:'-',callback_data:'-'},
-        {text:'-',callback_data:'-'},{text:'-',callback_data:'-'},
-        {text:'-',callback_data:'-'},{text:'-',callback_data:'-'},
-        {text:'-',callback_data:'-'}],
-    [
-        {text:'-',callback_data:'-'},{text:'-',callback_data:'-'},
-        {text:'-',callback_data:'-'},{text:'-',callback_data:'-'},
-        {text:'-',callback_data:'-'},{text:'-',callback_data:'-'},
-        {text:'-',callback_data:'-'}],
-    [
-        {text:'-',callback_data:'-'},{text:'-',callback_data:'-'},
-        {text:'-',callback_data:'-'},{text:'-',callback_data:'-'},
-        {text:'-',callback_data:'-'},{text:'-',callback_data:'-'},
-        {text:'-',callback_data:'-'}],
-    [
-        {text:'-',callback_data:'-'},{text:'-',callback_data:'-'},
-        {text:'-',callback_data:'-'},{text:'-',callback_data:'-'},
-        {text:'-',callback_data:'-'},{text:'-',callback_data:'-'},
-        {text:'-',callback_data:'-'}],
-    [
-        {text:'-',callback_data:'-'},{text:'-',callback_data:'-'},
-        {text:'-',callback_data:'-'},{text:'-',callback_data:'-'},
-        {text:'-',callback_data:'-'},{text:'-',callback_data:'-'},
-        {text:'-',callback_data:'-'}],
-    [
-        {text:`${em.left} Prev`,callback_data:'-'},
-        {text:`${em.home} Menu`,callback_data:'-'},
-        {text:`${em.right} Next`,callback_data:'-'}
-    ]
-]
-
 
 const dayOffMenu=(prefix)=>{
     let space = spaces(9)
