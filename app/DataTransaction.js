@@ -442,7 +442,7 @@ const getPastTaskToExcel= ()=>{
 
 const getHoliday= async (year)=>{
     const holidays = []
-    const dbRef = db.collection('day-off').where('year','==',year)
+    const dbRef = db.collection('day-off').where('year','==',year).orderBy('month','asc')
     return dbRef.get().then(results=>{
         results.forEach(res=>{
             if(res.data().type == 'holiday'){
@@ -462,7 +462,7 @@ const getHoliday= async (year)=>{
 const getYearsFromDayOff = async ()=>{
     const years = new Set([])
 
-    return db.collection('day-off').get()
+    return db.collection('day-off').orderBy('year','asc').get()
     .then(results=>{
         results.forEach(res=>{
             if(res.data().type == 'holiday'){

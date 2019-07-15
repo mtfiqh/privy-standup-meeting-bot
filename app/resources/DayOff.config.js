@@ -52,26 +52,32 @@ const calendarLayout=(prefix)=>{
 const generateCalendar = (prefix,option,count,pos=null)=>{
     reset(prefix)
     let w = 2
-    date = new Date()
-    date = new Date(date.getFullYear(),date.getMonth())
-    console.log(option)
+    let today = new Date()
     if(option==='next'){
         count++
     }else if(option==='prev'){
         count--
     }
+    
+    let nextMonth = `next#${count}`
+    let prevMonth = `prev#${count}`
+    calendar[8][0].text          = `${em.left} Prev`
+    calendar[8][0].callback_data = `${prefix}-onChange-${prevMonth}`
+    calendar[8][1].callback_data = `${prefix}-onBackPressed-`
+    calendar[8][2].callback_data = `${prefix}-onChange-${nextMonth}`
+    date = new Date()
+    date = new Date(date.getFullYear(),date.getMonth())
 
     if(calendar.length==10){
         calendar.pop()
     }
-
-    if(count!=0){
+    if(count>0){
         date = dateCalc.add(date,parseInt(count),'months')
+    }else{
+        calendar[8][0].text = `${em.delete}`
+        calendar[8][0].callback_data = `${prefix}-onBackPressed-`
     }
-    console.log(date)
     
-    let nextMonth = `next#${count}`
-    let prevMonth = `prev#${count}`
   
     let month = date.getMonth()
 
@@ -79,19 +85,24 @@ const generateCalendar = (prefix,option,count,pos=null)=>{
     while(date.getMonth() === month){
         calendar[w][date.getDay()].text = date.getDate().toString() 
         calendar[w][date.getDay()].callback_data = prefix+'-onDateClicked-' +date.getFullYear()+'/'+(month+1)+'/'+date.getDate()+'#'+w+'#'+date.getDay()
+        
         if(pos!=null){
             if((w==pos.y)&&(date.getDay()==pos.x)){
                 calendar[w][date.getDay()].text = `${em.done}`
             }
         }
+        if(count==0){
+            if(date.getDate()<today.getDate()){
+                calendar[w][date.getDay()].text = `${em.delete}` 
+                calendar[w][date.getDay()].callback_data = `${prefix}-onEmpty`
+            }
+        }
+
         date = new Date(dateCalc.add(date,1,'day'))
         if(date.getDay()==0){
             w++
         }
     }
-    calendar[8][0].callback_data = `${prefix}-onChange-${prevMonth}`
-    calendar[8][1].callback_data = `${prefix}-onBackPressed-`
-    calendar[8][2].callback_data = `${prefix}-onChange-${nextMonth}`
     return {
         reply_markup: {
             inline_keyboard: calendar
