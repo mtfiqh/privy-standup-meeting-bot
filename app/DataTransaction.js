@@ -14,7 +14,6 @@ load = () => {
     //Using to testing
     //exportToExcel()
     // listenTasks()
-    addProblems([{taskName:'A',problem:'P A',userID:121},{taskName:'A',problem:'P A',userID:1211}])
 }
 
 listenUsers = async () => {
@@ -1063,11 +1062,29 @@ const getStatistic = async (uid)=>{
     })
 }
 
-load()
+/**
+ * @returns 
+ * [ 
+ * { title: 'PM', description: 'Project Manager' },
+ * { title: 'QA', description: 'Quality Assurance' } 
+ * ]
+ */
+const getRoleList = () =>{
+    const list = []
+    db.collection('roles').get()
+    .then(result=>{
+        result.forEach(res=>{
+            list.push({title:res.id,description:res.data().description})
+        })
+        return list
+    })
+}
 
+load()
 
 module.exports = {
     load,
+    getRoleList,
     listenProjects,
     listenUsers,
     updateUser,
