@@ -55,6 +55,11 @@ const Mapper = {
         icon:em.delete,
         action:"onDeleteProjects"
     },
+    "assignproject":{
+        text:"Assign To Projects",
+        icon:`${em.right}${em.man}`,
+        action:"onAssignUserToProjects"
+    },
     "back":{
         text:"Back",
         icon:em.back,
@@ -161,7 +166,9 @@ const menuProjectsAdmin = (from, prefix) => {
                     ], [
                         {...getButton(prefix,'listproject', from)},
                         {...getButton(prefix,'deleteproject', from)}
-                    ], [
+                    ],[
+                        {...getButton(prefix,'assignproject', from)}
+                    ],[
                         {...getButton(prefix, "back", from)},
                         {...getButton(prefix, "close", from)}
                     ]
