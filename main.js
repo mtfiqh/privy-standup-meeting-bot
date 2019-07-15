@@ -10,6 +10,7 @@ const { Tasks } = require('./app/Tasks.js')
 const { Menu } = require('./app/menu')
 const { dictionary: dict } = require('./main.config')
 const { DayOff } = require('./app/DayOff')
+const { InsertProblems } = require('./app/insertProblems')
 
 // -------------------------------------- (global vars) ----------------------------------------------- //
 
@@ -428,7 +429,18 @@ async function initProjects(prefix, userID, name) {
     }
 }
 
+bot.onText(/\/problems/, (context, match)=>{
+    const {from, chat} = context
+    initProblems('problems', chat.id, chat.first_name)
+})
 
+async function initProblems(prefix, userID, name){
+    lookUp[`${prefix}@${userID}`] = new InsertProblems(userID, name, prefix)
+    console.log(userID, `created '${prefix}@${userID}' lookup`)
+    const currentApp = lookUp[`${prefix}@${userID}`]
+    let response = await currentApp.listen('onStart')
+    return handleRespond(response, userID)
+}
 // ----------------------------------------- (remainder function) ----------------------------------------------- //
 
 async function remindMessage(type,user){
