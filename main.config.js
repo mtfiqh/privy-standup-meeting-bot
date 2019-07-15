@@ -1,3 +1,5 @@
+const {getUserTasks,getStatistic} = require('./app/DataTransaction')
+const em = require('./app/resources/emoticons.config')
 
 module.exports = {
     dictionary:{
@@ -15,12 +17,24 @@ module.exports = {
             }
         },
         initMenuCron:{
-            getOptions: id => {
+            getOptions: (id,name,type) => {
+                if(type==10){
+                    return {
+                        parse_mode: 'Markdown',
+                        reply_markup: {
+                            inline_keyboard: [
+                                [{ text: `${em.add} Add Task(s)`, callback_data: `Menu@${id}-onAddTasks-${id}@${name}` }],
+                                [{ text: `${em.home} Menu`, callback_data: `Menu@${id}-cron-${id}@${name}` }]
+                            ]
+                        }
+                    }    
+                }
                 return {
                     parse_mode: 'Markdown',
                     reply_markup: {
                         inline_keyboard: [
-                            [{ text: 'Menu', callback_data: `Menu@${id}-cron` }]
+                            [{ text: `${em.add} Add Task(s)`, callback_data: `Menu@${id}-onAddTasks-${id}@${name}` }],
+                            [{ text: `${em.home} Menu`, callback_data: `Menu@${id}-cron-${id}@${name}` }]
                         ]
                     }
                 }
@@ -126,12 +140,31 @@ module.exports = {
                 }
             }
         },
-        remainder:{
+        reminder:{
             first:{
-                getMessage : name => `Selamat Pagi ${name}\nJangan lupa mengisi task hari ini. \nTekan tombol Menu atau kirim */menu* untuk menggunakan fitur bot.`
+                getMessage : async (name,uid) =>{
+                    let listTask = ''
+                    let counter = 1
+                    return getUserTasks(parseInt(uid)).then(tasks=>{
+                        tasks.forEach(task=>{
+                            listTask = listTask.concat(`${counter}. ${task.name}\n`)
+                            counter++
+                        })
+                        return  `Selamat Pagi ${name}\n${counter==1?'':`Berikut ini task kamu yang belum selesai \n${listTask}`}Jangan lupa tambahkan task hari ini.`  
+                    })
+                }
             },
             second:{
-                getMessage: name => `Selamat Siang ${name}\nJangan lupa melaporkan task hari ini yang sudah *Done*. \nTekan tombol Menu atau kirim */menu* untuk menggunakan fitur bot.`
+                getMessage: async (name,uid) =>{
+                    return getStatistic(uid).then(result=>{
+                        const added = result.Added
+                        const done  = result.Done
+                        const recurring = result.Recurring
+
+                        return `Selamat Siang ${name}\n${done==(recurring+added)?'Selamat, semua tugas anda telah selesai':`${done==0?'Anda belum menyelesaikan tugas satu pun. Ada kendala?':`${done} dari ${recurring+added} tugas anda telah selesai.`} `}`
+                    })
+                }
+
             }
         }
 
