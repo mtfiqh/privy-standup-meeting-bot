@@ -1,4 +1,5 @@
 const {App} = require('../core/App')
+const {addHoliday} = require('./DataTransaction')
 const msg = require('./resources/DayOff.config')
 const moment = require('moment')
 
@@ -121,6 +122,7 @@ class DayOff extends App{
 
     onSave(){
         let opts = msg.completeOptionClose(this.prefix)
+        addHoliday(this.holiday)
         return {
             type:'Edit',
             message:'Sukses!',

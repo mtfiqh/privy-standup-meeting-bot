@@ -1030,6 +1030,7 @@ module.exports = {
     getUserTasksOrderByPriority,
     assignUserToProjects,
     updateTaskStatus,
+    addHoliday,
     checkDayOff,
     isAdmin,
     setAdmin,
