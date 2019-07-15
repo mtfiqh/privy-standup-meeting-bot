@@ -496,9 +496,9 @@ function deleteHistory(prefix){
  * Cron function for reminder every 9 A.M
  * The function get data from database and check if user is active or not
  */
-cron.schedule('* * * * *',()=>{
-    reminder(13)
-})
+// cron.schedule('* * * * *',()=>{
+//     reminder(13)
+// })
 
 
 

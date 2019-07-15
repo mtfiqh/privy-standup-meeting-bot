@@ -17,7 +17,9 @@ class DayOff extends App{
             'onBackPressed',
             'onTypeListen',
             'onSave',
-            'onCancel'
+            'onCancel',
+            'onListHolidayClicked',
+            'onYearClicked'
         ])
 
         // Define Class variable here
@@ -27,6 +29,7 @@ class DayOff extends App{
         this.bot=bot
         this.visited = new Set([])
         this.selectedDate = ''
+        this.listenTo = 'nothing'
         this.holiday = {
             name:{},
             date:{}
@@ -92,8 +95,10 @@ class DayOff extends App{
         let [date,y,x] = params.split('#')
         let [year,month,day] = date.split('/')
         let today = new Date()
-        let opts = msg.generateCalendar(this.prefix,date,(parseInt(month)-1)                -today.getMonth(),{x,y})
-
+        let dateTo = new Date(year,month)
+        let dateDiff = this.countMonthBetween(today,dateTo)
+        let opts = msg.generateCalendar(this.prefix,date,dateDiff-1,{x,y})
+        console.log(dateDiff)
         this.selectedDate = date
         msg.generateSaveButton(date,this.prefix)
         return {
@@ -102,8 +107,10 @@ class DayOff extends App{
             message: `Hari yang dipilih ${this.getLocalDate(date)}`,
             options:opts
         }
+    }
 
-
+    countMonthBetween(date1,date2){
+        return date2.getMonth()-date1.getMonth()+(12*(date2.getFullYear()-date1.getFullYear()))
     }
 
     onTypeListen(context){
@@ -150,12 +157,27 @@ class DayOff extends App{
     }
 
     /**
+     * On click show years
+     */
+    async onListHolidayClicked(){
+        const opts = await msg.getYear(this.prefix)
+        return {
+            type:'Edit',
+            message:'Choose Year : ',
+            options:opts
+        }
+    }
+
+    onYearClicked(params){
+        return msg.getHolidays(this.prefix,params)
+    }
+
+    /**
      * 
      * @param {String} params - Date in YYYY/MM/DD
      */
     onAddName(params){
         this.holiday.date = params
-        
         return {
             record:true,
             prefix:'DayOff',
@@ -176,6 +198,7 @@ class DayOff extends App{
 
     onClose(){    
         return {
+            type:'Delete',
             destroy:true,
             id:this.userID,
             prefix:this.prefix

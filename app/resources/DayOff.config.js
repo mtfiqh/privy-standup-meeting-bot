@@ -1,7 +1,8 @@
-const {getUsersData}=require('../../app/DataTransaction')
+const {getYearsFromDayOff,getHoliday}=require('../../app/DataTransaction')
 const em = require('./emoticons.config')
 const {spaces} = require('../helper/helper')
 const {calendar,months} = require('./calendar.config')
+const moment = require('moment')
 
 const dateCalc  = require("add-subtract-date")
 
@@ -17,6 +18,12 @@ const dayOffMenu=(prefix)=>{
                     {text:`${space}Day-Off${space}\t`,
                     callback_data:`${prefix}-onSelectType-Vacation`}
                 ],
+                [
+                    {text:`${space}List Holiday${space}`,
+                    callback_data:`${prefix}-onListHolidayClicked-`},
+                    {text:`${space}List Day-Off${space}\t`,
+                    callback_data:`${prefix}-onSelectType-Vacation`}
+                ],
                 [ 
                     {text:`${em.delete} Close`,callback_data:`${this.prefix}-onClose-`}
                 ]
@@ -27,6 +34,7 @@ const dayOffMenu=(prefix)=>{
 
 const completeOptionClose =(prefix)=>{
     return {
+        parse_mode:'Markdown',
         reply_markup: {
             inline_keyboard: [
                 [ 
@@ -46,7 +54,7 @@ const generateCalendar = (prefix,option,count,pos=null)=>{
     let w = 2
     date = new Date()
     date = new Date(date.getFullYear(),date.getMonth())
-
+    console.log(option)
     if(option==='next'){
         count++
     }else if(option==='prev'){
@@ -60,6 +68,7 @@ const generateCalendar = (prefix,option,count,pos=null)=>{
     if(count!=0){
         date = dateCalc.add(date,parseInt(count),'months')
     }
+    console.log(date)
     
     let nextMonth = `next#${count}`
     let prevMonth = `prev#${count}`
@@ -117,6 +126,43 @@ const generateSaveButton =(date,prefix,dest='calendar')=>{
 
 }
 
+const getHolidays = async (prefix,year)=>{
+    const list    = await getHoliday(year)
+    let message = `List holiday : \n`
+    let counter   = 1
+    let opts = completeOptionClose(prefix)
+    for(item of list){
+        let date = moment(item.date,'YYYYMMDD').format('LLLL')
+        date = date.slice(0,date.length-11)
+        message = message.concat(`${counter}. *${item.name}*\n\t\t\t${date}\n\n`)
+        counter++
+    }
+    return {
+        type:'Edit',
+        message:message,
+        options:opts
+    }
+}
+
+const getYear = async (prefix)=>{
+    const keyboard = []
+    await getYearsFromDayOff().then(results=>{
+        results.forEach(res=>{
+            let tmp = []
+            tmp.push({text:res,callback_data:`${prefix}-onYearClicked-${res}`})
+            keyboard.push(tmp)
+        })
+        
+    })
+    console.log(keyboard)
+    return {
+        parse_mode:'Markdown',
+        reply_markup: {
+            inline_keyboard: keyboard
+        }
+    }
+}
+
 const reset=(prefix)=>{
     for(let i = 2;i<8;i++){
         for(let j = 0;j<7;j++){
@@ -129,6 +175,8 @@ module.exports={
     calendarLayout,
     generateCalendar,
     dayOffMenu,
+    getYear,
     generateSaveButton,
-    completeOptionClose
+    completeOptionClose,
+    getHolidays
 }
