@@ -432,28 +432,29 @@ async function initProjects(prefix, userID, name) {
 // ----------------------------------------- (remainder function) ----------------------------------------------- //
 
 async function remindMessage(type,user){
-    await dict.reminder.first.getMessage(user.name,user.userID).then(message=>{
-        if (type == 13) message = dict.remainder.second.getMessage()
-        const context = {
-            from: {
-                id: user.userID,
-                first_name: user.name
-            },
-            chat: null
-        }
-
-        // lookUp[`addTasks@${user.userID}`] = new Tasks(user.userID, 'addTasks', user.name)
-        // currentState[user.userID] = 'addTasks'
-        // const response = {
-        //     message: message,//dict.addTasks.getMessage(),
-        //     options: dict.addTasks.getOptions()
-        // }
-        // handleRespond(response, user.userID)
-
-        const menu = new Menu(user.userID).addCache(`from@${user.userID}`, { from: context.from })
-        lookUp[`Menu@${user.userID}`] = menu
-        initMenuCron(context, message)
-    })
+    const context = {
+        from: {
+            id: user.userID,
+            first_name: user.name
+        },
+        chat: null,
+        type:type
+    }
+    if(type===10){
+        await dict.reminder.first.getMessage(user.name,user.userID).then(message=>{
+            const menu = new Menu(user.userID).addCache(`from@${user.userID}`, { from: context.from })
+            lookUp[`Menu@${user.userID}`] = menu
+            initMenuCron(context, message)
+        })
+    }else{
+        await dict.reminder.second.getMessage(user.name,user.userID).then(message=>{
+            const menu = new Menu(user.userID).addCache(`from@${user.userID}`, { from: context.from })
+            lookUp[`Menu@${user.userID}`] = menu
+            initMenuCron(context, message)
+        })
+            
+    }
+    
 }
 
 function reminder(type) {
@@ -495,9 +496,9 @@ function deleteHistory(prefix){
  * Cron function for reminder every 9 A.M
  * The function get data from database and check if user is active or not
  */
-// cron.schedule('* * * * *',()=>{
-//     reminder(10)
-// })
+cron.schedule('* * * * *',()=>{
+    reminder(13)
+})
 
 
 

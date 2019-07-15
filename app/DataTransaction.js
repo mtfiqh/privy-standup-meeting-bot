@@ -14,7 +14,7 @@ load = () => {
     //Using to testing
     //exportToExcel()
     // listenTasks()
-    resetStat()
+    addProblems([{taskName:'A',problem:'P A',userID:121},{taskName:'A',problem:'P A',userID:1211}])
 }
 
 listenUsers = async () => {
@@ -434,6 +434,27 @@ const addTaskTransaction = async (data) => {
     })
 
     return taskIDs
+}
+
+/**
+ * 
+ * @param {*} payload 
+ * payload = [
+ * {taskName: nama, problem :problem,userID:12345},
+ * {taskName: nama, problem :problem,userID:12345}
+ * ]
+ */
+const addProblems = (payload)=>{
+    let {timestamp} = getDate()
+    for(item of payload){
+        let problem = `${item.taskName} : ${item.problem}`
+        let temp = {}
+        temp[item.userID] = {}
+        temp[item.userID]['problems'] = admin.firestore.FieldValue.arrayUnion(problem)
+        
+        db.collection('reports').doc(timestamp.toString())
+        .set(temp, { merge: true })
+    }
 }
 
 const addProjects = (projects) => {
@@ -1034,6 +1055,14 @@ const updateUser = (userID,payload)=>{
     db.collection('users').doc(userID.toString()).set(payload,{merge:true})
 }
 
+const getStatistic = async (uid)=>{
+    const {timestamp} = getDate()
+    return db.collection('statistics').doc(timestamp.toString())
+    .get().then(results=>{
+        return results.data()[uid.toString()]
+    })
+}
+
 load()
 
 
@@ -1044,6 +1073,7 @@ module.exports = {
     updateUser,
     addProjects,
     addTaskTransaction,
+    addProblems,
     checkDayOff,
     addHoliday,
     userDayOff,
@@ -1051,6 +1081,7 @@ module.exports = {
     getTaskCount,
     getDate,
     exportToExcel,
+    getStatistic,
     getUserProjects,
     getUserTasks,
     editProjectName,
