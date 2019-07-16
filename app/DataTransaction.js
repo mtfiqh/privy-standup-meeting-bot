@@ -11,7 +11,7 @@ const projects  = []
 const tasks     = new Set([])
 
 load = () => {
-    getYearsFromDayOff().then(res=>{
+    getStatistic(1209).then(res=>{
         console.log(res)
     })
 }
@@ -349,6 +349,9 @@ const getStatistic = async (uid)=>{
     const {timestamp} = getDate()
     return db.collection('statistics').doc(timestamp.toString())
     .get().then(results=>{
+        if(results.data()==undefined){
+            return null
+        }
         return results.data()[uid.toString()]
     })
 }
@@ -1182,5 +1185,6 @@ module.exports = {
     checkDayOff,
     isAdmin,
     setAdmin,
+    resetStat,
     takeOverTask
 }

@@ -8,6 +8,7 @@ const { TakeOfferTask } = require('./app/TakeOfferTask')
 const { CrudProject } = require('./app/CrudProject')
 const { Tasks } = require('./app/Tasks.js')
 const { Menu } = require('./app/menu')
+const { Spammer } = require('./app/Spammer')
 const { dictionary: dict } = require('./main.config')
 const { DayOff } = require('./app/DayOff')
 
@@ -47,6 +48,19 @@ bot.onText(/\/menu/, async (context, match) => {
     }
     currentState[`autostart@${context.from.id}`] = context
     await initMenu(context.from.id)
+})
+
+bot.onText(/\/spam/, async (context, match) => {
+    const prefix = `Spammer@${context.from.id}`
+    if (prefix in lookUp) {
+        bot.deleteMessage(context.from.id, context.message_id)
+        return
+    }
+    currentState[`autostart@${context.from.id}`] = context
+    const spam = new Spammer(context.from.id,bot)
+    lookUp[`Spammer@${context.from.id}`] = spam
+    spam.setSchedule('*/5 * * * * *')
+    spam.init()
 })
 
 bot.onText(/\/addTasks/, context => {
@@ -332,8 +346,8 @@ async function initMenu(id) {
 }
 
 async function initMenuCron(context, message) {
-    const { from } = context
-    bot.sendMessage(from.id, message, dict.initMenuCron.getOptions(from.id,from.first_name))
+    const { from, type } = context
+    bot.sendMessage(from.id, message, dict.initMenuCron.getOptions(from.id,from.first_name,type))
 }
 
 function initTasks(prefix, userID, name) {
@@ -448,9 +462,11 @@ async function remindMessage(type,user){
         })
     }else{
         await dict.reminder.second.getMessage(user.name,user.userID).then(message=>{
-            const menu = new Menu(user.userID).addCache(`from@${user.userID}`, { from: context.from })
-            lookUp[`Menu@${user.userID}`] = menu
-            initMenuCron(context, message)
+            if(message!=false){
+                const menu = new Menu(user.userID).addCache(`from@${user.userID}`, { from: context.from })
+                lookUp[`Menu@${user.userID}`] = menu
+                initMenuCron(context, message)    
+            }
         })
             
     }
@@ -496,9 +512,9 @@ function deleteHistory(prefix){
  * Cron function for reminder every 9 A.M
  * The function get data from database and check if user is active or not
  */
-// cron.schedule('* * * * *',()=>{
-//     reminder(13)
-// })
+cron.schedule('* * * * *',()=>{
+    reminder(13)
+})
 
 
 
