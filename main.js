@@ -309,6 +309,10 @@ async function handleAuto(context) {
             bot.deleteMessage(chat.id, message_id)
             initProjects('readProjects', chat.id, chat.first_name)
             break
+        case '/assignProject':
+            bot.deleteMessage(chat.id, message_id)
+            initAssignProject(chat.id,chat.first_name,'assignProject')
+            break
         default:
             console.log("waiting...")
             break
