@@ -11,7 +11,7 @@ const { Menu } = require('./app/menu')
 const { dictionary: dict } = require('./main.config')
 const { DayOff } = require('./app/DayOff')
 const { InsertProblems } = require('./app/insertProblems')
-
+const {assignUsersProject} = require('./app/assignUsersProject')
 // -------------------------------------- (global vars) ----------------------------------------------- //
 
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true })
@@ -433,6 +433,24 @@ bot.onText(/\/problems/, (context, match)=>{
     const {from, chat} = context
     initProblems('problems', chat.id, chat.first_name)
 })
+bot.onText(/\/assignProject/, (context, match)=>{
+    const {from, chat, message_id} = context
+    bot.deleteMessage(chat.id, message_id)
+    initAssignProject(chat.id, chat.first_name, 'assignProject')
+})
+
+async function initAssignProject(userID, name, prefix){
+    try{
+        lookUp[`${prefix}@${userID}`] = new assignUsersProject(userID, name, prefix)
+        console.log(userID, `created ${prefix}@${userID} lookup`)
+
+        const currentApp = lookUp[`${prefix}@${userID}`]
+        const response = await currentApp.listen('onStart')
+        return handleRespond(response, userID)
+    }catch(err){
+        console.log(err)
+    }
+}
 
 async function initProblems(prefix, userID, name){
     lookUp[`${prefix}@${userID}`] = new InsertProblems(userID, name, prefix)
