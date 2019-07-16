@@ -1,5 +1,6 @@
-const onStartMessage = (id, inline_keyboard)=>{
+const onStartMessage = (id, inline_keyboard, type)=>{
     return{
+        type:type?type:'Send',
         id,
         message:'Pilih task yang ada masalah',
         options:{
@@ -37,6 +38,9 @@ const onCancelMessage2 = (id, prefix, token)=>{
         },
         receiver:{
             id,
+            record:true,
+            prefix:prefixx,
+            userID,
             type:'Send',
             message:'Permintaan dibatalkan!',
             options:{
@@ -118,4 +122,20 @@ const onSaveMessage = (id, prefix, task, problems, token)=>{
     }
 
 }
-module.exports={onSaveMessage, onStartMessage, onCancelMessage, onCancelMessage2, onSelectedTaskMessage, typeListenMessage}
+
+const onAdded = (id, prefix, token)=>{
+    return{
+        id,
+        type:'Edit',
+        message:'Kendala Berhasil ditambahkan!',
+        options:{
+            reply_markup:{
+                inline_keyboard:[
+                    [{text:'Tambahkan Kendala Lain', callback_data:`${prefix}-onClose-${token}@Y`}],
+                    [{text:'Close', callback_data:`${prefix}-onClose-${token}`}]
+                ]
+            }
+        }
+    }
+}
+module.exports={onAdded, onSaveMessage, onStartMessage, onCancelMessage, onCancelMessage2, onSelectedTaskMessage, typeListenMessage}

@@ -1,6 +1,6 @@
 const {App} = require('../core/App')
-const {getUserTasks} = require('./DataTransaction')
-const {onStartMessage,onSaveMessage, onCancelMessage,onCancelMessage2, onSelectedTaskMessage, typeListenMessage} = require('./insertProblems.config')
+const {getUserTasks, addProblems} = require('./DataTransaction')
+const {onAdded, onStartMessage,onSaveMessage, onCancelMessage,onCancelMessage2, onSelectedTaskMessage, typeListenMessage} = require('./insertProblems.config')
 
 class InsertProblems extends App{
     constructor(userID, name, prefix){
@@ -9,7 +9,8 @@ class InsertProblems extends App{
             'onStart',
             'onSelectTask',
             'onTypeListen',
-            
+            'onSure',
+            'onClose'
         ])
         this.addCache('userID', userID)
         this.addCache('name', name)
@@ -28,7 +29,8 @@ class InsertProblems extends App{
         await getUserTasks(this.cache.userID).then(setAllUserTasks.bind(this))
     }
     
-    async onStart(){
+    async onStart(type){
+        this.cache.problems=[]
         await this.getAllUserTasks()
         let i=0
         for(let task of this.tasks){
@@ -41,7 +43,7 @@ class InsertProblems extends App{
             {text:'Cancel', callback_data:`${this.prefix}-onSelectTask-c@${this.cache.token}`}
         ])
         
-        return onStartMessage(this.cache.userID, this.cache.keyboard)
+        return onStartMessage(this.cache.userID, this.cache.keyboard, type)
     }
 
     onSelectTask(args){
@@ -59,11 +61,17 @@ class InsertProblems extends App{
             return onCancelMessage2(this.cache.userID, this.prefix, this.cache.token)
         }
         if(text==="SAVE"){
+            this.cache['payload']=[]
             let problems=""
             let i=1
             for(let problem of this.cache.problems){
                 problems+=`${i}. ${problem}\n`
                 i++
+                this.cache.payload.push({
+                    taskName:this.cache.selectedTask,
+                    problem,
+                    userID:this.cache.userID
+                })
             }
             return onSaveMessage(this.cache.userID, this.cache.prefix, this.cache.selectedTask, problems, this.cache.token)
         }
@@ -71,11 +79,31 @@ class InsertProblems extends App{
         return typeListenMessage(this.cache.userID, this.cache.prefix, text)
     }
 
-    onSureMessage(args){
+    onSure(args){
+        console.log('masuk')
         const [ans, token]=args.split('@')
+        console.log(ans, token)
         if(token!==this.cache.token) return
-        if(ans==='Y'){
-            
+        if(ans==='N'){
+            return onCancelMessage(this.cache.userID, this.prefix, this.cache.token)
+        }
+        addProblems(this.cache.payload)
+        return onAdded(this.cache.userID, this.prefix, this.cache.token)
+        
+    }
+
+    onClose(args){
+        const [token, ans] = args.split('@')
+        if(token===this.cache.token){
+            if(ans==='Y'){
+                return this.onStart('Edit')
+            }
+            return{
+                type:'Delete',
+                id:this.cache.userID,
+                destroy:true,
+                prefix:this.prefix
+            }
         }
     }
 }
