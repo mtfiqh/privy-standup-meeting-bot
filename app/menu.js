@@ -35,6 +35,7 @@ class Menu extends App{
             'onEditProjects',
             'onDeleteProjects',
             'onListProjects',
+            'onAssignUserToProjects'
         ])
         // Define Class variable here
         this.prefix     = `${Menu.name}@${userID}`
@@ -216,6 +217,14 @@ class Menu extends App{
         return {
             type:'Auto',
             message:'/listProjects',
+        }
+    }
+
+    onAssignUserToProjects(){
+        this.onVisit('onProjectsClicked')
+        return {
+            type:'Auto',
+            message:'/assignProject'
         }
     }
 

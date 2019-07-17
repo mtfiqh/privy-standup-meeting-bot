@@ -360,9 +360,9 @@ const getStatistic = async (uid)=>{
  * { title: 'QA', description: 'Quality Assurance' } 
  * ]
  */
-const getRoleList = () =>{
+const getRoleList = async () =>{
     const list = []
-    db.collection('roles').get()
+    return db.collection('roles').get()
     .then(result=>{
         result.forEach(res=>{
             list.push({title:res.id,description:res.data().description})

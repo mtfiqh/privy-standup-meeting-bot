@@ -11,7 +11,9 @@ const { Menu } = require('./app/menu')
 const { Spammer } = require('./app/Spammer')
 const { dictionary: dict } = require('./main.config')
 const { DayOff } = require('./app/DayOff')
-
+const { InsertProblems } = require('./app/insertProblems')
+const {assignUsersProject} = require('./app/assignUsersProject')
+const { ChangeRole } = require('./app/ChangeRole')
 // -------------------------------------- (global vars) ----------------------------------------------- //
 
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true })
@@ -135,6 +137,10 @@ bot.onText(/\/listProjects/, async context => {
     initProjects('readProjects', chat.id, chat.first_name)
 })
 
+bot.onText(/\/role/, async context =>{
+    console.log('keyboard')
+    initChangeRole(context.chat.id, context.chat.first_name)
+})
 
 // ----------------------------------------- (on Messages) ----------------------------------------------- //
 
@@ -309,6 +315,10 @@ async function handleAuto(context) {
             bot.deleteMessage(chat.id, message_id)
             initProjects('readProjects', chat.id, chat.first_name)
             break
+        case '/assignProject':
+            bot.deleteMessage(chat.id, message_id)
+            initAssignProject(chat.id,chat.first_name,'assignProject')
+            break
         default:
             console.log("waiting...")
             break
@@ -318,6 +328,13 @@ async function handleAuto(context) {
 
 // ----------------------------------------- (init function) ----------------------------------------------- //
 
+async function initChangeRole(userID, name){
+    console.log('init change role')
+    lookUp[`changerole@${userID}`] = new ChangeRole('changerole', userID, name)
+    const currentApp=lookUp[`changerole@${userID}`]
+    const res = await currentApp.listen('onStart')
+    handleRespond(res, userID)
+}
 
 async function initMenu(id) {
     const context = currentState[`autostart@${id}`]
@@ -429,6 +446,27 @@ async function initProjects(prefix, userID, name) {
     }
 }
 
+bot.onText(/\/problems/, (context, match)=>{
+    const {from, chat} = context
+    initProblems('problems', chat.id, chat.first_name)
+})
+bot.onText(/\/assignProject/, (context, match)=>{
+    const {from, chat, message_id} = context
+    bot.deleteMessage(chat.id, message_id)
+    initAssignProject(chat.id, chat.first_name, 'assignProject')
+})
+
+async function initAssignProject(userID, name, prefix){
+    try{
+        lookUp[`${prefix}@${userID}`] = new assignUsersProject(userID, name, prefix)
+        console.log(userID, `created ${prefix}@${userID} lookup`)
+        const currentApp = lookUp[`${prefix}@${userID}`]
+        const response = await currentApp.listen('onStart')
+        return handleRespond(response, userID)
+    }catch(err){
+        console.log(err)
+    }
+}
 const initSpam = (userID)=>{
     const prefix = `Spammer@${userID}`
     currentState[`autostart@${userID}`] = userID
@@ -437,8 +475,13 @@ const initSpam = (userID)=>{
     spam.setSchedule(' * * * * *')
     spam.init()
 }
-
-
+async function initProblems(prefix, userID, name){
+    lookUp[`${prefix}@${userID}`] = new InsertProblems(userID, name, prefix)
+    console.log(userID, `created '${prefix}@${userID}' lookup`)
+    const currentApp = lookUp[`${prefix}@${userID}`]
+    let response = await currentApp.listen('onStart')
+    return handleRespond(response, userID)
+}
 // ----------------------------------------- (remainder function) ----------------------------------------------- //
 
 async function remindMessage(type,user){
