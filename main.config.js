@@ -33,7 +33,7 @@ module.exports = {
                     parse_mode: 'Markdown',
                     reply_markup: {
                         inline_keyboard: [
-                            [{ text: `${em.add} Add Task(s)`, callback_data: `Menu@${id}-onAddTasks-${id}@${name}` }],
+                            [{ text: `${em.add} Add Problem(s)`, callback_data: `Menu@${id}-onAddTasks-${id}@${name}` }],
                             [{ text: `${em.home} Menu`, callback_data: `Menu@${id}-cron-${id}@${name}` }]
                         ]
                     }
@@ -157,11 +157,16 @@ module.exports = {
             second:{
                 getMessage: async (name,uid) =>{
                     return getStatistic(uid).then(result=>{
-                        const added = result.Added
-                        const done  = result.Done
-                        const recurring = result.Recurring
-
-                        return `Selamat Siang ${name}\n${done==(recurring+added)?'Selamat, semua tugas anda telah selesai':`${done==0?'Anda belum menyelesaikan tugas satu pun. Ada kendala?':`${done} dari ${recurring+added} tugas anda telah selesai.`} `}`
+                        if(result==null){
+                            console.log(`Data not exists on ${uid}`)
+                            return false
+                        }else{
+                            const added = result.Added
+                            const done  = result.Done
+                            const recurring = result.Recurring
+    
+                            return `Selamat Siang ${name}\n${done==(recurring+added)?'Selamat, semua tugas anda telah selesai':`${done==0?'Anda belum menyelesaikan tugas satu pun. Ada kendala?':`${done} dari ${recurring+added} tugas anda telah selesai.`} `}`
+                        }
                     })
                 }
 

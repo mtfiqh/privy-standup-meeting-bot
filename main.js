@@ -8,6 +8,7 @@ const { TakeOfferTask } = require('./app/TakeOfferTask')
 const { CrudProject } = require('./app/CrudProject')
 const { Tasks } = require('./app/Tasks.js')
 const { Menu } = require('./app/menu')
+const { Spammer } = require('./app/Spammer')
 const { dictionary: dict } = require('./main.config')
 const { DayOff } = require('./app/DayOff')
 const { InsertProblems } = require('./app/insertProblems')
@@ -349,8 +350,8 @@ async function initMenu(id) {
 }
 
 async function initMenuCron(context, message) {
-    const { from } = context
-    bot.sendMessage(from.id, message, dict.initMenuCron.getOptions(from.id,from.first_name))
+    const { from, type } = context
+    bot.sendMessage(from.id, message, dict.initMenuCron.getOptions(from.id,from.first_name,type))
 }
 
 function initTasks(prefix, userID, name) {
@@ -459,7 +460,6 @@ async function initAssignProject(userID, name, prefix){
     try{
         lookUp[`${prefix}@${userID}`] = new assignUsersProject(userID, name, prefix)
         console.log(userID, `created ${prefix}@${userID} lookup`)
-
         const currentApp = lookUp[`${prefix}@${userID}`]
         const response = await currentApp.listen('onStart')
         return handleRespond(response, userID)
@@ -467,7 +467,14 @@ async function initAssignProject(userID, name, prefix){
         console.log(err)
     }
 }
-
+const initSpam = (userID)=>{
+    const prefix = `Spammer@${userID}`
+    currentState[`autostart@${userID}`] = userID
+    const spam = new Spammer(userID,bot)
+    lookUp[prefix] = spam
+    spam.setSchedule(' * * * * *')
+    spam.init()
+}
 async function initProblems(prefix, userID, name){
     lookUp[`${prefix}@${userID}`] = new InsertProblems(userID, name, prefix)
     console.log(userID, `created '${prefix}@${userID}' lookup`)
@@ -494,9 +501,11 @@ async function remindMessage(type,user){
         })
     }else{
         await dict.reminder.second.getMessage(user.name,user.userID).then(message=>{
-            const menu = new Menu(user.userID).addCache(`from@${user.userID}`, { from: context.from })
-            lookUp[`Menu@${user.userID}`] = menu
-            initMenuCron(context, message)
+            if(message!=false){
+                const menu = new Menu(user.userID).addCache(`from@${user.userID}`, { from: context.from })
+                lookUp[`Menu@${user.userID}`] = menu
+                initMenuCron(context, message)    
+            }
         })
             
     }
@@ -504,24 +513,21 @@ async function remindMessage(type,user){
 }
 
 function reminder(type) {
-    let today = new Date()
-    if (today.getDay() != 0 && today.getDay() != 6) {
-        db.getUsersData('all').then(async results => {
-            let arr = []
-            results.forEach(user => {
-                if (user.status === 'active') {
-                    arr.push(remindMessage(type,user))
-                } else {
-                    console.log(user.name + ' is inactive, not sending message')
-                }
-            })
-            await Promise.all(arr).then(e=>{
-                e.forEach(a=>{
-                    console.log(a)
-                })
+    db.getUsersData('all').then(async results => {
+        let arr = []
+        results.forEach(user => {
+            if (user.status === 'active') {
+                arr.push(remindMessage(type,user))
+            } else {
+                console.log(user.name + ' is inactive, not sending message')
+            }
+        })
+        await Promise.all(arr).then(e=>{
+            e.forEach(a=>{
+                console.log(a)
             })
         })
-    }
+    })
 }
 
 function deleteHistory(prefix){
@@ -537,46 +543,83 @@ function deleteHistory(prefix){
     delete history[`${prefix}`]
 }
 
+async function allowReminder(){
+    const isHoliday = await db.isHoliday()
+    const todayDate = new Date()
+
+    if((!isHoliday)&&(todayDate.getDate()!=6)&&(todayDate.getDate()!=0)){
+        return true
+    }
+    return false
+}
 
 /**
  * Cron function for reminder every 9 A.M
  * The function get data from database and check if user is active or not
  */
-// cron.schedule('* * * * *',()=>{
-//     reminder(13)
-// })
+
+cron.schedule(' 0 10 * * * ',()=>{
+    allowReminder().then(allowed=>{
+        if(allowed){
+            reminder(10)
+        }
+    })
+})
+
+cron.schedule(' 0 13 * * * ',()=>{
+    allowReminder().then(allowed=>{
+        if(allowed){
+            reminder(13)
+        }
+    })
+})
+
+/**
+ * Function to send message every 1 P.M
+ * To remind users and check their progress
+ * Messages send to all users
+ */
+cron.schedule(' 30 13 * * * ',()=>{
+    allowReminder().then(allowed=>{
+        if(allowed){
+            let arr = []
+            db.getUsersData('all').then(async results => {
+                results.forEach(user => {
+                    if (user.status === 'active') {
+                        arr.push(initSpam(user.userID))
+                    } else {
+                        console.log(user.name + ' is inactive, not sending message')
+                    }
+                })
+                await Promise.all(arr).then(e=>{
+                    e.forEach(a=>{
+                        console.log(a)
+                    })
+                })
+            })
+        }
+    })
+})
 
 
 
-// /**
-//  * Function to send message every 1 P.M
-//  * To remind users and check their progress
-//  * Messages send to all users
-//  */
-// cron.schedule('*/5 * * * * *',()=>{
-//     reminder(13)
-//     //Implements function to send messages here
-// })
-
-
-
-// /**
-//  * Set a user active or not based on day-off databases
-//  * 
-//  */
-// cron.schedule('* * * * *',()=>{
-//     db.checkDayOff().then(results=>{
-//         db.getUsersData('all').then(result=>{
-//             result.forEach(user=>{
-//                 if(results.includes(user.userID)){
-//                     db.updateUser(user.userID,{status:'inactive'})
-//                 }else{
-//                     db.updateUser(user.userID,{status:'active'})
-//                 }
-//             })
-//         })
-//     })
-// })
+/**
+ * Set a user active or not based on day-off databases
+ * 
+ */
+cron.schedule('0 7 * * *',()=>{
+    db.checkDayOff().then(results=>{
+        db.getUsersData('all').then(result=>{
+            result.forEach(user=>{
+                if(results.includes(user.userID)){
+                    db.updateUser(user.userID,{status:'inactive'})
+                }else{
+                    db.updateUser(user.userID,{status:'active'})
+                }
+            })
+        })
+    })
+})
 
 
 // ----------------------------------------- (polling error) ----------------------------------------------- //
