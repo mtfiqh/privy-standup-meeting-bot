@@ -12,6 +12,7 @@ const { dictionary: dict } = require('./main.config')
 const { DayOff } = require('./app/DayOff')
 const { InsertProblems } = require('./app/insertProblems')
 const {assignUsersProject} = require('./app/assignUsersProject')
+const { ChangeRole } = require('./app/ChangeRole')
 // -------------------------------------- (global vars) ----------------------------------------------- //
 
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true })
@@ -135,6 +136,10 @@ bot.onText(/\/listProjects/, async context => {
     initProjects('readProjects', chat.id, chat.first_name)
 })
 
+bot.onText(/\/role/, async context =>{
+    console.log('keyboard')
+    initChangeRole(context.chat.id, context.chat.first_name)
+})
 
 // ----------------------------------------- (on Messages) ----------------------------------------------- //
 
@@ -322,6 +327,13 @@ async function handleAuto(context) {
 
 // ----------------------------------------- (init function) ----------------------------------------------- //
 
+async function initChangeRole(userID, name){
+    console.log('init change role')
+    lookUp[`changerole@${userID}`] = new ChangeRole('changerole', userID, name)
+    const currentApp=lookUp[`changerole@${userID}`]
+    const res = await currentApp.listen('onStart')
+    handleRespond(res, userID)
+}
 
 async function initMenu(id) {
     const context = currentState[`autostart@${id}`]
@@ -530,9 +542,9 @@ function deleteHistory(prefix){
  * Cron function for reminder every 9 A.M
  * The function get data from database and check if user is active or not
  */
-cron.schedule('* * * * *',()=>{
-    reminder(13)
-})
+// cron.schedule('* * * * *',()=>{
+//     reminder(13)
+// })
 
 
 

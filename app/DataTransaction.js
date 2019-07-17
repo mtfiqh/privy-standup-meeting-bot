@@ -11,6 +11,9 @@ const projects  = []
 const tasks     = new Set([])
 
 load = () => {
+    getYearsFromDayOff().then(res=>{
+        console.log(res)
+    })
 }
 
 listenUsers = async () => {
@@ -357,9 +360,9 @@ const getStatistic = async (uid)=>{
  * { title: 'QA', description: 'Quality Assurance' } 
  * ]
  */
-const getRoleList = () =>{
+const getRoleList = async () =>{
     const list = []
-    db.collection('roles').get()
+    return db.collection('roles').get()
     .then(result=>{
         result.forEach(res=>{
             list.push({title:res.id,description:res.data().description})
@@ -435,6 +438,39 @@ const getPastTaskToExcel= ()=>{
         })
     })
 
+}
+
+const getHoliday= async (year)=>{
+    const holidays = []
+    const dbRef = db.collection('day-off').where('year','==',year).orderBy('month','asc')
+    return dbRef.get().then(results=>{
+        results.forEach(res=>{
+            if(res.data().type == 'holiday'){
+                holidays.push(
+                    {
+                        date:`${res.data().year}/${res.data().month}/${res.data().day}`,
+                        name:res.data().name})
+            }
+        })
+        return holidays
+    })
+}
+
+/**
+ * Get list of year to list holiday
+ */
+const getYearsFromDayOff = async ()=>{
+    const years = new Set([])
+
+    return db.collection('day-off').orderBy('year','asc').get()
+    .then(results=>{
+        results.forEach(res=>{
+            if(res.data().type == 'holiday'){
+                years.add(res.data().year)
+            }
+        })
+        return Array.from(years)
+    })
 }
 
 //---------------------------ADD SECTION---------------------------------//
@@ -560,7 +596,10 @@ const insertDayOff=async(date,userID,reason)=>{
             let schema = {
                 name:'cuti',
                 type:'day-off',
-                users:[]
+                users:[],
+                year:date.getFullYear(),
+                month:date.getMonth()+1,
+                day:date.getDate()
             }
             
             await db.collection('day-off').doc(date.toString())
@@ -646,9 +685,16 @@ const addHoliday=({name,date})=>{
      * 
      */
     const timestamp = generateTimestamp(date)
-
+    const [year,month,day] = date.split('/')
     db.collection('day-off').doc(timestamp.toString())
-    .set({name:name,type:'holiday',users:[]},{merge:true})
+    .set({
+        name:name,
+        type:'holiday',
+        users:[],
+        year:year,
+        month:month,
+        day:day
+    },{merge:true})
     console.log(timestamp)
 }
 
@@ -1126,10 +1172,13 @@ module.exports = {
     generateTimestamp,
     getProjects,
     saveUser,
+    getHoliday,
+    getYearsFromDayOff,
     isUserExist,
     getUserTasksOrderByPriority,
     assignUserToProjects,
     updateTaskStatus,
+    addHoliday,
     checkDayOff,
     isAdmin,
     setAdmin,
