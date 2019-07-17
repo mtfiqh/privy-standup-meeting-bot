@@ -11,6 +11,10 @@ const projects  = []
 const tasks     = new Set([])
 
 load = () => {
+    getDayOff({day:'29',month:'7',year:'2019'},'day').then(res=>{
+        console.log(res)
+    })
+
 }
 
 listenUsers = async () => {
@@ -473,6 +477,66 @@ const getYearsFromDayOff = async ()=>{
     })
 }
 
+const getDayOff=async ({day,month,year},by)=>{
+    if(by==='year'){
+        return db.collection('day-off')
+        .where('year','==',year)
+        .get().then(result=>{
+            let tmp = []
+            result.forEach(res=>{
+                if(res.data().type=='cuti'){
+                    tmp.push(res.data())
+                }
+            })
+            return dayOffParser(tmp)
+        })
+    }else if(by==='month'){
+        return db.collection('day-off')
+        .where('year','==',year)
+        .where('month','==',month)
+        .get().then(result=>{
+            let tmp = []
+            result.forEach(res=>{
+                if(res.data().type=='cuti'){
+                    tmp.push(res.data())
+                }
+            })
+            return dayOffParser(tmp)
+        })
+    }else if(by==='day'){
+        return db.collection('day-off')
+        .where('year','==',year)
+        .where('month','==',month)
+        .where('day','==',day)
+        .get().then(result=>{
+            let tmp = []
+            result.forEach(res=>{
+                if(res.data().type=='cuti'){
+                    tmp.push(res.data())
+                }
+            })
+            return dayOffParser(tmp)
+        })
+    }
+}
+
+const dayOffParser = (list)=>{
+    const newList = []
+    list.forEach(data=>{
+        data.users.forEach( user=>{
+            newList.push({
+                user:user['name'],
+                alasan:user['reason'],
+                tanggal:`${data.day}/${data.month}/${data.year}`
+            })
+        })
+    })
+    if(newList.length==0){
+        return 'No day off'
+    }
+    return newList
+}
+
 //---------------------------ADD SECTION---------------------------------//
 
 const saveUser = (userID, data) => {
@@ -604,9 +668,12 @@ const insertDayOff=async(date,userID,reason)=>{
             
             await db.collection('day-off').doc(date.toString())
             .set(schema,{merge:true})
-            
-            await db.collection('day-off').doc(date.toString())
-            .update({ users:admin.firestore.FieldValue.arrayUnion({userID:userID,reason:reason}) })
+
+            await getUsersData(userID).then(async res=>{
+                await db.collection('day-off').doc(date.toString())
+                .update({ users:admin.firestore.FieldValue.arrayUnion({userID:userID,reason:reason,name:res.name}) })
+            })
+
         }else{
             console.log(results.data().type)
             if(results.data().type!='holiday'){
