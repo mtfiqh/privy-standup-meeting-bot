@@ -35,7 +35,8 @@ class Menu extends App{
             'onEditProjects',
             'onDeleteProjects',
             'onListProjects',
-            'onAssignUserToProjects'
+            'onAssignUserToProjects',
+            'onAssignRole'
         ])
         // Define Class variable here
         this.prefix     = `${Menu.name}@${userID}`
@@ -176,7 +177,11 @@ class Menu extends App{
     }
 
     onAddProblem(){
-        
+        this.onVisit('onTasksClicked')
+        return {
+            type:'Auto',
+            message:'/problems',
+        }
     }
 
     //----------------PROJECT SECTION------------------------
@@ -193,6 +198,14 @@ class Menu extends App{
         return {
             type:'Auto',
             message:'/createProjects',
+        }
+    }
+    
+    onAssignRole(){
+        this.onVisit('onProjectsClicked')
+        return {
+            type:'Auto',
+            message:'/role',
         }
     }
 

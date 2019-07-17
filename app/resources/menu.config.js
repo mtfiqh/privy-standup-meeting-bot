@@ -92,8 +92,13 @@ const Mapper = {
     },
     "problem":{
         text:"Add Problem",
-        icon:`${em.exc}`,
+        icon:`${em.add}`,
         action:"onAddProblem"
+    },
+    "assignRole":{
+        text:"Assign/Change Role",
+        icon:`${em.man}${em.edit}`,
+        action:"onAssignRole"
     }
 
     
@@ -172,7 +177,8 @@ const menuProjectsAdmin = (from, prefix) => {
                         {...getButton(prefix,'listproject', from)},
                         {...getButton(prefix,'deleteproject', from)}
                     ],[
-                        {...getButton(prefix,'assignproject', from)}
+                        {...getButton(prefix,'assignproject', from)},
+                        {...getButton(prefix,'assignRole', from)}
                     ],[
                         {...getButton(prefix, "back", from)},
                         {...getButton(prefix, "close", from)}
