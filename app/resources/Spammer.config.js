@@ -10,11 +10,11 @@ module.exports={
                 inline_keyboard: [
                     [ 
                         {
-                            text:`${em.done} Mark Task As Done`,callback_data:`${prefix}-MarkDown-`}
+                            text:`${em.done} Mark Task As Done`,callback_data:`${prefix}-onTaskDone-`}
                     ],
                     [ 
                         {
-                            text:`${em.add} Tambah kendala`,callback_data:`${prefix}-problem-`}
+                            text:`${em.add} Tambah kendala`,callback_data:`${prefix}-onAddProblem-`}
                     ],
                     [ 
                         {

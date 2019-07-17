@@ -11,9 +11,6 @@ const projects  = []
 const tasks     = new Set([])
 
 load = () => {
-    getStatistic(1209).then(res=>{
-        console.log(res)
-    })
 }
 
 listenUsers = async () => {
@@ -783,6 +780,16 @@ const checkDayOff = async()=>{
     })
 }
 
+const isHoliday = async ()=>{
+    const {timestamp} = getDate()
+    return db.collection('day-off').doc(timestamp.toString())
+    .get().then(result=>{
+        if(result.data()&&(result.data().type=='holiday')){
+            return true
+        }
+        return false
+    })
+}
 
 //---------------------EDIT SECTION----------------------------------//
 
@@ -1181,8 +1188,7 @@ module.exports = {
     getUserTasksOrderByPriority,
     assignUserToProjects,
     updateTaskStatus,
-    addHoliday,
-    checkDayOff,
+    isHoliday,
     isAdmin,
     setAdmin,
     resetStat,

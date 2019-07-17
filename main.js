@@ -50,19 +50,6 @@ bot.onText(/\/menu/, async (context, match) => {
     await initMenu(context.from.id)
 })
 
-bot.onText(/\/spam/, async (context, match) => {
-    const prefix = `Spammer@${context.from.id}`
-    if (prefix in lookUp) {
-        bot.deleteMessage(context.from.id, context.message_id)
-        return
-    }
-    currentState[`autostart@${context.from.id}`] = context
-    const spam = new Spammer(context.from.id,bot)
-    lookUp[`Spammer@${context.from.id}`] = spam
-    spam.setSchedule('*/5 * * * * *')
-    spam.init()
-})
-
 bot.onText(/\/addTasks/, context => {
     const { from } = context
     try {
@@ -442,6 +429,15 @@ async function initProjects(prefix, userID, name) {
     }
 }
 
+const initSpam = (userID)=>{
+    const prefix = `Spammer@${userID}`
+    currentState[`autostart@${userID}`] = userID
+    const spam = new Spammer(userID,bot)
+    lookUp[prefix] = spam
+    spam.setSchedule(' * * * * *')
+    spam.init()
+}
+
 
 // ----------------------------------------- (remainder function) ----------------------------------------------- //
 
@@ -474,24 +470,21 @@ async function remindMessage(type,user){
 }
 
 function reminder(type) {
-    let today = new Date()
-    if (today.getDay() != 0 && today.getDay() != 6) {
-        db.getUsersData('all').then(async results => {
-            let arr = []
-            results.forEach(user => {
-                if (user.status === 'active') {
-                    arr.push(remindMessage(type,user))
-                } else {
-                    console.log(user.name + ' is inactive, not sending message')
-                }
-            })
-            await Promise.all(arr).then(e=>{
-                e.forEach(a=>{
-                    console.log(a)
-                })
+    db.getUsersData('all').then(async results => {
+        let arr = []
+        results.forEach(user => {
+            if (user.status === 'active') {
+                arr.push(remindMessage(type,user))
+            } else {
+                console.log(user.name + ' is inactive, not sending message')
+            }
+        })
+        await Promise.all(arr).then(e=>{
+            e.forEach(a=>{
+                console.log(a)
             })
         })
-    }
+    })
 }
 
 function deleteHistory(prefix){
@@ -507,46 +500,83 @@ function deleteHistory(prefix){
     delete history[`${prefix}`]
 }
 
+async function allowReminder(){
+    const isHoliday = await db.isHoliday()
+    const todayDate = new Date()
+
+    if((!isHoliday)&&(todayDate.getDate()!=6)&&(todayDate.getDate()!=0)){
+        return true
+    }
+    return false
+}
 
 /**
  * Cron function for reminder every 9 A.M
  * The function get data from database and check if user is active or not
  */
-cron.schedule('* * * * *',()=>{
-    reminder(13)
+
+cron.schedule(' 0 10 * * * ',()=>{
+    allowReminder().then(allowed=>{
+        if(allowed){
+            reminder(10)
+        }
+    })
+})
+
+cron.schedule(' 0 13 * * * ',()=>{
+    allowReminder().then(allowed=>{
+        if(allowed){
+            reminder(13)
+        }
+    })
+})
+
+/**
+ * Function to send message every 1 P.M
+ * To remind users and check their progress
+ * Messages send to all users
+ */
+cron.schedule(' 30 13 * * * ',()=>{
+    allowReminder().then(allowed=>{
+        if(allowed){
+            let arr = []
+            db.getUsersData('all').then(async results => {
+                results.forEach(user => {
+                    if (user.status === 'active') {
+                        arr.push(initSpam(user.userID))
+                    } else {
+                        console.log(user.name + ' is inactive, not sending message')
+                    }
+                })
+                await Promise.all(arr).then(e=>{
+                    e.forEach(a=>{
+                        console.log(a)
+                    })
+                })
+            })
+        }
+    })
 })
 
 
 
-// /**
-//  * Function to send message every 1 P.M
-//  * To remind users and check their progress
-//  * Messages send to all users
-//  */
-// cron.schedule('*/5 * * * * *',()=>{
-//     reminder(13)
-//     //Implements function to send messages here
-// })
-
-
-
-// /**
-//  * Set a user active or not based on day-off databases
-//  * 
-//  */
-// cron.schedule('* * * * *',()=>{
-//     db.checkDayOff().then(results=>{
-//         db.getUsersData('all').then(result=>{
-//             result.forEach(user=>{
-//                 if(results.includes(user.userID)){
-//                     db.updateUser(user.userID,{status:'inactive'})
-//                 }else{
-//                     db.updateUser(user.userID,{status:'active'})
-//                 }
-//             })
-//         })
-//     })
-// })
+/**
+ * Set a user active or not based on day-off databases
+ * 
+ */
+cron.schedule('0 7 * * *',()=>{
+    db.checkDayOff().then(results=>{
+        db.getUsersData('all').then(result=>{
+            result.forEach(user=>{
+                if(results.includes(user.userID)){
+                    db.updateUser(user.userID,{status:'inactive'})
+                }else{
+                    db.updateUser(user.userID,{status:'active'})
+                }
+            })
+        })
+    })
+})
 
 
 // ----------------------------------------- (polling error) ----------------------------------------------- //

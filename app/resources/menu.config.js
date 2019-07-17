@@ -84,6 +84,11 @@ const Mapper = {
         text:"Assign Tasks",
         icon:`${em.tasks}${em.man}`,
         action:"onAssignTasks"
+    },
+    "problem":{
+        text:"Add Problem",
+        icon:`${em.exc}`,
+        action:"onAddProblem"
     }
 
     
@@ -209,6 +214,8 @@ const menuTasksUser = (prefix, from) => {
                     ], [
                         {...getButton(prefix, "done", from)}, 
                         {...getButton(prefix, "offer", from)}
+                    ],[
+                        {...getButton(prefix, "problem", from)}
                     ], [
                         {...getButton(prefix, "back", from)}, 
                         {...getButton(prefix, 'close', from)}
@@ -236,7 +243,8 @@ const menuTasksAdmin = (prefix, from) => {
                         { ...getButton(prefix, "done", from)}, 
                         { ...getButton(prefix, "offer", from)}
                     ], [
-                        {...getButton(prefix, "assignment", from)}
+                        {...getButton(prefix, "assignment", from)},
+                        {...getButton(prefix, "problem", from)}
                     ], [
                         { ...getButton(prefix, "back", from)}, 
                         { ...getButton(prefix, "close", from)}

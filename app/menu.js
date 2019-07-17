@@ -28,6 +28,7 @@ class Menu extends App{
             'onListTasks',
             'onOfferTasks',
             'onAssignTasks',
+            'onAddProblem',
             //Project Section
             'onProjectsClicked',
             'onAddProjects',
@@ -173,6 +174,9 @@ class Menu extends App{
         }
     }
 
+    onAddProblem(){
+        
+    }
 
     //----------------PROJECT SECTION------------------------
     onProjectsClicked(){
