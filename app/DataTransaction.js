@@ -11,10 +11,7 @@ const projects  = []
 const tasks     = new Set([])
 
 load = () => {
-    getDayOff({day:'29',month:'7',year:'2019'},'day').then(res=>{
-        console.log(res)
-    })
-
+    userDayOff({userID:1234455,startDate:'2019/10/26',long:5,reason:'Kangen'})
 }
 
 listenUsers = async () => {
@@ -647,8 +644,16 @@ const userDayOff=async ({userID,startDate,long,reason})=>{
     let start = generateTimestamp(startDate)
     
     for(let i=0;i < long;i++){
-        await insertDayOff(start,userID,reason)
-        start=generateTimestamp(dateCalc.add(start,1,'day'))
+        await isHoliday(`${start.getFullYear()}/${start.getMonth()+1}/${start.getDate()}`).then(async res=>{
+            if(start.getDay()==0||start.getDay()==6||res){
+                i--
+            }else{
+                await insertDayOff(start,userID,reason)
+            }
+            start=generateTimestamp(dateCalc.add(start,1,'day'))
+    
+        })
+        
     }
     
 }
@@ -656,34 +661,33 @@ const userDayOff=async ({userID,startDate,long,reason})=>{
 const insertDayOff=async(date,userID,reason)=>{
     return db.collection('day-off').doc(date.toString())
     .get().then(async results=>{
-        if(results.data()===undefined){   
-            let schema = {
-                name:'cuti',
-                type:'day-off',
-                users:[],
-                year:date.getFullYear(),
-                month:date.getMonth()+1,
-                day:date.getDate()
-            }
-            
-            await db.collection('day-off').doc(date.toString())
-            .set(schema,{merge:true})
-
-            await getUsersData(userID).then(async res=>{
+        if((date.getDay()!=6)&&(date.getDay()!=0)){
+            if(results.data()===undefined){   
+                let schema = {
+                    name:'cuti',
+                    type:'day-off',
+                    users:[],
+                    year:date.getFullYear(),
+                    month:(date.getMonth()+1),
+                    day:date.getDate()
+                }
+                
                 await db.collection('day-off').doc(date.toString())
-                .update({ users:admin.firestore.FieldValue.arrayUnion({userID:userID,reason:reason,name:res.name}) })
-            })
-
-        }else{
-            console.log(results.data().type)
-            if(results.data().type!='holiday'){
-                db.collection('day-off').doc(date.toString())
-                .update({users:admin.firestore.FieldValue.arrayUnion({userID:userID,reason:reason}) })
-            } 
+                .set(schema,{merge:true})
+    
+                await getUsersData(userID).then(async res=>{
+                    await db.collection('day-off').doc(date.toString())
+                    .update({ users:admin.firestore.FieldValue.arrayUnion({userID:userID,reason:reason,name:res.name}) })
+                })
+    
+            }else{
+                if(results.data().type!='holiday'){
+                    db.collection('day-off').doc(date.toString())
+                    .update({users:admin.firestore.FieldValue.arrayUnion({userID:userID,reason:reason}) })
+                } 
+            }
         }
         
-        console.log('result ')
-        console.log(results.data())
     })
     .catch(e=>{
         console.log(e)
@@ -847,10 +851,15 @@ const checkDayOff = async()=>{
     })
 }
 
-const isHoliday = async ()=>{
-    const {timestamp} = getDate()
+const isHoliday = async (date=null)=>{
+    let {timestamp} = getDate()
+    if(date!=null){
+      timestamp = generateTimestamp(date)   
+    }
+    console.log(timestamp)
     return db.collection('day-off').doc(timestamp.toString())
     .get().then(result=>{
+        console.log(result.data())
         if(result.data()&&(result.data().type=='holiday')){
             return true
         }
