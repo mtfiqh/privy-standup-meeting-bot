@@ -1259,5 +1259,6 @@ module.exports = {
     isAdmin,
     setAdmin,
     resetStat,
-    takeOverTask
+    takeOverTask,
+    getDayOff
 }

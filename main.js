@@ -11,6 +11,7 @@ const { Menu } = require('./app/menu')
 const { Spammer } = require('./app/Spammer')
 const { dictionary: dict } = require('./main.config')
 const { DayOff } = require('./app/DayOff')
+const { ListCuti } = require('./app/ListCuti')
 
 // -------------------------------------- (global vars) ----------------------------------------------- //
 
@@ -39,6 +40,7 @@ bot.onText(/\/start/, context => {
         bot.deleteMessage(chat.id, message_id)
     })
 })
+
 
 bot.onText(/\/menu/, async (context, match) => {
     const prefix = `Menu@${context.from.id}`
@@ -135,6 +137,10 @@ bot.onText(/\/listProjects/, async context => {
     initProjects('readProjects', chat.id, chat.first_name)
 })
 
+bot.onText(/\/dayOffByDay/, context =>{
+    const { chat } = context
+    initListDayOff('byDay', chat.id, chat.first_name)
+})
 
 // ----------------------------------------- (on Messages) ----------------------------------------------- //
 
@@ -427,6 +433,14 @@ async function initProjects(prefix, userID, name) {
     } catch (e) {
         console.log(e)
     }
+}
+
+async function initListDayOff(action, userID, name){
+    lookUp[`${'listDayOff'}@${userID}`] = new ListCuti('listDayOff', userID, name)
+    console.log(userID, `created '${'listDayOff'}@${userID}' lookup`)
+    const currentApp = lookUp[`${'listDayOff'}@${userID}`]
+    let response = currentApp.listen(action)
+    handleRespond(response, userID)
 }
 
 const initSpam = (userID)=>{
