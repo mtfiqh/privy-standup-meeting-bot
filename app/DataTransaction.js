@@ -11,7 +11,9 @@ const projects  = []
 const tasks     = new Set([])
 
 load = () => {
-    userDayOff({userID:1234455,startDate:'2019/10/26',long:5,reason:'Kangen'})
+    getDayOff({day:18,month:7,year:2019},'day').then(res=>{
+        console.log(res)
+    })
 }
 
 listenUsers = async () => {
@@ -448,11 +450,12 @@ const getHoliday= async (year)=>{
         results.forEach(res=>{
             if(res.data().type == 'holiday'){
                 holidays.push(
-                    {
-                        date:`${res.data().year}/${res.data().month}/${res.data().day}`,
-                        name:res.data().name})
+                {
+                    date:`${res.data().year}/${res.data().month}/${res.data().day}`,
+                    name:res.data().name})
+                }
             }
-        })
+        )
         return holidays
     })
 }
@@ -524,6 +527,7 @@ const dayOffParser = (list)=>{
             newList.push({
                 user:user['name'],
                 alasan:user['reason'],
+                userID:user['userID'],
                 tanggal:`${data.day}/${data.month}/${data.year}`
             })
         })
@@ -665,7 +669,7 @@ const insertDayOff=async(date,userID,reason)=>{
             if(results.data()===undefined){   
                 let schema = {
                     name:'cuti',
-                    type:'day-off',
+                    type:'cuti',
                     users:[],
                     year:date.getFullYear(),
                     month:(date.getMonth()+1),
@@ -762,9 +766,9 @@ const addHoliday=({name,date})=>{
         name:name,
         type:'holiday',
         users:[],
-        year:year,
-        month:month,
-        day:day
+        year:parseInt(year),
+        month:parseInt(month),
+        day:parseInt(day)
     },{merge:true})
     console.log(timestamp)
 }
