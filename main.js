@@ -141,7 +141,15 @@ bot.onText(/\/dayOffByDay/, context =>{
     const { chat } = context
     initListDayOff('byDay', chat.id, chat.first_name)
 })
+bot.onText(/\/dayOffByMonth/, context =>{
+    const { chat } = context
+    initListDayOff('byMonth', chat.id, chat.first_name)
+})
 
+bot.onText(/\/dayOffByYear/, context =>{
+    const { chat } = context
+    initListDayOff('byYear', chat.id, chat.first_name)
+})
 // ----------------------------------------- (on Messages) ----------------------------------------------- //
 
 bot.on("message", async context => {
@@ -439,7 +447,7 @@ async function initListDayOff(action, userID, name){
     lookUp[`${'listDayOff'}@${userID}`] = new ListCuti('listDayOff', userID, name)
     console.log(userID, `created '${'listDayOff'}@${userID}' lookup`)
     const currentApp = lookUp[`${'listDayOff'}@${userID}`]
-    let response = currentApp.listen(action)
+    let response = await currentApp.listen(action)
     handleRespond(response, userID)
 }
 

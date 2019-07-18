@@ -533,7 +533,7 @@ const dayOffParser = (list)=>{
         })
     })
     if(newList.length==0){
-        return 'No day off'
+        return []
     }
     return newList
 }
