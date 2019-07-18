@@ -14,6 +14,8 @@ const { DayOff } = require('./app/DayOff')
 const { InsertProblems } = require('./app/insertProblems')
 const {assignUsersProject} = require('./app/assignUsersProject')
 const { ChangeRole } = require('./app/ChangeRole')
+const {CalendarKeyboard} = require('./app/Calendar')
+
 // -------------------------------------- (global vars) ----------------------------------------------- //
 
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true })
@@ -142,6 +144,20 @@ bot.onText(/\/role/, async context =>{
     initChangeRole(context.chat.id, context.chat.first_name)
 })
 
+bot.onText(/\/calls/, context => {
+    const { from, message_id } = context
+    const { id, first_name: name } = from
+    const prefix = `CalendarKeyboard@${id}`
+    const calendar = new CalendarKeyboard(prefix, id)
+    lookUp[prefix] = calendar
+    bot.sendMessage(id, "Test",{
+        parse_mode:'Markdown',
+        reply_markup:{
+            inline_keyboard:calendar.makeCalendar(2019,6,'onChoose')
+        }
+    })
+})
+
 // ----------------------------------------- (on Messages) ----------------------------------------------- //
 
 bot.on("message", async context => {
@@ -190,7 +206,7 @@ bot.on('callback_query', async query => {
 
         const currentApp = lookUp[lookUpKey]
         const response = await currentApp.listen(action, address)
-        handleRespond(response, from.id, message.message_id)
+        handleRespond(response, from.id, message.message_id, query.id)
         if (response && response.destroy == true) {
             if(history[currentApp.prefix]!==undefined) deleteHistory(currentApp.prefix)
             delete lookUp[currentApp.prefix]
@@ -213,7 +229,7 @@ bot.on('callback_query', async query => {
 
 
 // ----------------------------------------- (Response Handler) ----------------------------------------------//
-function handleRespond(response, to, message_id) {
+function handleRespond(response, to, message_id,query_id) {
     /**
      * response = {
      *     type : type case (ex."Edit") (required!)
@@ -242,6 +258,8 @@ function handleRespond(response, to, message_id) {
     } else if (type == "Auto") {
         handleAuto(response.message)
         bot.sendMessage(to, response.message).then(async context => await handleAuto(context))
+    }else if(type == 'NoAction'){
+        bot.answerCallbackQuery(query_id, {text: response.message})
     }
     else {
         if (response.multiple === true) {
