@@ -82,6 +82,12 @@ class DayOff extends App{
     }
 
     onSelectType(params){
+        if(params=='Cuti'){
+            return  {
+                type:'Auto',
+                message:'/cuti'
+            }
+        }
         const opts = msg.calendarLayout(this.prefix)
         this.type = params
         return {
