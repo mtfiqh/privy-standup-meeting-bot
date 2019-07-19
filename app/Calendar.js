@@ -293,7 +293,7 @@ class CalendarKeyboard extends App {
         return calendar;
     }
 
-    noaction(message="No Action") {
+    noaction(args ,message="No Action") {
         return {
             type: "NoAction",
             message:message
@@ -414,8 +414,8 @@ class CalendarKeyboard extends App {
     }
 
     async onProcess() {
-        if (!this.choosen || this.choosen.length==0) return this.noaction("please choose start and end day!")
-        if (this.visited.size==1 && this.choosen.length==1) return this.noaction("please choose end-day!")
+        if (!this.choosen || this.choosen.length==0) return this.noaction("","please choose start and end day!")
+        if (this.visited.size==1 && this.choosen.length==1) return this.noaction("","please choose end-day!")
         let startDate;
         let endDate;
         if (this.choosen.length == 1) {
