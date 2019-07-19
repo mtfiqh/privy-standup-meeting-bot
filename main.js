@@ -655,7 +655,7 @@ cron.schedule(' 55 */3 * * * * ',()=>{
             db.getUsersData('all').then(async results => {
                 results.forEach(user => {
                     db.getStatistic(user.userID).then(stat=>{
-                        if ((user.status === 'active')&&(stat.Done===0)) {
+                        if ((user.status === 'active')&&(stat.Done===0&&((stat.Recurring+stat.Added)>0))) {
                             arr.push(initSpam(user.userID))
                         } else {
                             console.log(user.name + ' is inactive, not sending message')
