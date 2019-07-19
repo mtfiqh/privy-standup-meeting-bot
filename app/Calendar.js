@@ -24,7 +24,7 @@ const monthNames = [
     "Dec"
 ];
 
-function getMonthRange(month, year) {
+function getDayStartEnd(month, year) {
     const fd = new Date(year, month, 1);
     const ld = new Date(year, month + 1, 0);
     return {
@@ -34,13 +34,24 @@ function getMonthRange(month, year) {
 }
 
 function getMaxDay(month, year) {
-    const _month = (month + 1) % NUM_MONTH;
+    const _month = (month + 1) % (NUM_MONTH+1);
     if (_month == 2) return year % 4 == 0 ? 29 : 28;
     if (_month <= 7) return _month % 2 == 1 ? 31 : 30;
     return _month % 2 == 1 ? 30 : 31;
 }
 
 function makeKeyboard(prefix, text, action = "noaction", args = "") {
+    
+    const callbackFormat = [prefix, text, action]
+    for(let format of callbackFormat){
+        if(format.toString().includes('-'))
+            throw new Error("Invalid callback format!")
+    }
+
+    if(args.match(/^(-)+/)){
+        throw new Error("args cannot prefix by '-'!")
+    }
+
     return {
         text: `${text}`,
         callback_data: `${prefix}-${action}-${args}`
@@ -48,10 +59,20 @@ function makeKeyboard(prefix, text, action = "noaction", args = "") {
 }
 
 function createArgs(day, month, year, row, col) {
-    return `${day}@${month}@${year}@${row}@${col}`;
+    const args = `${day}@${month}@${year}@${row}@${col}`;
+    if(!args.match(/(([0-9]+)@){4,}[0-9]+/)){
+        throw new Error("createArgs's params must be integer.")
+    }
+    if(day<0){
+        throw new Error("Day must be positive integer.")
+    }
+    return args
 }
 
-function parseArgs(args) {
+function parseArgs(args="") {
+    if(!args.match(/(([0-9]+)@){4,}[0-9]+/)){
+        throw new Error("Invalid Args format. Args must be match to this pattern `/(([0-9]+)@){4,}[0-9]+/`.")
+    }
     const [day, month, year, row, col] = args.split("@").map(e => parseInt(e));
     return { day, month, year, row, col };
 }
@@ -175,7 +196,7 @@ class CalendarKeyboard extends App {
         const footer = makeFooter(this.prefix);
         const subHeader = this.dayNames;
         const _calendar = [header, subHeader];
-        const { firstDay } = getMonthRange(month, year);
+        const { firstDay } = getDayStartEnd(month, year);
         const lastdayPrevMonth = getMaxDay(month - 1, year);
         const numberDays = getMaxDay(month, year);
         let numberWeeks = Math.ceil((getMaxDay(month) + firstDay) / NUM_DAYS);
@@ -425,6 +446,18 @@ class CalendarKeyboard extends App {
     }
 }
 
+
 module.exports = {
-    CalendarKeyboard
-};
+    CalendarKeyboard,
+    getDayStartEnd,
+    getMaxDay,
+    makeKeyboard,
+    createArgs,
+    parseArgs,
+    isWeekend,
+    fitMonth,
+    threeStateTogge, 
+    makeHeader,
+    makeFooter,
+    countDay
+}
