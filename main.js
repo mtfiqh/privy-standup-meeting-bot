@@ -15,6 +15,7 @@ const { InsertProblems } = require('./app/insertProblems')
 const {assignUsersProject} = require('./app/assignUsersProject')
 const { ChangeRole } = require('./app/ChangeRole')
 const {CalendarKeyboard} = require('./app/Calendar')
+const { ListCuti } = require('./app/ListCuti')
 
 // -------------------------------------- (global vars) ----------------------------------------------- //
 
@@ -43,6 +44,7 @@ bot.onText(/\/start/, context => {
         bot.deleteMessage(chat.id, message_id)
     })
 })
+
 
 bot.onText(/\/menu/, async (context, match) => {
     const prefix = `Menu@${context.from.id}`
@@ -158,6 +160,19 @@ bot.onText(/\/calls/, context => {
     })
 })
 
+bot.onText(/\/dayOffByDay/, context =>{
+    const { chat } = context
+    initListDayOff('byDay', chat.id, chat.first_name)
+})
+bot.onText(/\/dayOffByMonth/, context =>{
+    const { chat } = context
+    initListDayOff('byMonth', chat.id, chat.first_name)
+})
+
+bot.onText(/\/dayOffByYear/, context =>{
+    const { chat } = context
+    initListDayOff('byYear', chat.id, chat.first_name)
+})
 // ----------------------------------------- (on Messages) ----------------------------------------------- //
 
 bot.on("message", async context => {
@@ -492,6 +507,14 @@ async function initAssignProject(userID, name, prefix){
         console.log(err)
     }
 }
+async function initListDayOff(action, userID, name){
+    lookUp[`${'listDayOff'}@${userID}`] = new ListCuti('listDayOff', userID, name)
+    console.log(userID, `created '${'listDayOff'}@${userID}' lookup`)
+    const currentApp = lookUp[`${'listDayOff'}@${userID}`]
+    let response = await currentApp.listen(action)
+    handleRespond(response, userID)
+}
+
 const initSpam = (userID)=>{
     const prefix = `Spammer@${userID}`
     currentState[`autostart@${userID}`] = userID
