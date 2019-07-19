@@ -16,7 +16,7 @@ const dayOffMenu=(prefix)=>{
                     {text:`${space}Holiday${space}`,
                     callback_data:`${prefix}-onSelectType-Holiday`},
                     {text:`${space}Day-Off${space}\t`,
-                    callback_data:`${prefix}-onSelectType-Vacation`}
+                    callback_data:`${prefix}-onSelectType-Cuti`}
                 ],
                 [
                     {text:`${space}List Holiday${space}`,

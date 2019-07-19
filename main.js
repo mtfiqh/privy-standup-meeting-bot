@@ -152,10 +152,11 @@ bot.onText(/\/calls/, context => {
     const prefix = `CalendarKeyboard@${id}`
     const calendar = new CalendarKeyboard(prefix, id)
     lookUp[prefix] = calendar
+    const date = new Date()
     bot.sendMessage(id, "Test",{
         parse_mode:'Markdown',
         reply_markup:{
-            inline_keyboard:calendar.makeCalendar(2019,6,'onChoose')
+            inline_keyboard:calendar.makeCalendar(date.getFullYear(),date.getMonth(),'onChoose')
         }
     })
 })
@@ -354,6 +355,10 @@ async function handleAuto(context) {
         case '/listCuti':
                 initListDayOff(chat.id, chat.first_name)
             break        
+        case '/cuti':
+            bot.deleteMessage(chat.id, message_id)
+            initCuti(chat);
+            break
         default:
             console.log("waiting...")
             break
@@ -525,6 +530,20 @@ async function initProblems(prefix, userID, name){
     let response = await currentApp.listen('onStart')
     return handleRespond(response, userID)
 }
+
+function initCuti(chat) {
+    const prefix = `CalendarKeyboard@${chat.id}`;
+    const calendar = new CalendarKeyboard(prefix, chat.id);
+    lookUp[prefix] = calendar;
+    const date = new Date();
+    bot.sendMessage(chat.id, "Pilih Tanggal Awal dan Akhir", {
+        parse_mode: 'Markdown',
+        reply_markup: {
+            inline_keyboard: calendar.makeCalendar(date.getFullYear(), date.getMonth(), 'onChoose')
+        }
+    });
+}
+
 // ----------------------------------------- (remainder function) ----------------------------------------------- //
 
 async function remindMessage(type,user){

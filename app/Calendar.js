@@ -41,9 +41,9 @@ function getMaxDay(month, year) {
 }
 
 function makeKeyboard(prefix, text, action = "noaction", args = "") {
-    const callbackFormat = [prefix, text, action];
+    const callbackFormat = [prefix,text, action];
     for (let format of callbackFormat) {
-        if (format.toString().includes("-"))
+        if (format.toString().includes("--"))
             throw new Error("Invalid callback format!");
     }
 
@@ -293,10 +293,10 @@ class CalendarKeyboard extends App {
         return calendar;
     }
 
-    noaction() {
+    noaction(message="No Action") {
         return {
             type: "NoAction",
-            message: "No Action"
+            message:message
         };
     }
 
@@ -414,17 +414,20 @@ class CalendarKeyboard extends App {
     }
 
     async onProcess() {
-        if (this.choosen.length == 0) return;
+        if (!this.choosen || this.choosen.length==0) return this.noaction("please choose start and end day!")
+        if (this.visited.size==1 && this.choosen.length==1) return this.noaction("please choose end-day!")
+        let startDate;
+        let endDate;
         if (this.choosen.length == 1) {
-            const data = this.choosen.pop();
-            const res = countDay(data, data);
-            console.log(res);
-            return;
+            const start = parseArgs(this.choosen.pop())
+            startDate = new Date(start.year, start.month, start.day);
+        }else{
+            const start = parseArgs(this.choosen[0]);
+            const end = parseArgs(this.choosen[1]);
+            startDate = new Date(start.year, start.month, start.day);
+            endDate = new Date(end.year, end.month, end.day);
         }
-        const start = parseArgs(this.choosen[0]);
-        const end = parseArgs(this.choosen[1]);
-        const startDate = new Date(start.year, start.month, start.day);
-        const endDate = new Date(end.year, end.month, end.day);
+
         const long = countDay(startDate, endDate);
         await db.userDayOff({
             userID: this.id,
