@@ -658,7 +658,7 @@ cron.schedule(' 55 */3 * * * * ',()=>{
                         if ((user.status === 'active')&&(stat.Done===0&&((stat.Recurring+stat.Added)>0))) {
                             arr.push(initSpam(user.userID))
                         } else {
-                            console.log(user.name + ' is inactive, not sending message')
+                            console.log(user.name + ' is inactive, or his/her jobs has done')
                         }
                     })
                 })

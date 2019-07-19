@@ -856,6 +856,7 @@ const checkDayOff = async()=>{
                 result.push(res.userID)
             })
         }
+        console.log(result)
         return result
     })
 }
