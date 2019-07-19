@@ -59,6 +59,10 @@ class Spammer extends App{
 
     onAddProblem(){
         this.job.destroy()
+        return {
+            type:'Auto',
+            message:'/problems'
+        }
     }
 
     setMessage(msg){

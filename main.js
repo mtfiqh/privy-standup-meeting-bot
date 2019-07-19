@@ -15,6 +15,7 @@ const { InsertProblems } = require('./app/insertProblems')
 const {assignUsersProject} = require('./app/assignUsersProject')
 const { ChangeRole } = require('./app/ChangeRole')
 const {CalendarKeyboard} = require('./app/Calendar')
+const { ListCuti } = require('./app/ListCuti')
 
 // -------------------------------------- (global vars) ----------------------------------------------- //
 
@@ -43,6 +44,7 @@ bot.onText(/\/start/, context => {
         bot.deleteMessage(chat.id, message_id)
     })
 })
+
 
 bot.onText(/\/menu/, async (context, match) => {
     const prefix = `Menu@${context.from.id}`
@@ -158,6 +160,10 @@ bot.onText(/\/calls/, context => {
     })
 })
 
+bot.onText(/\/listCuti/, context =>{
+    const { chat } = context
+    initListDayOff(chat.id, chat.first_name)
+})
 // ----------------------------------------- (on Messages) ----------------------------------------------- //
 
 bot.on("message", async context => {
@@ -337,6 +343,17 @@ async function handleAuto(context) {
             bot.deleteMessage(chat.id, message_id)
             initAssignProject(chat.id,chat.first_name,'assignProject')
             break
+        case '/role':
+            bot.deleteMessage(chat.id, message_id)
+            initChangeRole(chat.id, chat.first_name)
+            break
+        case '/problems':
+                bot.deleteMessage(chat.id, message_id)
+                initProblems('problems',chat.id,chat.first_name)
+            break
+        case '/listCuti':
+                initListDayOff(chat.id, chat.first_name)
+            break        
         default:
             console.log("waiting...")
             break
@@ -485,6 +502,14 @@ async function initAssignProject(userID, name, prefix){
         console.log(err)
     }
 }
+async function initListDayOff(userID, name){
+    lookUp[`${'listDayOff'}@${userID}`] = new ListCuti('listDayOff', userID, name)
+    console.log(userID, `created '${'listDayOff'}@${userID}' lookup`)
+    const currentApp = lookUp[`${'listDayOff'}@${userID}`]
+    let response = await currentApp.listen('onStart')
+    handleRespond(response, userID)
+}
+
 const initSpam = (userID)=>{
     const prefix = `Spammer@${userID}`
     currentState[`autostart@${userID}`] = userID
@@ -576,7 +601,11 @@ async function allowReminder(){
  * The function get data from database and check if user is active or not
  */
 
-cron.schedule(' 0 10 * * * ',()=>{
+/**
+ * Send reminder message at 10 A.M
+ */
+cron.schedule(' 20 */3 * * * * ',()=>{
+    console.log('10 A.M')
     allowReminder().then(allowed=>{
         if(allowed){
             reminder(10)
@@ -584,7 +613,11 @@ cron.schedule(' 0 10 * * * ',()=>{
     })
 })
 
-cron.schedule(' 0 13 * * * ',()=>{
+/**
+ * Send reminder message at 1 P.M
+ */
+cron.schedule(' 30 */3 * * * * ',()=>{
+    console.log('1 P.M')
     allowReminder().then(allowed=>{
         if(allowed){
             reminder(13)
@@ -593,21 +626,22 @@ cron.schedule(' 0 13 * * * ',()=>{
 })
 
 /**
- * Function to send message every 1 P.M
- * To remind users and check their progress
- * Messages send to all users
+ * Initialization spam message
  */
-cron.schedule(' 30 13 * * * ',()=>{
+cron.schedule(' 55 */3 * * * * ',()=>{
+    console.log('1.30 P.M')
     allowReminder().then(allowed=>{
         if(allowed){
             let arr = []
             db.getUsersData('all').then(async results => {
                 results.forEach(user => {
-                    if (user.status === 'active') {
-                        arr.push(initSpam(user.userID))
-                    } else {
-                        console.log(user.name + ' is inactive, not sending message')
-                    }
+                    db.getStatistic(user.userID).then(stat=>{
+                        if ((user.status === 'active')&&(stat.Done===0)) {
+                            arr.push(initSpam(user.userID))
+                        } else {
+                            console.log(user.name + ' is inactive, not sending message')
+                        }
+                    })
                 })
                 await Promise.all(arr).then(e=>{
                     e.forEach(a=>{
@@ -625,7 +659,9 @@ cron.schedule(' 30 13 * * * ',()=>{
  * Set a user active or not based on day-off databases
  * 
  */
-cron.schedule('0 7 * * *',()=>{
+cron.schedule('1 */3 * * * *',()=>{
+    console.log('reset')    
+    db.resetStat()
     db.checkDayOff().then(results=>{
         db.getUsersData('all').then(result=>{
             result.forEach(user=>{
