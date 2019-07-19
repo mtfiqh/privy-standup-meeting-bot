@@ -18,8 +18,31 @@ class ListCuti extends App{
             'byDay',
             'onClose',
             'byMonth',
-            'byYear'
+            'byYear',
+            'onStart',
+            'onClick'
         ])
+    }
+
+    onStart(){
+        return{
+            message:`Ingin menampilkan list cuti untuk yang mana?`,
+            options:{
+                reply_markup:{
+                    inline_keyboard:[
+                        [{text:'List Cuti Hari ini', callback_data:`${this.prefix}-onClick-Day`}],
+                        [{text:'List Cuti Bulan ini', callback_data:`${this.prefix}-onClick-Month`}],
+                        [{text:'List Cuti Tahun ini', callback_data:`${this.prefix}-onClick-Year`}],
+                    ]
+                }
+            }
+        }
+    }
+
+    async onClick(by){
+        console.log('onClick')
+        const response = await this[`by${by}`].call(this)
+        return response
     }
 
     async getListDayOff(by){
@@ -48,7 +71,7 @@ class ListCuti extends App{
             i++
         }
         return{
-            type:'Send',
+            type:'Edit',
             message:`Berikut daftar cuti pada ${this.date.day}/${this.date.month}/${this.date.year}\n${text}`,
             options:{
                 reply_markup:{
@@ -68,7 +91,7 @@ class ListCuti extends App{
             i++
         }
         return{
-            type:'Send',
+            type:'Edit',
             message:`Berikut daftar cuti pada bulan ${this.date.month}\n${text}`,
             options:{
                 reply_markup:{
@@ -88,7 +111,7 @@ class ListCuti extends App{
             i++
         }
         return{
-            type:'Send',
+            type:'Edit',
             message:`Berikut daftar cuti pada tahun ${this.date.year}\n${text}`,
             options:{
                 reply_markup:{
