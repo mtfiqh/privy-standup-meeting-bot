@@ -138,10 +138,11 @@ const generateSaveButton =(date,prefix,dest='calendar')=>{
 }
 
 const getHolidays = async (prefix,year)=>{
-    const list    = await getHoliday(year)
+    const list    = await getHoliday(parseInt(year))
     let message = `List holiday : \n`
     let counter   = 1
     let opts = completeOptionClose(prefix)
+    console.log(list)
     for(item of list){
         let date = moment(item.date,'YYYYMMDD').format('LLLL')
         date = date.slice(0,date.length-11)

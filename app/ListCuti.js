@@ -49,7 +49,7 @@ class ListCuti extends App{
         console.log('date', this.date)
         this.lists={}
         const setListDayOff = (dayOff)=>{
-            // console.log('ini day off list\n',dayOff)
+            console.log('ini day off list\n',dayOff)
             this.lists=dayOff
         }
         await getDayOff(this.date, by).then(setListDayOff.bind(this))

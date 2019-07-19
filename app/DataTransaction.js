@@ -443,7 +443,7 @@ const getPastTaskToExcel= ()=>{
 
 const getHoliday= async (year)=>{
     const holidays = []
-    const dbRef = db.collection('day-off').where('year','==',year).orderBy('month','asc')
+    const dbRef = db.collection('day-off').where('year','==',year).orderBy('timestamp','asc')
     return dbRef.get().then(results=>{
         results.forEach(res=>{
             if(res.data().type == 'holiday'){
@@ -476,9 +476,13 @@ const getYearsFromDayOff = async ()=>{
 }
 
 const getDayOff=async ({day,month,year},by)=>{
+    day = parseInt(day)
+    month = parseInt(month)
+    year = parseInt(year)
     if(by==='year'){
         return db.collection('day-off')
         .where('year','==',year)
+        .orderBy('timestamp','asc')
         .get().then(result=>{
             let tmp = []
             result.forEach(res=>{
@@ -492,6 +496,7 @@ const getDayOff=async ({day,month,year},by)=>{
         return db.collection('day-off')
         .where('year','==',year)
         .where('month','==',month)
+        .orderBy('timestamp','asc')
         .get().then(result=>{
             let tmp = []
             result.forEach(res=>{
@@ -506,6 +511,7 @@ const getDayOff=async ({day,month,year},by)=>{
         .where('year','==',year)
         .where('month','==',month)
         .where('day','==',day)
+        .orderBy('timestamp','asc')
         .get().then(result=>{
             let tmp = []
             result.forEach(res=>{
@@ -671,7 +677,8 @@ const insertDayOff=async(date,userID,reason)=>{
                     users:[],
                     year:date.getFullYear(),
                     month:(date.getMonth()+1),
-                    day:date.getDate()
+                    day:date.getDate(),
+                    timestamp:date.getTime()
                 }
                 
                 await db.collection('day-off').doc(date.toString())
@@ -766,9 +773,9 @@ const addHoliday=({name,date})=>{
         users:[],
         year:parseInt(year),
         month:parseInt(month),
-        day:parseInt(day)
+        day:parseInt(day),
+        timestamp:timestamp
     },{merge:true})
-    console.log(timestamp)
 }
 
 //---------------------------SET SECTION------------------------------//
