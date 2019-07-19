@@ -151,6 +151,8 @@ const menuUser = (prefix, from) => {
                 [
                     {...getButton(prefix, 'project', from)}, 
                     {...getButton(prefix, 'task', from)}, 
+                ],[
+                    {...getButton(prefix, 'dayoff', from)}                    
                 ], [
                     {...getButton(prefix, 'close', from)}
                 ]
