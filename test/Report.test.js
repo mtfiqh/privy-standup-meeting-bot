@@ -1,5 +1,5 @@
 const assert = require("assert")
-const {Report} = require('./Report')
+const {Report} = require('../app/Report')
 
 
 const projects = {
