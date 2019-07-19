@@ -4,7 +4,7 @@
   "description": "",
   "main": "main.js",
   "scripts": {
-    "test": "mocha app/Calendar.test.js"
+    "test": "mocha test/"
   },
   "repository": {
     "type": "git",

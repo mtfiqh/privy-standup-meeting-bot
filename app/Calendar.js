@@ -1,5 +1,5 @@
 const { App } = require("../core/App");
-const db      = require('./DataTransaction')
+const db = require("./DataTransaction");
 
 const MAX_CHOOSEN = 2;
 const START_DAY = 0;
@@ -34,22 +34,21 @@ function getDayStartEnd(month, year) {
 }
 
 function getMaxDay(month, year) {
-    const _month = (month + 1) % (NUM_MONTH+1);
+    const _month = (month + 1) % (NUM_MONTH + 1);
     if (_month == 2) return year % 4 == 0 ? 29 : 28;
     if (_month <= 7) return _month % 2 == 1 ? 31 : 30;
     return _month % 2 == 1 ? 30 : 31;
 }
 
 function makeKeyboard(prefix, text, action = "noaction", args = "") {
-    
-    const callbackFormat = [prefix, text, action]
-    for(let format of callbackFormat){
-        if(format.toString().includes('-'))
-            throw new Error("Invalid callback format!")
+    const callbackFormat = [prefix, text, action];
+    for (let format of callbackFormat) {
+        if (format.toString().includes("-"))
+            throw new Error("Invalid callback format!");
     }
 
-    if(args.match(/^(-)+/)){
-        throw new Error("args cannot prefix by '-'!")
+    if (args.match(/^(-)+/)) {
+        throw new Error("args cannot prefix by '-'!");
     }
 
     return {
@@ -60,18 +59,20 @@ function makeKeyboard(prefix, text, action = "noaction", args = "") {
 
 function createArgs(day, month, year, row, col) {
     const args = `${day}@${month}@${year}@${row}@${col}`;
-    if(!args.match(/(([0-9]+)@){4,}[0-9]+/)){
-        throw new Error("createArgs's params must be integer.")
+    if (!args.match(/(([0-9]+)@){4,}[0-9]+/)) {
+        throw new Error("createArgs's params must be integer.");
     }
-    if(day<0){
-        throw new Error("Day must be positive integer.")
+    if (day < 0) {
+        throw new Error("Day must be positive integer.");
     }
-    return args
+    return args;
 }
 
-function parseArgs(args="") {
-    if(!args.match(/(([0-9]+)@){4,}[0-9]+/)){
-        throw new Error("Invalid Args format. Args must be match to this pattern `/(([0-9]+)@){4,}[0-9]+/`.")
+function parseArgs(args = "") {
+    if (!args.match(/(([0-9]+)@){4,}[0-9]+/)) {
+        throw new Error(
+            "Invalid Args format. Args must be match to this pattern `/(([0-9]+)@){4,}[0-9]+/`."
+        );
     }
     const [day, month, year, row, col] = args.split("@").map(e => parseInt(e));
     return { day, month, year, row, col };
@@ -120,23 +121,29 @@ function makeFooter(prefix, resolve = "Process", reject = "Close") {
     ];
 }
 
-function countDay(startDate, endDate, exlcludeWeekend=true) {
-    
-    if(startDate.getTime() > endDate.getTime()){
+function countDay(startDate, endDate, exlcludeWeekend = true) {
+    if (startDate.getTime() > endDate.getTime()) {
         const temp = startDate;
         startDate = endDate;
         endDate = temp;
     }
-    let delta = Math.abs(Math.ceil((endDate-startDate)/(24*3600*1000)+1))
-    if(exlcludeWeekend==true){
-        let counter = 0
-        for(let i = startDate.getDate(); i < startDate.getDate() + delta ; i++) {
-            if (isWeekend(i, startDate.getMonth(), startDate.getFullYear())) continue
-            counter++
+    let delta = Math.abs(
+        Math.ceil((endDate - startDate) / (24 * 3600 * 1000) + 1)
+    );
+    if (exlcludeWeekend == true) {
+        let counter = 0;
+        for (
+            let i = startDate.getDate();
+            i < startDate.getDate() + delta;
+            i++
+        ) {
+            if (isWeekend(i, startDate.getMonth(), startDate.getFullYear()))
+                continue;
+            counter++;
         }
-        return counter
+        return counter;
     }
-    return delta
+    return delta;
 }
 
 class CalendarKeyboard extends App {
@@ -159,7 +166,7 @@ class CalendarKeyboard extends App {
     }
 
     switchAction(day, month, year, action) {
-        if(action=="noaction"){
+        if (action == "noaction") {
             return {
                 message: "-",
                 action: "noaction"
@@ -302,11 +309,11 @@ class CalendarKeyboard extends App {
             data.month -= 1;
         }
 
-        const message = this.renderMesage()
+        const message = this.renderMesage();
         return {
             id: this.id,
             type: "Edit",
-            message: message==false ? "Prev": message,
+            message: message == false ? "Prev" : message,
             options: {
                 parse_mode: "Markdown",
                 reply_markup: {
@@ -329,11 +336,11 @@ class CalendarKeyboard extends App {
             data.month += 1;
         }
 
-        const message = this.renderMesage()
+        const message = this.renderMesage();
         return {
             id: this.id,
             type: "Edit",
-            message: message==false? "Next" : message,
+            message: message == false ? "Next" : message,
             options: {
                 parse_mode: "Markdown",
                 reply_markup: {
@@ -348,14 +355,14 @@ class CalendarKeyboard extends App {
     }
 
     renderMesage() {
-        if(!this.choosen) return false
+        if (!this.choosen) return false;
         if (this.choosen.length < 1) false;
-        let message = "Selected :\n"
-        for(let item of this.choosen){
-            const data = parseArgs(item)
-            message+=`- *${data.day}/${data.month}/${data.year}*\n`
+        let message = "Selected :\n";
+        for (let item of this.choosen) {
+            const data = parseArgs(item);
+            message += `- *${data.day}/${data.month}/${data.year}*\n`;
         }
-        return message
+        return message;
     }
 
     onChoose(args) {
@@ -396,7 +403,7 @@ class CalendarKeyboard extends App {
         return {
             id: this.id,
             type: "Edit",
-            message: message==false? "Choose": message,
+            message: message == false ? "Choose" : message,
             options: {
                 parse_mode: "Markdown",
                 reply_markup: {
@@ -407,34 +414,33 @@ class CalendarKeyboard extends App {
     }
 
     async onProcess() {
-        if(this.choosen.length ==0 ) return
-        if (this.choosen.length == 1){
-            const data =  this.choosen.pop()
-            const res = countDay(data,data)
-            console.log(res)
-            return 
+        if (this.choosen.length == 0) return;
+        if (this.choosen.length == 1) {
+            const data = this.choosen.pop();
+            const res = countDay(data, data);
+            console.log(res);
+            return;
         }
         const start = parseArgs(this.choosen[0]);
         const end = parseArgs(this.choosen[1]);
         const startDate = new Date(start.year, start.month, start.day);
-        const endDate   = new Date(end.year, end.month, end.day);
-        const long = countDay(startDate, endDate)
+        const endDate = new Date(end.year, end.month, end.day);
+        const long = countDay(startDate, endDate);
         await db.userDayOff({
             userID: this.id,
             startDate: startDate,
             long: long,
             reason: "Cuti"
-        })
+        });
         return {
             type: "Edit",
             id: this.id,
-            destroy:true,
+            destroy: true,
             message: "*Success!*",
             options: {
-                parse_mode:'Markdown'
+                parse_mode: "Markdown"
             }
-        }
-        
+        };
     }
 
     onClose() {
@@ -446,7 +452,6 @@ class CalendarKeyboard extends App {
     }
 }
 
-
 module.exports = {
     CalendarKeyboard,
     getDayStartEnd,
@@ -456,8 +461,8 @@ module.exports = {
     parseArgs,
     isWeekend,
     fitMonth,
-    threeStateTogge, 
+    threeStateTogge,
     makeHeader,
     makeFooter,
     countDay
-}
+};
