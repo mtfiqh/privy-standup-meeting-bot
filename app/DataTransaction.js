@@ -23,10 +23,10 @@ listenUsers = async () => {
         user.docChanges().forEach(data => {
     
             if (data.type === 'added') {
-                console.log('Users added : ' + data.doc.data().userID)
+                // console.log('Users added : ' + data.doc.data().userID)
                 users.add(data.doc.data())
             } else if (data.type === 'removed') {
-                console.log('Users removed : ' + data.doc.data().userID)
+                // console.log('Users removed : ' + data.doc.data().userID)
                 users.delete(data.doc.data())
             }
     
@@ -58,9 +58,9 @@ listenProjects = async () => {
                 projects[data.doc.id]['Task']        = tasks
                 tasks = []
                 
-                console.log('Projects added ' + data.doc.data().projectName)
+                // console.log('Projects added ' + data.doc.data().projectName)
             } else if (data.type === 'removed') {
-                console.log('Projects ' + data.doc.data().projectName + ' removed')
+                // console.log('Projects ' + data.doc.data().projectName + ' removed')
             }
         })
     })
@@ -80,17 +80,17 @@ listenTasks = async () => {
                 tasks.add(data.doc.data())
                 
                 if (counter < 5) {
-                    console.log('Task added : ' + data.doc.data().name)
+                    // console.log('Task added : ' + data.doc.data().name)
                 }
                 
                 if (counter === 5) {
-                    console.log('More tasks loading in background')
+                    // console.log('More tasks loading in background')
                 }
 
                 counter++
             } else if (data.type === 'removed') {
                 
-                console.log('Tasks removed : ' + data.doc.data().name)
+                // console.log('Tasks removed : ' + data.doc.data().name)
 
                 db.collection('projects').doc(data.doc.data().projectID)
                 .update(
@@ -102,7 +102,7 @@ listenTasks = async () => {
                 tasks.delete(data.doc.data())
             
             } else if (data.type === 'modified') {
-                console.log('Task modified : ' + data.doc.data().name)
+                // console.log('Task modified : ' + data.doc.data().name)
             }
         })
     })
@@ -172,10 +172,10 @@ const getUserTasksOrderByPriority = async (uid, order) => {
         return taskList
     })
     .catch(err => {
-        console.log('Error : ' + err.details)
+        // console.log('Error : ' + err.details)
     })
     .finally(() => {
-        console.log('Tasks for ' + uid + ' successfully loaded')
+        // console.log('Tasks for ' + uid + ' successfully loaded')
     })
 
 }
@@ -203,10 +203,10 @@ const getProjects = async (type) => {
         return projectNames
     })
     .catch(err => {
-        console.log('Error : ' + err.details)
+        // console.log('Error : ' + err.details)
     })
     .finally(() => {
-        console.log('Projects loaded!')
+        // console.log('Projects loaded!')
     })
 }
 
@@ -240,10 +240,10 @@ const getUserTasks = async (uid) => {
         // })
         return sortingTask(Array.from(taskList))
     }).catch(err => {
-        console.log('Error : ' + err.details)
+        // console.log('Error : ' + err.details)
     })
     .finally(() => {
-        console.log('Tasks for ' + uid + ' successfully loaded')
+        // console.log('Tasks for ' + uid + ' successfully loaded')
     })
 }
 
@@ -313,10 +313,10 @@ const getUserProjects = async (uid) => {
         return projectList
     })
     .catch(err => {
-        console.log('Error : ' + err.details)
+        // console.log('Error : ' + err.details)
     })
     .finally(() => {
-        console.log('Projects for ' + uid + ' successfully loaded')
+        // console.log('Projects for ' + uid + ' successfully loaded')
     })
 }
 
@@ -549,19 +549,19 @@ const saveUser = (userID, data) => {
         if(!res){
             db.collection('users').doc(userID.toString()).set(data)
             .catch(err => {
-                console.log('Error : ' + err.details)
+                // console.log('Error : ' + err.details)
             })
             .finally(result => {
-                console.log('result')
+                // console.log('result')
             })
         }else{
-            console.log(userID+' already registered!')
+            // console.log(userID+' already registered!')
         }
     })
 }
 
 const assignUserToProjects = (projectName, userID) => {
-    console.log(projectName)
+    // console.log(projectName)
     let projectRef = db.collection("projects").where("projectName", "==", projectName)
     projectRef.get()
         .then(data => {
@@ -571,10 +571,10 @@ const assignUserToProjects = (projectName, userID) => {
             })
         })
         .catch(err => {
-            console.log('Error : ' + err.details)
+            // console.log('Error : ' + err.details)
         })
         .finally(() => {
-            console.log('Assign ' + userID + ' to ' + projectName + ' succeeded')
+            // console.log('Assign ' + userID + ' to ' + projectName + ' succeeded')
         })
 }
 
@@ -588,7 +588,7 @@ const addTaskTransaction = async (data) => {
     let taskIDs = []
     let userID
     for (dt of data) {
-        console.log(data)
+        // console.log(data)
         let taskRef       = db.collection('tasks').doc()
         let taskID        = taskRef.id
         let projectRef    = db.collection("projects").where("projectName", "==", dt.projectName)
@@ -630,11 +630,11 @@ const addTaskTransaction = async (data) => {
             
         })
         .catch(err => {
-            console.log(err)
+            // console.log(err)
         })
         .finally(() => {
-            console.log('Task successfully added')
-            console.log('Task ID : ' + taskID)
+            // console.log('Task successfully added')
+            // console.log('Task ID : ' + taskID)
         })
 
     }
@@ -699,7 +699,7 @@ const insertDayOff=async(date,userID,reason)=>{
         
     })
     .catch(e=>{
-        console.log(e)
+        // console.log(e)
         return e
     })
 }
@@ -743,11 +743,11 @@ const addProjects = (projects) => {
             }
         )
         .catch(err => {
-            console.log('Add project failed, error : ' + err.details)
+            // console.log('Add project failed, error : ' + err.details)
         })
         .finally(() => {
-            console.log('Project successfully added')
-            console.log('Project ID : ' + projectID)
+            // console.log('Project successfully added')
+            // console.log('Project ID : ' + projectID)
         })
         pids.add(projectID)
     })
@@ -791,11 +791,11 @@ const setAdmin = (userID) => {
     .update({ type: 'admin' })
     .catch(err => {
         if (err) {
-            console.log('Error : ' + err.details)
+            // console.log('Error : ' + err.details)
         }
     })
     .finally(() => {
-        console.log(userID + ' are successfully set as admin')
+        // console.log(userID + ' are successfully set as admin')
     })
 }
 
@@ -812,7 +812,7 @@ const isUserExist = async (userID) => {
             }
         })
         .catch(err => {
-            console.log('Error : ' + err.details)
+            // console.log('Error : ' + err.details)
         })
 }
 
@@ -830,7 +830,7 @@ const isAdmin = async (userID) => {
             }
         })
         .catch(err => {
-            console.log('Error : ' + err.details)
+            // console.log('Error : ' + err.details)
         })
 }
 
@@ -856,7 +856,7 @@ const checkDayOff = async()=>{
                 result.push(res.userID)
             })
         }
-        console.log(result)
+        // console.log(result)
         return result
     })
 }
@@ -866,10 +866,10 @@ const isHoliday = async (date=null)=>{
     if(date!=null){
       timestamp = generateTimestamp(date)   
     }
-    console.log(timestamp)
+    // console.log(timestamp)
     return db.collection('day-off').doc(timestamp.toString())
     .get().then(result=>{
-        console.log(result.data())
+        // console.log(result.data())
         if(result.data()&&(result.data().type=='holiday')){
             return true
         }
@@ -890,7 +890,7 @@ const editProjectName = (oldName, newName) => {
         })
     })
     .catch(e => {
-        console.log(e)
+        // console.log(e)
     })
 }
 
@@ -898,10 +898,10 @@ const editProjectName = (oldName, newName) => {
 
 const deleteProject = async (projectName) => {
     let projectRef = db.collection('projects').where('projectName', '==', projectName)
-    console.log(projectRef)
+    // console.log(projectRef)
     return projectRef.get()
     .then(data => {
-        // console.log(data)
+        console.log(data)
         let a = 0
         
         data.forEach(dt => {
@@ -957,7 +957,7 @@ const updateTaskStatus = (payload) => {
                 })
 
             }).catch(err => {
-                console.log("Error when updating task", err)
+                // console.log("Error when updating task", err)
             }).finally(`Task ${name} Updated!`)
         })
         
@@ -1066,7 +1066,7 @@ const generateColumn = async (userData, todayReport) => {
         
     
     
-        console.log(inProgress.length)
+        // console.log(inProgress.length)
         if (inProgress != undefined) {
             if (inProgress.length > 1) {
                 let counter = 1
@@ -1088,7 +1088,7 @@ const generateColumn = async (userData, todayReport) => {
                 }
             }
         } else {
-            console.log('bawah')
+            // console.log('bawah')
             ipTemp  = ' '
             project = ' '
         }
@@ -1191,7 +1191,7 @@ const takeOverTask = (payloads) => {
 
         db.collection('tasks').doc(tid).get()
         .then(res=>{
-            console.log(res.data())
+            // console.log(res.data())
             let temp = {}
             temp[uidB] = {}
             temp[uidL] = {}
@@ -1279,5 +1279,6 @@ module.exports = {
     setAdmin,
     resetStat,
     takeOverTask,
-    getDayOff
+    getDayOff,
+    db
 }
