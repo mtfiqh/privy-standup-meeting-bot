@@ -41,9 +41,9 @@ function getMaxDay(month, year) {
 }
 
 function makeKeyboard(prefix, text, action = "noaction", args = "") {
-    const callbackFormat = [prefix, text, action];
+    const callbackFormat = [prefix,text, action];
     for (let format of callbackFormat) {
-        if (format.toString().includes("-"))
+        if (format.toString().includes("--"))
             throw new Error("Invalid callback format!");
     }
 
@@ -426,6 +426,7 @@ class CalendarKeyboard extends App {
         const startDate = new Date(start.year, start.month, start.day);
         const endDate = new Date(end.year, end.month, end.day);
         const long = countDay(startDate, endDate);
+        console.log()
         await db.userDayOff({
             userID: this.id,
             startDate: startDate,
