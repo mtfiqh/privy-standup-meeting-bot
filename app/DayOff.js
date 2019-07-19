@@ -19,6 +19,7 @@ class DayOff extends App{
             'onSave',
             'onCancel',
             'onListHolidayClicked',
+            'onListDayOffClicked',
             'onYearClicked'
         ])
 
@@ -165,6 +166,13 @@ class DayOff extends App{
             type:'Edit',
             message:'Choose Year : ',
             options:opts
+        }
+    }
+
+    onListDayOffClicked(){
+        return {
+            type:'Auto',
+            message:'/listCuti'
         }
     }
 
