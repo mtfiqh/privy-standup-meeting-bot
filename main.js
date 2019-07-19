@@ -17,6 +17,7 @@ const { ChangeRole } = require('./app/ChangeRole')
 const {CalendarKeyboard} = require('./app/Calendar')
 const { ListCuti } = require('./app/ListCuti')
 
+require('dotenv').config()
 // -------------------------------------- (global vars) ----------------------------------------------- //
 
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true })
