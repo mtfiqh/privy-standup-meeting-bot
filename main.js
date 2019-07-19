@@ -609,76 +609,76 @@ async function allowReminder(){
 /**
  * Send reminder message at 10 A.M
  */
-cron.schedule(' 20 */3 * * * * ',()=>{
-    console.log('10 A.M')
-    allowReminder().then(allowed=>{
-        if(allowed){
-            reminder(10)
-        }
-    })
-})
+// cron.schedule(' 20 */3 * * * * ',()=>{
+//     console.log('10 A.M')
+//     allowReminder().then(allowed=>{
+//         if(allowed){
+//             reminder(10)
+//         }
+//     })
+// })
 
-/**
- * Send reminder message at 1 P.M
- */
-cron.schedule(' 30 */3 * * * * ',()=>{
-    console.log('1 P.M')
-    allowReminder().then(allowed=>{
-        if(allowed){
-            reminder(13)
-        }
-    })
-})
+// /**
+//  * Send reminder message at 1 P.M
+//  */
+// cron.schedule(' 30 */3 * * * * ',()=>{
+//     console.log('1 P.M')
+//     allowReminder().then(allowed=>{
+//         if(allowed){
+//             reminder(13)
+//         }
+//     })
+// })
 
-/**
- * Initialization spam message
- */
-cron.schedule(' 55 */3 * * * * ',()=>{
-    console.log('1.30 P.M')
-    allowReminder().then(allowed=>{
-        if(allowed){
-            let arr = []
-            db.getUsersData('all').then(async results => {
-                results.forEach(user => {
-                    db.getStatistic(user.userID).then(stat=>{
-                        if ((user.status === 'active')&&(stat.Done===0)) {
-                            arr.push(initSpam(user.userID))
-                        } else {
-                            console.log(user.name + ' is inactive, not sending message')
-                        }
-                    })
-                })
-                await Promise.all(arr).then(e=>{
-                    e.forEach(a=>{
-                        console.log(a)
-                    })
-                })
-            })
-        }
-    })
-})
+// /**
+//  * Initialization spam message
+//  */
+// cron.schedule(' 55 */3 * * * * ',()=>{
+//     console.log('1.30 P.M')
+//     allowReminder().then(allowed=>{
+//         if(allowed){
+//             let arr = []
+//             db.getUsersData('all').then(async results => {
+//                 results.forEach(user => {
+//                     db.getStatistic(user.userID).then(stat=>{
+//                         if ((user.status === 'active')&&(stat.Done===0)) {
+//                             arr.push(initSpam(user.userID))
+//                         } else {
+//                             console.log(user.name + ' is inactive, not sending message')
+//                         }
+//                     })
+//                 })
+//                 await Promise.all(arr).then(e=>{
+//                     e.forEach(a=>{
+//                         console.log(a)
+//                     })
+//                 })
+//             })
+//         }
+//     })
+// })
 
 
 
-/**
- * Set a user active or not based on day-off databases
- * 
- */
-cron.schedule('1 */3 * * * *',()=>{
-    console.log('reset')    
-    db.resetStat()
-    db.checkDayOff().then(results=>{
-        db.getUsersData('all').then(result=>{
-            result.forEach(user=>{
-                if(results.includes(user.userID)){
-                    db.updateUser(user.userID,{status:'inactive'})
-                }else{
-                    db.updateUser(user.userID,{status:'active'})
-                }
-            })
-        })
-    })
-})
+// /**
+//  * Set a user active or not based on day-off databases
+//  * 
+//  */
+// cron.schedule('1 */3 * * * *',()=>{
+//     console.log('reset')    
+//     db.resetStat()
+//     db.checkDayOff().then(results=>{
+//         db.getUsersData('all').then(result=>{
+//             result.forEach(user=>{
+//                 if(results.includes(user.userID)){
+//                     db.updateUser(user.userID,{status:'inactive'})
+//                 }else{
+//                     db.updateUser(user.userID,{status:'active'})
+//                 }
+//             })
+//         })
+//     })
+// })
 
 
 // ----------------------------------------- (polling error) ----------------------------------------------- //

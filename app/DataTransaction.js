@@ -11,9 +11,7 @@ const projects  = []
 const tasks     = new Set([])
 
 load = () => {
-    getDayOff({day:18,month:7,year:2019},'day').then(res=>{
-        console.log(res)
-    })
+
 }
 
 listenUsers = async () => {
