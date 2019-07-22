@@ -1,5 +1,5 @@
 const {App} = require('../core/App')
-const {addHoliday} = require('./DataTransaction')
+const {addHoliday,isAdmin} = require('./DataTransaction')
 const msg = require('./resources/DayOff.config')
 const moment = require('moment')
 
@@ -37,12 +37,15 @@ class DayOff extends App{
         }
     }
 
-    onStart({from,chat},first = false){
+    async onStart({from,chat},first = false){
         this.from = from
         this.chat = chat
         this.visited.clear()
+
+        const load = result => { this.isAdmin = result }
+        await isAdmin(chat.id).then(load.bind(this))
         this.onVisit('onStart',{from,chat})
-        const opts = msg.dayOffMenu(this.prefix)
+        const opts = msg.dayOffMenu(this.prefix,this.isAdmin)
         moment.locale('id')
         return {
             type: "Edit",
@@ -56,7 +59,6 @@ class DayOff extends App{
         let {func,args} = this.state.pop()
         this.visited.delete(func)
         const response = await this[func].call(this,args)
-        console.log(response)
         return response
         
     }

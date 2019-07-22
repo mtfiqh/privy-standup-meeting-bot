@@ -1,21 +1,52 @@
-const {deleteProject,addProjects,addTaskTransaction,addHoliday,userDayOff} = require('./app/DataTransaction')
+const {db,addProjects,addTaskTransaction,addHoliday,userDayOff} = require('./app/DataTransaction')
+
+const project = [
+    {
+        projectName:'Project A'
+    },
+    {
+        projectName:'Project B'
+    },
+    {
+        projectName:'Project C'
+    },
+    {
+        projectName:'Project D'
+    }
+]
+
+const users = [
+    {
+        name:'user test A',
+        status:'active',
+        type:'admin',
+        userID:1234,
+        username:'testA1234'
+    },
+    {
+        name:'user test B',
+        status:'active',
+        type:'admin',
+        userID:2234,
+        username:'testB1234'
+    },
+    {
+        name:'user test C',
+        status:'active',
+        type:'admin',
+        userID:3234,
+        username:'testA1234'
+    },
+    {
+        name:'user test D',
+        status:'active',
+        type:'admin',
+        userID:4234,
+        username:'testA1234'
+    }
+]
 
 const addProject =async()=>{
-    let date = new Date()
-    const project = [
-        {
-            projectName:'Project A'
-        },
-        {
-            projectName:'Project B'
-        },
-        {
-            projectName:'Project C'
-        },
-        {
-            projectName:'Project D'
-        }
-    ]
     await addProjects(project)
 }
 
@@ -60,6 +91,8 @@ const addTask = async ()=>{
     await addTaskTransaction(tasks,'Project A')
 }
 
+
+
 const holiday = ()=>{
     addHoliday({name:'Idul Fitri',date:'2019/07/05'})
     addHoliday({name:'Nyepi',date:'2019/07/10'})
@@ -73,9 +106,31 @@ const dayoff=()=>{
     userDayOff({userID:886120759,startDate:'2019/07/10',long:10 })
 }
 
-const load =()=>{
-   //addTask()
-   //holiday()
-   //dayoff()
+const addUser=()=>{
+    users.forEach(user=>{
+        db.collection('users').doc(user.userID.toString()).set(user)
+    })
 }
-load()
+
+const deleteUser=()=>{
+    users.forEach(user=>{
+        db.collection('users').doc(user.userID.toString()).delete()
+    })
+}
+
+const getRandomUser=()=>{
+    return users[Math.ceil((Math.random()*100)%users.length)]
+}
+
+const load =()=>{
+
+}
+module.exports={
+    addUser,
+    deleteUser,
+    addProject,
+    addTask,
+    holiday,
+    dayoff,
+    getRandomUser
+}

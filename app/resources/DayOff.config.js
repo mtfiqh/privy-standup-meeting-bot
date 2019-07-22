@@ -6,28 +6,54 @@ const moment = require('moment')
 
 const dateCalc  = require("add-subtract-date")
 
-const dayOffMenu=(prefix)=>{
+const dayOffMenu=(prefix,isAdmin)=>{
     let space = spaces(9)
     this.prefix = prefix
+
+    const adminKeyboard = [
+        [
+            {text:`${space}Holiday${space}`,
+            callback_data:`${prefix}-onSelectType-Holiday`},
+            {text:`${space}Day-Off${space}\t`,
+            callback_data:`${prefix}-onSelectType-Cuti`}
+        ],
+        [
+            {text:`${space}List Holiday${space}`,
+            callback_data:`${prefix}-onListHolidayClicked-`},
+            {text:`${space}List Day-Off${space}\t`,
+            callback_data:`${prefix}-onListDayOffClicked-`}
+        ],
+        [ 
+            {text:`${em.delete} Close`,callback_data:`${prefix}-onClose-`}
+        ]
+    ]
+
+    const userKeyboard = [
+        [
+            {text:`${space}Day-Off${space}\t`,
+            callback_data:`${prefix}-onSelectType-Cuti`}
+        ],
+        [
+            {text:`${space}List Holiday${space}`,
+            callback_data:`${prefix}-onListHolidayClicked-`},
+            {text:`${space}List Day-Off${space}\t`,
+            callback_data:`${prefix}-onListDayOffClicked-`}
+        ],
+        [ 
+            {text:`${em.delete} Close`,callback_data:`${prefix}-onClose-`}
+        ]
+    ]
+    if(isAdmin){
+        return {
+            reply_markup: {
+                inline_keyboard: adminKeyboard
+            }
+        }
+    }
+    
     return {
         reply_markup: {
-            inline_keyboard: [
-                [
-                    {text:`${space}Holiday${space}`,
-                    callback_data:`${prefix}-onSelectType-Holiday`},
-                    {text:`${space}Day-Off${space}\t`,
-                    callback_data:`${prefix}-onSelectType-Cuti`}
-                ],
-                [
-                    {text:`${space}List Holiday${space}`,
-                    callback_data:`${prefix}-onListHolidayClicked-`},
-                    {text:`${space}List Day-Off${space}\t`,
-                    callback_data:`${prefix}-onListDayOffClicked-`}
-                ],
-                [ 
-                    {text:`${em.delete} Close`,callback_data:`${this.prefix}-onClose-`}
-                ]
-            ]
+            inline_keyboard: userKeyboard
         }
     }
 }
