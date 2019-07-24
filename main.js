@@ -16,8 +16,11 @@ const {assignUsersProject} = require('./app/assignUsersProject')
 const { ChangeRole } = require('./app/ChangeRole')
 const {CalendarKeyboard} = require('./app/Calendar')
 const { ListCuti } = require('./app/ListCuti')
-
 require('dotenv').config()
+const SCHEDULE_10  = process.env.SCHEDULE_10
+const SCHEDULE_13  = process.env.SCHEDULE_13
+const SCHEDULE_SPAMMER = process.env.SCHEDULE_SPAMMER
+const SCHEDULE_RESET   = process.env.SCHEDULE_RESET
 // -------------------------------------- (global vars) ----------------------------------------------- //
 
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true })
@@ -632,8 +635,9 @@ async function allowReminder(){
 
 /**
  * Send reminder message at 10 A.M
+ * SCHEDULE_10
  */
-cron.schedule(' 20 */3 * * * * ',()=>{
+cron.schedule(SCHEDULE_10,()=>{
     console.log('10 A.M')
     allowReminder().then(allowed=>{
         if(allowed){
@@ -644,8 +648,9 @@ cron.schedule(' 20 */3 * * * * ',()=>{
 
 /**
  * Send reminder message at 1 P.M
+ * SCHEDULE_13
  */
-cron.schedule(' 30 */3 * * * * ',()=>{
+cron.schedule(SCHEDULE_13,()=>{
     console.log('1 P.M')
     allowReminder().then(allowed=>{
         if(allowed){
@@ -656,8 +661,9 @@ cron.schedule(' 30 */3 * * * * ',()=>{
 
 /**
  * Initialization spam message
+ * SCHEDULE_SPAMMER
  */
-cron.schedule(' 55 */3 * * * * ',()=>{
+cron.schedule(SCHEDULE_SPAMMER,()=>{
     console.log('1.30 P.M')
     allowReminder().then(allowed=>{
         if(allowed){
@@ -686,9 +692,9 @@ cron.schedule(' 55 */3 * * * * ',()=>{
 
 /**
  * Set a user active or not based on day-off databases
- * 
+ * SCHEDULE_RESET
  */
-cron.schedule('1 */3 * * * *',()=>{
+cron.schedule(SCHEDULE_RESET,()=>{
     console.log('reset')    
     db.resetStat()
     db.checkDayOff().then(results=>{

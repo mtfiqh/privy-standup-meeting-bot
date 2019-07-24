@@ -28,6 +28,7 @@
     "node-cron": "^2.0.3",
     "node-datetime": "^2.1.2",
     "node-telegram-bot-api": "^0.30.0",
-    "nodemon": "^1.19.1"
+    "nodemon": "^1.19.1",
+    "pm2": "^3.5.1"
   }
 }
