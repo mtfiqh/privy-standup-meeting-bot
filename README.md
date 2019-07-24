@@ -17,9 +17,23 @@ SMPrivyDev is a Telegram bot to make it easier for developers at PrivyID to repo
 2. Firebase Service Account
 3. Telegram bot
 
+## Dependencies
+1. <a href="https://github.com/yagop/node-telegram-bot-api">node-telegram-bot-api</a> 
+2. <a href="https://github.com/node-cron/node-cron">node-cron</a> 
+3. <a href="https://github.com/googleapis/google-api-nodejs-client">google-api-nodejs-client</a> 
+4. <a href="https://github.com/firebase/firebase-admin-node">firebase-admin-node</a> 
+
 ## Quick Install
 ```bash
-~$ git clone https://github.com/taufiq2810/privy-standup-meeting-bot
-~$ npm install 
-~$ node main.js
+$ git clone https://github.com/taufiq2810/privy-standup-meeting-bot
+$ npm install 
+$ node main.js
 ```
+
+## Author
+1. <a href="https://github.com/dimasadyaksa" >Dimas Adiyaksa</a>
+2. <a href="https://github.com/josestg" >Jose Sitanggang</a>
+3. <a href="https://github.com/taufiq2810" >M. Taufiq H</a>
+
+## License
+<a href="https://github.com/taufiq2810/privy-standup-meeting-bot/blob/master/LICENSE">MIT</a>
