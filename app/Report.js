@@ -22,37 +22,31 @@ class Report extends App {
         this.bucket     = []
         this.separator  = '::' // toggleSelectedTask
 
-        this.register(["select","send","cancel"])
+        this.register(["select","send","cancel","close"])
     }
 
     select(address){
         // address : item@index
         const pressedButtonPosition  = parseInt(address.split('@').pop())
         const { projectId, taskId }  = this.cache[this.prefix][address]
-        const { options, message }   = { ...dict.select.success }
-
-        options.reply_markup = {
-            inline_keyboard : this.toggleSelectedTask(
-                projectId, 
-                taskId,
-                pressedButtonPosition
-            )
-        }
+        const keyboard = this.toggleSelectedTask( projectId, taskId,pressedButtonPosition)
         
         return {
             id: this.id,
             type :"Edit",
-            message: `Halo *${this.name}*, ${message}`,
-            options:  options
+            message:  dict.select.success.getMessage(this.name),
+            options:  dict.select.success.getOptions(keyboard)
         }
     }
 
     send(){
         if(this.selected.size==0) 
             return {
+                destroy:true,
                 id:this.id,
                 type: "Edit",
-                ...dict.send.failed
+                message: dict.send.failed.getMessage(),
+                options: dict.send.failed.getOptions()
             }
 
         const dataTosend = {}
@@ -76,15 +70,16 @@ class Report extends App {
         // cleaning temp
         this.bucket.splice(0, this.bucket.length)
         this.selected.clear()
-        console.log(this.cache[this.prefix])
+        delete this.cache[this.prefix]
 
         // response
-        const {message, options} = dict.send.success
+        const taskList  =  helper.selectedButtonToString(dataTosend[this.id],"Done")
         return {
+            // destroy:true,
             id:this.id,
             type: "Edit",
-            message : helper.selectedButtonToString(dataTosend[this.id],"Done",message),
-            options
+            message : dict.send.success.getMessage(taskList),
+            options : dict.send.success.getOptions(this.prefix)
         }
         
     }
@@ -93,6 +88,16 @@ class Report extends App {
         this.selected.clear()
         this.bucket.splice(0, this.bucket.length)
         return {
+            destroy:true,
+            id:this.id,
+            type:"Delete"
+        }
+    }
+
+    close(){
+        console.log("close")
+        return {
+            destroy:true,
             id:this.id,
             type:"Delete"
         }

@@ -1,5 +1,5 @@
-const {addProjects, getProjects, deleteProject, editProjectName,getTaskCount} = require('./DataTransaction')
-const{toggleCheck} = require('./helper/helper')
+const {addProjects, getProjects, deleteProject, editProjectName,getTaskCount} = require('../DataTransaction')
+const{toggleCheck} = require('../helper/helper')
 const {
     onTypeListenMessage,
     onCancelMessage,
@@ -10,8 +10,8 @@ const {
     onUpdate,
     updated,
     onShowProjects,
-} = require('./CrudProject.config')
-const {App} = require('../core/App')
+} = require('../CrudProject.config')
+const {App} = require('../../core/App')
 
 class CrudProject extends App{
     constructor(userID, name, prefix){

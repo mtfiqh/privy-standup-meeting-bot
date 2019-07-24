@@ -1,5 +1,5 @@
 const assert = require("assert")
-const { App } = require('./App')
+const { App } = require('../core/App')
 
 class Task extends App {
     constructor() {
