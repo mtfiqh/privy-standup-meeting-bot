@@ -166,6 +166,15 @@ bot.onText(/\/listCuti/, context =>{
     const { chat } = context
     initListDayOff(chat.id, chat.first_name)
 })
+
+bot.onText(/\/restart/, context =>{
+    const { chat } = context
+    bot.sendMessage(chat.id, "*Restarted!*", {parse_mode: "Markdown"})
+
+    
+    delete lookUp[`Menu@${chat.id}`]
+    delete lookUp[`Menu@${chat.id}@cron`]
+})
 // ----------------------------------------- (on Messages) ----------------------------------------------- //
 
 bot.on("message", async context => {
@@ -559,14 +568,14 @@ async function remindMessage(type,user){
     if(type===10){
         await dict.reminder.first.getMessage(user.name,user.userID).then(message=>{
             const menu = new Menu(user.userID).addCache(`from@${user.userID}`, { from: context.from })
-            lookUp[`Menu@${user.userID}`] = menu
+            lookUp[`Menu@${user.userID}@cron`] = menu
             initMenuCron(context, message)
         })
     }else{
         await dict.reminder.second.getMessage(user.name,user.userID).then(message=>{
             if(message!=false){
                 const menu = new Menu(user.userID).addCache(`from@${user.userID}`, { from: context.from })
-                lookUp[`Menu@${user.userID}`] = menu
+                lookUp[`Menu@${user.userID}@cron`] = menu
                 initMenuCron(context, message)    
             }
         })
