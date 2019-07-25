@@ -183,9 +183,30 @@ bot.onText(/\/restart/, context =>{
 bot.onText(/\/masukan/, context => {
     const {chat} = context
     const advice = new Advice(`Advice@${chat.id}`, chat.id, chat.first_name)
-    
     const response = advice.onRequest()
+    const adviceTexts = []
     bot.sendMessage(chat.id, response.message, response.options)
+        .then( c => {
+            bot.on("message", ctx => {
+                const text = ctx.text
+                if(text == "Save"){
+                    bot.editMessageText("Ok", {
+                        message_id: context.message_id,
+                        chat_id: context.chat.id,
+                        options:{
+                            reply_markup:{
+                                remove_keyboard:true
+                            }
+                        }
+                    })
+                }else if(text == "Cancel"){
+
+                }else{
+                    adviceTexts.push(text)
+                    console.log(adviceTexts)
+                }
+            })
+        })
 
 })
 
@@ -279,6 +300,21 @@ function handleRespond(response, to, message_id,query_id) {
             message_id: message_id,
             chat_id: to,
             ...response.options
+        })
+    }else if(type=='Listen'){
+        bot.editMessageText(response.message, {
+            message_id: message_id,
+            chat_id: to,
+            ...response.options
+        }).then(c =>{
+            bot.on("message", async context => {
+                const prefix = `CalendarKeyboard@${to}`
+                const currApp = lookUp[prefix]
+                currApp.setReason(context.text)
+                const r = await currApp.saveToDB()
+                handleRespond(r, to, message_id, query_id)
+                await bot.deleteMessage(context.chat.id, context.message_id )
+            })
         })
     } else if (type == "Delete") {
         bot.deleteMessage(response.id, message_id)
