@@ -11,7 +11,6 @@ const projects  = []
 const tasks     = new Set([])
 
 load = () => {
-
 }
 
 listenUsers = async () => {
@@ -542,6 +541,17 @@ const dayOffParser = (list)=>{
     return newList
 }
 
+const getAdvice=async ()=>{
+    const advices = []
+    return db.collection('advices').get()
+    .then(results=>{
+        results.forEach(result=>{
+            advices.push(result.data())
+        })
+        return advices
+    })
+}
+
 //---------------------------ADD SECTION---------------------------------//
 
 const saveUser = (userID, data) => {
@@ -558,6 +568,10 @@ const saveUser = (userID, data) => {
             // console.log(userID+' already registered!')
         }
     })
+}
+
+const addAdvice=(advice,name)=>{
+    db.collection('advices').doc().set({name:name,advice:advice})
 }
 
 const assignUserToProjects = (projectName, userID) => {
@@ -1253,6 +1267,8 @@ module.exports = {
     addProjects,
     addTaskTransaction,
     addProblems,
+    addAdvice,
+    getAdvice,
     checkDayOff,
     addHoliday,
     userDayOff,
