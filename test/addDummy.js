@@ -1,4 +1,4 @@
-const {db,addProjects,addTaskTransaction,addHoliday,userDayOff} = require('./app/DataTransaction')
+const {db,addProjects,addTaskTransaction,addHoliday,userDayOff} = require('../app/DataTransaction')
 
 const project = [
     {

@@ -16,6 +16,7 @@ const {assignUsersProject} = require('./app/assignUsersProject')
 const { ChangeRole } = require('./app/ChangeRole')
 const {CalendarKeyboard} = require('./app/Calendar')
 const { ListCuti } = require('./app/ListCuti')
+const { Advice } = require('./app/advice')
 require('dotenv').config()
 const SCHEDULE_10  = process.env.SCHEDULE_10
 const SCHEDULE_13  = process.env.SCHEDULE_13
@@ -28,6 +29,25 @@ const currentState = {}
 const history = {}
 const lookUp = {}
 
+const commands = new Set([
+    "/start",
+    "/menu",
+    "/addTasks",
+    "/assignTasks",
+    "/showTasks",
+    "/dayOff",
+    "/req",
+    "/offer",
+    "/createProjects",
+    "/deleteProjects",
+    "/updateProjects",
+    "/listProjects",
+    "/role",
+    "/calls",
+    "/restart",
+    "/advice",
+    "/listCuti"
+])
 // -------------------------------------- (onText Listener) ----------------------------------------------- //
 
 bot.onText(/\/start/, context => {
@@ -178,6 +198,27 @@ bot.onText(/\/restart/, context =>{
     delete lookUp[`Menu@${chat.id}`]
     delete lookUp[`Menu@${chat.id}@cron`]
 })
+
+bot.onText(/\/advice/, context => {
+    const {chat} = context
+    const prefix = `Advice@${chat.id}`
+    const advice = new Advice(prefix, chat.id, chat.first_name)
+    lookUp[prefix] = advice
+    const response = advice.onRequest()
+    bot.sendMessage(chat.id, response.message, response.options)
+        .then( ctx => {
+            bot.once("message", async c => {
+                if(!commands.has(c.text)){
+                    const res = advice.onRespond(c.text)
+                    bot.deleteMessage(chat.id, c.message_id)
+                    handleRespond(res,ctx.chat.id, ctx.message_id)
+                }else{
+                    bot.deleteMessage(ctx.chat.id, ctx.message_id)
+                }
+            })
+        })
+})
+
 // ----------------------------------------- (on Messages) ----------------------------------------------- //
 
 bot.on("message", async context => {
@@ -268,6 +309,21 @@ function handleRespond(response, to, message_id,query_id) {
             message_id: message_id,
             chat_id: to,
             ...response.options
+        })
+    }else if(type=='Listen'){
+        bot.editMessageText(response.message, {
+            message_id: message_id,
+            chat_id: to,
+            ...response.options
+        }).then(c =>{
+            bot.on("message", async context => {
+                const prefix = `CalendarKeyboard@${to}`
+                const currApp = lookUp[prefix]
+                currApp.setReason(context.text)
+                const r = await currApp.saveToDB()
+                handleRespond(r, to, message_id, query_id)
+                await bot.deleteMessage(context.chat.id, context.message_id )
+            })
         })
     } else if (type == "Delete") {
         bot.deleteMessage(response.id, message_id)
@@ -628,88 +684,94 @@ async function allowReminder(){
     return false
 }
 
-/**
- * Cron function for reminder every 9 A.M
- * The function get data from database and check if user is active or not
- */
 
-/**
- * Send reminder message at 10 A.M
- * SCHEDULE_10
- */
-cron.schedule(SCHEDULE_10,()=>{
-    console.log('10 A.M')
-    allowReminder().then(allowed=>{
-        if(allowed){
-            reminder(10)
-        }
-    })
-})
+function executeCron(ok){
+    if(ok){
+        /**
+         * Cron function for reminder every 9 A.M
+         * The function get data from database and check if user is active or not
+         */
 
-/**
- * Send reminder message at 1 P.M
- * SCHEDULE_13
- */
-cron.schedule(SCHEDULE_13,()=>{
-    console.log('1 P.M')
-    allowReminder().then(allowed=>{
-        if(allowed){
-            reminder(13)
-        }
-    })
-})
-
-/**
- * Initialization spam message
- * SCHEDULE_SPAMMER
- */
-cron.schedule(SCHEDULE_SPAMMER,()=>{
-    console.log('1.30 P.M')
-    allowReminder().then(allowed=>{
-        if(allowed){
-            let arr = []
-            db.getUsersData('all').then(async results => {
-                results.forEach(user => {
-                    db.getStatistic(user.userID).then(stat=>{
-                        if ((user.status === 'active')&&(stat.Done===0&&((stat.Recurring+stat.Added)>0))) {
-                            arr.push(initSpam(user.userID))
-                        } else {
-                            console.log(user.name + ' is inactive, or his/her jobs has done')
-                        }
-                    })
-                })
-                await Promise.all(arr).then(e=>{
-                    e.forEach(a=>{
-                        console.log(a)
-                    })
-                })
-            })
-        }
-    })
-})
-
-
-
-/**
- * Set a user active or not based on day-off databases
- * SCHEDULE_RESET
- */
-cron.schedule(SCHEDULE_RESET,()=>{
-    console.log('reset')    
-    db.resetStat()
-    db.checkDayOff().then(results=>{
-        db.getUsersData('all').then(result=>{
-            result.forEach(user=>{
-                if(results.includes(user.userID)){
-                    db.updateUser(user.userID,{status:'inactive'})
-                }else{
-                    db.updateUser(user.userID,{status:'active'})
+        /**
+         * Send reminder message at 10 A.M
+         * SCHEDULE_10
+         */
+        cron.schedule(SCHEDULE_10,()=>{
+            console.log('10 A.M')
+            allowReminder().then(allowed=>{
+                if(allowed){
+                    reminder(10)
                 }
             })
         })
-    })
-})
 
+        /**
+         * Send reminder message at 1 P.M
+         * SCHEDULE_13
+         */
+        cron.schedule(SCHEDULE_13,()=>{
+            console.log('1 P.M')
+            allowReminder().then(allowed=>{
+                if(allowed){
+                    reminder(13)
+                }
+            })
+        })
+
+        /**
+         * Initialization spam message
+         * SCHEDULE_SPAMMER
+         */
+        cron.schedule(SCHEDULE_SPAMMER,()=>{
+            console.log('1.30 P.M')
+            allowReminder().then(allowed=>{
+                if(allowed){
+                    let arr = []
+                    db.getUsersData('all').then(async results => {
+                        results.forEach(user => {
+                            db.getStatistic(user.userID).then(stat=>{
+                                if ((user.status === 'active')&&(stat.Done===0&&((stat.Recurring+stat.Added)>0))) {
+                                    arr.push(initSpam(user.userID))
+                                } else {
+                                    console.log(user.name + ' is inactive, or his/her jobs has done')
+                                }
+                            })
+                        })
+                        await Promise.all(arr).then(e=>{
+                            e.forEach(a=>{
+                                console.log(a)
+                            })
+                        })
+                    })
+                }
+            })
+        })
+
+
+
+        /**
+         * Set a user active or not based on day-off databases
+         * SCHEDULE_RESET
+         */
+        cron.schedule(SCHEDULE_RESET,()=>{
+            console.log('reset')    
+            db.resetStat()
+            db.checkDayOff().then(results=>{
+                db.getUsersData('all').then(result=>{
+                    result.forEach(user=>{
+                        if(results.includes(user.userID)){
+                            db.updateUser(user.userID,{status:'inactive'})
+                        }else{
+                            db.updateUser(user.userID,{status:'active'})
+                        }
+                    })
+                })
+            })
+        })
+    }
+}
+
+executeCron(false)
 
 // ----------------------------------------- (polling error) ----------------------------------------------- //
 
