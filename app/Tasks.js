@@ -38,6 +38,7 @@ class Tasks extends App{
                 this.text+=`\n<b>#${task.projectName}</b>\n${i}. ${task.name} [${task.priority}]\nDibuat pada: ${readableDate}\n`
                 i++
             }
+            if(tasks.length<1) this.text="Mohon maaf, kamu belum mempunyai task apapun!"
         }
         await getUserTasks(this.cache.userID).then(getTheTasks.bind(this))
     }
