@@ -1,7 +1,9 @@
 
+
 function save(date, report) {
     const data=report
-
+    let spreadsheetId = process.env.sheet_key
+    console.log(spreadsheetId)
     let maxLength=0
     console.log("\n\n")
     console.log(data)
@@ -10,7 +12,7 @@ function save(date, report) {
     const {
         google
     } = require('googleapis')
-    const keys = require('../credentials/keys-sheets.json')
+    const keys = require('../credentials/firebase.json')
 
     const client = new google.auth.JWT(
         keys.client_email,
@@ -19,7 +21,7 @@ function save(date, report) {
         ['https://www.googleapis.com/auth/spreadsheets']
     )
 
-    client.authorize((err, tokens) => {
+    client.authorize(async(err, tokens) => {
         if (err) {
             console.log(err)
         } else {
@@ -39,7 +41,7 @@ function save(date, report) {
         // create new sheets
         const request = {
             // The ID of the spreadsheet
-            "spreadsheetId": '1YfZQRCdkrZ5I45AMs_7N5GEYnj6_tFQbU6zW_sfICvc',
+            "spreadsheetId": spreadsheetId,
             "resource": {
                 "requests": [{
                     "addSheet": {
@@ -62,7 +64,7 @@ function save(date, report) {
 
              // update properties
              const prop = {
-                spreadsheetId: '1YfZQRCdkrZ5I45AMs_7N5GEYnj6_tFQbU6zW_sfICvc',
+                spreadsheetId: spreadsheetId,
                 range: title+"!A1", //sheet!A1
                 valueInputOption: 'USER_ENTERED',
                 resource: {
