@@ -180,34 +180,20 @@ bot.onText(/\/restart/, context =>{
     delete lookUp[`Menu@${chat.id}@cron`]
 })
 
-bot.onText(/\/masukan/, context => {
+bot.onText(/\/advice/, context => {
     const {chat} = context
-    const advice = new Advice(`Advice@${chat.id}`, chat.id, chat.first_name)
+    const prefix = `Advice@${chat.id}`
+    const advice = new Advice(prefix, chat.id, chat.first_name)
+    lookUp[prefix] = advice
     const response = advice.onRequest()
-    const adviceTexts = []
     bot.sendMessage(chat.id, response.message, response.options)
-        .then( c => {
-            bot.on("message", ctx => {
-                const text = ctx.text
-                if(text == "Save"){
-                    bot.editMessageText("Ok", {
-                        message_id: context.message_id,
-                        chat_id: context.chat.id,
-                        options:{
-                            reply_markup:{
-                                remove_keyboard:true
-                            }
-                        }
-                    })
-                }else if(text == "Cancel"){
-
-                }else{
-                    adviceTexts.push(text)
-                    console.log(adviceTexts)
-                }
+        .then( ctx => {
+            bot.on("message", async c => {
+                const res = advice.onRespond(c.text)
+                bot.deleteMessage(chat.id, c.message_id)
+                handleRespond(res,ctx.chat.id, ctx.message_id)
             })
         })
-
 })
 
 // ----------------------------------------- (on Messages) ----------------------------------------------- //
