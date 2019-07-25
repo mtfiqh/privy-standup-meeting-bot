@@ -1,6 +1,6 @@
 const assert = require('assert')
 const dt = require('../app/DataTransaction')
-const dummy = require('../addDummy')
+const dummy = require('./addDummy')
 
 describe('Test On DataTransaction.js',function(){
     describe('On Getter Methods',function(){
