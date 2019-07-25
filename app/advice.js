@@ -1,6 +1,7 @@
 
 const {App} = require('../core/App')
 const {makeKeyboard} = require('./Calendar')
+const db = require('./DataTransaction')
 class Advice  extends App {
 
     constructor(prefix, id, name){
@@ -51,6 +52,7 @@ class Advice  extends App {
     }
 
     onSubmit(){
+        db.addAdvice(this.data, this.name)
         return {
             type:"Edit",
             id: this.id,

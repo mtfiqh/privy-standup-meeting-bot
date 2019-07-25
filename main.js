@@ -29,6 +29,25 @@ const currentState = {}
 const history = {}
 const lookUp = {}
 
+const commands = new Set([
+    "/start",
+    "/menu",
+    "/addTasks",
+    "/assignTasks",
+    "/showTasks",
+    "/dayOff",
+    "/req",
+    "/offer",
+    "/createProjects",
+    "/deleteProjects",
+    "/updateProjects",
+    "/listProjects",
+    "/role",
+    "/calls",
+    "/restart",
+    "/advice",
+    "/listCuti"
+])
 // -------------------------------------- (onText Listener) ----------------------------------------------- //
 
 bot.onText(/\/start/, context => {
@@ -188,10 +207,14 @@ bot.onText(/\/advice/, context => {
     const response = advice.onRequest()
     bot.sendMessage(chat.id, response.message, response.options)
         .then( ctx => {
-            bot.on("message", async c => {
-                const res = advice.onRespond(c.text)
-                bot.deleteMessage(chat.id, c.message_id)
-                handleRespond(res,ctx.chat.id, ctx.message_id)
+            bot.once("message", async c => {
+                if(!commands.has(c.text)){
+                    const res = advice.onRespond(c.text)
+                    bot.deleteMessage(chat.id, c.message_id)
+                    handleRespond(res,ctx.chat.id, ctx.message_id)
+                }else{
+                    bot.deleteMessage(ctx.chat.id, ctx.message_id)
+                }
             })
         })
 })
