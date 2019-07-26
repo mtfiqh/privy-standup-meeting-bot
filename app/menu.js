@@ -51,6 +51,7 @@ class Menu extends App{
     //----------------BASIC SECTION-----------------------------------------
 
     async cron(){
+        this.prefix = `${Menu.name}@${this.userID}@cron`
         const {from } = this.cache[`from@${this.userID}`]
         return await this.onMain({from:from,chat:undefined})
     }

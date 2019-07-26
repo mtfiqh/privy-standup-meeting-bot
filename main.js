@@ -262,10 +262,10 @@ bot.on('callback_query', async query => {
     try {
         const { from, message, data: command } = query
         const [lookUpKey, action, address] = command.split('-')
-
         if (command == '/menu') return await initMenu(from.id)
 
         const currentApp = lookUp[lookUpKey]
+        console.log(currentApp)
         const response = await currentApp.listen(action, address)
         handleRespond(response, from.id, message.message_id, query.id)
         if (response && response.destroy == true) {
