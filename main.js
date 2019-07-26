@@ -193,7 +193,6 @@ bot.onText(/\/listCuti/, context =>{
 bot.onText(/\/restart/, context =>{
     const { chat } = context
     bot.sendMessage(chat.id, "*Restarted!*", {parse_mode: "Markdown"})
-
     
     delete lookUp[`Menu@${chat.id}`]
     delete lookUp[`Menu@${chat.id}@cron`]
@@ -238,7 +237,6 @@ bot.on("message", async context => {
             if(history[response.prefix+'@'+response.userID]===undefined) history[response.prefix+'@'+response.userID]=new Set([])
             history[response.prefix+'@'+response.userID].add(context.message_id)
         }
-        console.log(from.id, `currentState ${currentState[from.id]} deleted`)
         delete currentState[from.id]
         bot.sendMessage(chat.id, 'Processing....',{reply_markup:{remove_keyboard:true}}).then(contextBot=>{
             if(response && response.record===true){
@@ -270,9 +268,6 @@ bot.on('callback_query', async query => {
         handleRespond(response, from.id, message.message_id, query.id)
         if (response && response.destroy == true) {
             if(history[currentApp.prefix]!==undefined) deleteHistory(currentApp.prefix)
-            delete lookUp[currentApp.prefix]
-        }
-        if(response && response.destroyBatch<=1){
             delete lookUp[currentApp.prefix]
         }
         if (response && response.record === true) {
@@ -329,7 +324,7 @@ function handleRespond(response, to, message_id,query_id) {
         bot.deleteMessage(response.id, message_id)
     } else if (type == "Confirm") {
         const { sender, receiver } = response
-        handleRespond(sender, sender.id, sender.special? message_id-1:message_id)
+        handleRespond(sender, sender.id, message_id)
         handleRespond(receiver, receiver.id, message_id)
     } else if (type == "Auto") {
         handleAuto(response.message)
@@ -769,16 +764,16 @@ const cronreset = cron.schedule(SCHEDULE_RESET,()=>{
 })
 
 function cronstart(){
-    cron10.start()
-    cron13.start()
-    cronspam.start()
-    cronreset.start()
+    cron10.stop()
+    cron13.stop()
+    cronspam.stop()
+    cronreset.stop()
 }
 
 cronstart()
 
 // ----------------------------------------- (polling error) ----------------------------------------------- //
 
-bot.on('polling_error', msg => {
-    console.log(msg)
-})
+// bot.on('polling_error', msg => {
+//     console.log(msg)
+// })
