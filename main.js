@@ -756,6 +756,7 @@ function executeCron(ok){
         cron.schedule(SCHEDULE_RESET,()=>{
             console.log('reset')    
             db.resetStat()
+
             db.checkDayOff().then(results=>{
                 db.getUsersData('all').then(result=>{
                     result.forEach(user=>{
@@ -771,7 +772,7 @@ function executeCron(ok){
     }
 }
 
-executeCron(false)
+executeCron(true)
 
 // ----------------------------------------- (polling error) ----------------------------------------------- //
 

@@ -1072,8 +1072,8 @@ const generateColumn = async (userData, todayReport) => {
         if(todayReport[userData['userID']].info!=undefined){
             info          = todayReport[userData['userID']].info
         }
-        if(todayReport[userData['userID']].problem!=undefined){
-            problem          = todayReport[userData['userID']].problem
+        if(todayReport[userData['userID']].problems!=undefined){
+            problem          = todayReport[userData['userID']].problems
         }
         
         tmp.push(userData['name'])
@@ -1094,7 +1094,7 @@ const generateColumn = async (userData, todayReport) => {
                         
                 })
             } else {
-                ipTemp = todayReport[userData['userID']].inProgress[0]
+                ipTemp = todayReport[userData['userID']].inProgress&&todayReport[userData['userID']].inProgress[0]
                 if(ipTemp!=undefined){
                     getTask.push(getProjectByTask(ipTemp))
                 }else{
@@ -1118,7 +1118,7 @@ const generateColumn = async (userData, todayReport) => {
                     counter++
                 })
             } else {
-                doneTemp = todayReport[userData['userID']].done[0]
+                doneTemp = todayReport[userData['userID']].done && todayReport[userData['userID']].done[0]
                 if(doneTemp==undefined){
                     infoTemp = ' '
                 }
@@ -1163,7 +1163,7 @@ const generateColumn = async (userData, todayReport) => {
                     }
                 })
             } else {
-                problemTemp = todayReport[userData['userID']].problem[0]
+                problemTemp = todayReport[userData['userID']].problems&&todayReport[userData['userID']].problems[0]
                 if(problemTemp==undefined){
                     problemTemp = ' '
                 }
