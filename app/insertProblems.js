@@ -32,6 +32,7 @@ class InsertProblems extends App{
     async onStart(type){
         this.cache.problems=[]
         await this.getAllUserTasks()
+        this.cache.keyboard=[]
         let i=0
         for(let task of this.tasks){
             this.cache.keyboard.push([
