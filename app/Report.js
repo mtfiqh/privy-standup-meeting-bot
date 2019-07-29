@@ -3,6 +3,7 @@ const { App }                     = require('../core/App')
 const { dictionary:dict }         = require('./Report.config')
 const helper                      = require('./helper/helper')
 const  db                         = require('./DataTransaction')
+const {QA}                        = require('./QA')
 
 class Report extends App {
 
@@ -39,7 +40,7 @@ class Report extends App {
         }
     }
 
-    send(){
+    async send(){
         if(this.selected.size==0) 
             return {
                 destroy:true,
@@ -65,10 +66,10 @@ class Report extends App {
         
         // Mark tasks as done=
         dataTosend[this.id]=[...this.bucket]
-        db.updateTaskStatus(dataTosend)
+        // db.updateTaskStatus(dataTosend)
 
         //send notifitaions to QA
-        this.sendNotificationToQA()
+        await this.sendNotificationToQA()
 
         // cleaning temp
         this.bucket.splice(0, this.bucket.length)
@@ -98,7 +99,6 @@ class Report extends App {
     }
 
     close(){
-        console.log("close")
         return {
             destroy:true,
             id:this.id,
@@ -122,8 +122,10 @@ class Report extends App {
         return this.toggleCheckIcon(position)
     }
 
-    sendNotificationToQA(){
-
+    async sendNotificationToQA(){
+        const qa = await QA.getInstance()
+        const qaList = qa.QAs
+        
     }
 
 }
