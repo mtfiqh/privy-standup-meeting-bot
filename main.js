@@ -288,7 +288,7 @@ bot.on('callback_query', async query => {
         }
         
     } catch (error) {
-        console.error("Error on bo.on('callback_query') (main.js)", error)
+        bot.answerCallbackQuery(query.id, {text: "Session Over!"})
     }
 
 })
@@ -314,21 +314,6 @@ function handleRespond(response, to, message_id,query_id) {
             message_id: message_id,
             chat_id: to,
             ...response.options
-        })
-    }else if(type=='Listen'){
-        bot.editMessageText(response.message, {
-            message_id: message_id,
-            chat_id: to,
-            ...response.options
-        }).then(c =>{
-            bot.on("message", async context => {
-                const prefix = `CalendarKeyboard@${to}`
-                const currApp = lookUp[from.id][prefix]
-                currApp.setReason(context.text)
-                const r = await currApp.saveToDB()
-                handleRespond(r, to, message_id, query_id)
-                await bot.deleteMessage(context.chat.id, context.message_id )
-            })
         })
     } else if (type == "Delete") {
         bot.deleteMessage(response.id, message_id)
