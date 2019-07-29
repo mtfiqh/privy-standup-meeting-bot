@@ -11,7 +11,9 @@ const projects  = []
 const tasks     = new Set([])
 
 load = () => {
-
+    isUserActive(886120759).then(res=>{
+        console.log(res)
+    })
 }
 
 listenUsers = async () => {
@@ -606,6 +608,11 @@ const getUserTaskCountAndDayOff= async (userID)=>{
     })
 
     return user
+}
+
+const isUserActive = async (userID)=>{
+    const userStatistic = await getStatistic(userID)
+    return (userStatistic.Done + userStatistic.Added)!=0
 }
 
 //---------------------------ADD SECTION---------------------------------//
@@ -1350,6 +1357,7 @@ module.exports = {
     isHoliday,
     isAdmin,
     setAdmin,
+    getUserTaskCountAndDayOff,
     resetStat,
     takeOverTask,
     getDayOff,
