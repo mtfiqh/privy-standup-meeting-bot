@@ -1,4 +1,4 @@
-
+const TIME_OUT = 120
 class App {
     constructor() {
         if (this.constructor === App) {
@@ -6,6 +6,7 @@ class App {
         }
         this.lookUp = new Set([]) // action-methods name
         this.cache = {}
+        this.startTime = new Date().getTime()
     }
 
     addCache(key, payloads){
@@ -35,9 +36,27 @@ class App {
             throw new Error(
                 `Action '${action}' on '${this.constructor.name}' has not been registered!`,
             )
-        }
+        }  
+        this.startTime = new Date().getTime()
         //call action-method using method name
         return this[action].call(this, args)
+    }
+
+    startNewSession(){
+        return {
+            type:"Restart",
+            id:this.id,
+            activity:this.prefix,
+        }
+    }
+
+    get durration(){
+        const endTime = new Date().getTime()
+        return (endTime-this.startTime)/1000
+    }
+
+    isNewSession(){
+        return this.durration>= TIME_OUT
     }
 }
 

@@ -20,6 +20,7 @@ class InsertProblems extends App{
         this.addCache('token', Math.random().toString(36).substring(8))
         this.addCache('problems', [])
         this.prefix=`${prefix}@${userID}`
+        this.id = userID
     }
     async getAllUserTasks(){
         this.tasks={}
