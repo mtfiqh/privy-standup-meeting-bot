@@ -1,5 +1,6 @@
 const {isAdmin,exportToExcel} = require("./DataTransaction")
 const {App} = require('../core/App')
+const {settings}= require('./helper/reader')
 const {
     menuAdmin,
     menuUser,
@@ -111,7 +112,7 @@ class Menu extends App{
         return {
             type:'Send',
             id:this.userID,
-            message:'Success Export to Excel'
+            message:`Success Export to Excel\nLink : ${settings.spreadsheetURL}`
         } 
     }
 
