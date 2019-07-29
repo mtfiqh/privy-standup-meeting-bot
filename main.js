@@ -50,6 +50,13 @@ const commands = new Set([
 ])
 // -------------------------------------- (onText Listener) ----------------------------------------------- //
 
+function addLookUp(id, prefix, value){
+    if(lookUp[id]==undefined){
+        lookUp[id]={}
+    }
+    lookUp[id][prefix]=value
+}
+
 bot.onText(/\/start/, context => {
     const { from, chat, message_id } = context
     currentState[`autostart@${from.id}`] = context
@@ -58,6 +65,7 @@ bot.onText(/\/start/, context => {
         status: 'active',
         type: 'user',
         userID: from.id,
+        role:'user',
         username: from.username
     })
     bot.sendMessage(chat.id,
@@ -72,7 +80,7 @@ bot.onText(/\/start/, context => {
 
 bot.onText(/\/menu/, async (context, match) => {
     const prefix = `Menu@${context.from.id}`
-    if (prefix in lookUp) {
+    if ((lookUp[context.from.id]!=undefined)&& (prefix in lookUp[context.from.id])) {
         bot.deleteMessage(context.from.id, context.message_id)
         return
     }
@@ -83,7 +91,9 @@ bot.onText(/\/menu/, async (context, match) => {
 bot.onText(/\/addTasks/, context => {
     const { from } = context
     try {
-        lookUp[`addTasks@${from.id}`] = new Tasks(from.id, 'addTasks', from.first_name)
+        const prefix = `addTasks@${from.id}`
+        const task   = new Tasks(from.id, 'addTasks', from.first_name)
+        addLookUp(from.id, prefix, task)
         currentState[from.id] = 'addTasks'
         const response = {
             message: dict.addTasks.getMessage(),
@@ -98,7 +108,9 @@ bot.onText(/\/addTasks/, context => {
 bot.onText(/\/assignTasks/, (context, match) => {
     const { from } = context
     try {
-        lookUp[`assignTasks@${from.id}`] = new Tasks(from.id, 'assignTasks')
+        const prefix = `assignTasks@${from.id}`
+        const task  = new Tasks(from.id, 'assignTasks')
+        addLookUp(from.id, prefix, task)
         currentState[from.id] = 'assignTasks'
         const response = {
             message: dict.assignTasks.getMessage(),
@@ -124,7 +136,8 @@ bot.onText(/\/dayOff/, async (context, match) => {
     const { from, message_id } = context
     const dayOff = new DayOff(bot, from.id)
     const res = await dayOff.onStart(context, true)
-    lookUp[`DayOff@${from.id}`] = dayOff
+    const prefix = `DayOff@${from.id}`
+    addLookUp(from.id, prefix, dayOff)
     handleRespond(res, from.id, message_id)
 })
 
@@ -175,7 +188,7 @@ bot.onText(/\/calls/, context => {
     const { id, first_name: name } = from
     const prefix = `CalendarKeyboard@${id}`
     const calendar = new CalendarKeyboard(prefix, id)
-    lookUp[prefix] = calendar
+    addLookUp(id, prefix, calendar)
     const date = new Date()
     bot.sendMessage(id, "Test",{
         parse_mode:'Markdown',
@@ -192,17 +205,16 @@ bot.onText(/\/listCuti/, context =>{
 
 bot.onText(/\/restart/, context =>{
     const { chat } = context
+    bot.deleteMessage(chat.id, context.message_id)
     bot.sendMessage(chat.id, "*Restarted!*", {parse_mode: "Markdown"})
-    
-    delete lookUp[`Menu@${chat.id}`]
-    delete lookUp[`Menu@${chat.id}@cron`]
+    delete lookUp[chat.id]
 })
 
 bot.onText(/\/advice/, context => {
     const {chat} = context
     const prefix = `Advice@${chat.id}`
     const advice = new Advice(prefix, chat.id, chat.first_name)
-    lookUp[prefix] = advice
+    addLookUp(chat.id, prefix, advice)
     const response = advice.onRequest()
     bot.sendMessage(chat.id, response.message, response.options)
         .then( ctx => {
@@ -224,14 +236,14 @@ bot.on("message", async context => {
     const { from, chat, text } = context
     if (currentState[from.id]) {
         console.log(from.id, 'Type Listen')
-        const currentApp = lookUp[`${currentState[from.id]}@${from.id}`]
+        const currentApp = lookUp[from.id][`${currentState[from.id]}@${from.id}`]
         const response = await currentApp.listen('onTypeListen', context)
         if (response && response.destroy == true) {
             if(history[currentApp.prefix]!==undefined){
                 history[currentApp.prefix].add(context.message_id)
                 deleteHistory(currentApp.prefix)
             }
-            delete lookUp[currentApp.prefix]
+            delete lookUp[from.id][currentApp.prefix]
         }
         if(response && response.record===true){
             if(history[response.prefix+'@'+response.userID]===undefined) history[response.prefix+'@'+response.userID]=new Set([])
@@ -261,14 +273,12 @@ bot.on('callback_query', async query => {
         const { from, message, data: command } = query
         const [lookUpKey, action, address] = command.split('-')
         if (command == '/menu') return await initMenu(from.id)
-
-        const currentApp = lookUp[lookUpKey]
-        console.log(currentApp)
-        const response = await currentApp.listen(action, address)
+        const currentApp = lookUp[from.id][lookUpKey]
+        const response = currentApp.isNewSession() ? currentApp.startNewSession() : await currentApp.listen(action, address)
         handleRespond(response, from.id, message.message_id, query.id)
         if (response && response.destroy == true) {
             if(history[currentApp.prefix]!==undefined) deleteHistory(currentApp.prefix)
-            delete lookUp[currentApp.prefix]
+            delete lookUp[from.id][currentApp.prefix]
         }
         if (response && response.record === true) {
             if(history[response.prefix+'@'+response.userID]===undefined) history[response.prefix+'@'+response.userID]=new Set([])
@@ -313,7 +323,7 @@ function handleRespond(response, to, message_id,query_id) {
         }).then(c =>{
             bot.on("message", async context => {
                 const prefix = `CalendarKeyboard@${to}`
-                const currApp = lookUp[prefix]
+                const currApp = lookUp[from.id][prefix]
                 currApp.setReason(context.text)
                 const r = await currApp.saveToDB()
                 handleRespond(r, to, message_id, query_id)
@@ -331,6 +341,15 @@ function handleRespond(response, to, message_id,query_id) {
         bot.sendMessage(to, response.message).then(async context => await handleAuto(context))
     }else if(type == 'NoAction'){
         bot.answerCallbackQuery(query_id, {text: response.message})
+
+    }else if(type=="Restart"){
+        delete lookUp[response.id][response.activity]
+        bot.answerCallbackQuery(query_id, {text: "Time Out!"})
+        bot.deleteMessage(to, message_id)
+    }else if(type == 'Batch'){
+        for(let r of response.responses){
+            handleRespond(r, to, message_id, query_id)
+        }
     }
     else {
         if (response.multiple === true) {
@@ -377,15 +396,16 @@ async function handleAuto(context) {
             break
         case '/showTasks':
             bot.deleteMessage(chat.id, message_id)
-            lookUp[`showTasks@${chat.id}`] = new Tasks(chat.id, 'showTasks', chat.name)
-            const currentApp = lookUp[`showTasks@${chat.id}`]
-            response = await currentApp.showTasks(chat)
+            const prefix = `showTasks@${chat.id}`
+            const task =  new Tasks(chat.id, 'showTasks', chat.name)
+            addLookUp(chat.id, prefix, task)
+            response = await task.showTasks(chat)
             handleRespond(response, chat.id)
             break
         case '/dayOff':
             const dayOff = new DayOff(bot, chat.id)
-            lookUp[`DayOff@${chat.id}`] = dayOff
             const res = await dayOff.onStart(context, true)
+            addLookUp(chat.id, `DayOff@${chat.id}`, dayOff)
             handleRespond(res, chat.id, message_id)
             break
         case '/createProjects':
@@ -434,9 +454,10 @@ async function handleAuto(context) {
 
 async function initChangeRole(userID, name){
     console.log('init change role')
-    lookUp[`changerole@${userID}`] = new ChangeRole('changerole', userID, name)
-    const currentApp=lookUp[`changerole@${userID}`]
-    const res = await currentApp.listen('onStart')
+    const prefix = `changerole@${userID}`
+    const changeRole = new ChangeRole('changerole', userID, name)
+    const res = await changeRole.listen('onStart')
+    addLookUp(userID, prefix, changeRole)
     handleRespond(res, userID)
 }
 
@@ -445,8 +466,8 @@ async function initMenu(id) {
     const { from, chat, message_id } = context
     const menu = new Menu(from.id)
     const msg_bot = currentState[`autostartBot@${id}`] == undefined ? message_id : currentState[`autostartBot@${id}`]
-
-    lookUp[`Menu@${from.id}`] = menu
+    const prefix  =`Menu@${from.id}`
+    addLookUp(id, prefix, menu)
     const res = await menu.onMain(context, true)
     handleRespond(res, from.id, message_id)
     bot.deleteMessage(chat.id, msg_bot)
@@ -458,15 +479,15 @@ async function initMenuCron(context, message) {
     bot.sendMessage(from.id, message, dict.initMenuCron.getOptions(from.id,from.first_name,type))
 }
 
-function initTasks(prefix, userID, name) {
+function initTasks(activityName, userID, name) {
     try {
-        lookUp[`${prefix}@${userID}`] = new Tasks(userID, prefix, name)
-        currentState[userID] = prefix
-        console.log(userID, `created '${prefix}@${userID}' lookup`)
-        console.log(userID, `lock user in state '${prefix}'`)
+        const prefix = `${activityName}@${userID}`
+        const task = new Tasks(userID, activityName, name)
+        addLookUp(userID, prefix,task )
+        currentState[userID] = activityName
         const response = {
             record:true,
-            prefix,
+            prefix: activityName,
             userID,
             message: dict.initTasks.getMessage(),
             options: dict.initTasks.getOptions()
@@ -482,7 +503,7 @@ async function initOfferTask(id, name) {
     const prefix = `TakeOfferTask@${id}`
     const injector = `Menu@${id}`
     // user was regitered
-    if (prefix in lookUp) return { active: true }
+    if (lookUp[id]!=undefined && prefix in lookUp[id]) return { active: true }
     const response = {
         message: dict.initOfferTask.done.getMessage(name),
         options:  dict.initOfferTask.done.getOptions(injector)
@@ -492,7 +513,8 @@ async function initOfferTask(id, name) {
             const projects = helper.parseToReportFormat(results)
             const { inlineKeyboard, addrs } = helper.generateTasksKeyboard(projects[id], prefix, "Process", "Cancel")
             // regiter current user to lookUp as Report@userId
-            lookUp[prefix] = new TakeOfferTask(projects[id], id, name, inlineKeyboard).addCache(prefix, addrs)
+            const takeOfferTask = new TakeOfferTask(projects[id], id, name, inlineKeyboard).addCache(prefix, addrs)
+            addLookUp(id, prefix, takeOfferTask)
             response.options = dict.initOfferTask.inprogress.getOptions(inlineKeyboard)
             response.message = dict.initOfferTask.inprogress.getMessage(name)
         }
@@ -506,7 +528,7 @@ async function initUserReport(id, name) {
     const prefix = `Report@${id}`
     const injector = `Menu@${id}`
     // user report was regitered
-    if (prefix in lookUp) return { active: true }
+    if ((lookUp[id]!=undefined) && (prefix in lookUp[id])) return { active: true }
     const response = {
         message: dict.initUserReport.done.getMessage(name),
         options: dict.initUserReport.done.getOptions(injector)
@@ -516,7 +538,8 @@ async function initUserReport(id, name) {
             const projects = helper.parseToReportFormat(results)
             const { inlineKeyboard, addrs } = helper.generateTasksKeyboard(projects[id], prefix)
             // regiter current user to lookUp as Report@userId
-            lookUp[prefix] = new Report(projects[id], id, name, inlineKeyboard).addCache(prefix, addrs)
+            const report = new Report(projects[id], id, name, inlineKeyboard).addCache(prefix, addrs)
+            addLookUp(id, prefix, report)
             response.options = dict.initUserReport.inprogress.getOptions(inlineKeyboard)
             response.message = dict.initUserReport.inprogress.getMessage(name)
         }
@@ -524,25 +547,25 @@ async function initUserReport(id, name) {
     return response
 }
 
-async function initProjects(prefix, userID, name) {
+async function initProjects(activityName, userID, name) {
     try {
-        lookUp[`${prefix}@${userID}`] = new CrudProject(userID, name, prefix)
-        console.log(userID, `created '${prefix}@${userID}' lookup`)
-        const currentApp = lookUp[`${prefix}@${userID}`]
+        const prefix = `${activityName}@${userID}`
+        const crudProject = new CrudProject(userID, name, activityName)
+        addLookUp(userID, prefix, crudProject)
         let response
-        if (prefix === "createProjects") {
-            currentState[userID] = `${prefix}`
-            console.log(userID, `lock user in state '${prefix}'`)
+        if (activityName === "createProjects") {
+            currentState[userID] = `${activityName}`
+            console.log(userID, `lock user in state '${activityName}'`)
             const response = {
                 message: dict.initProjects.getMessage(),
                 options: dict.initProjects.getOptions()
             }
             return handleRespond(response, userID)
-        } else if (prefix === "readProjects") {
-            response = await currentApp.listen('read')
+        } else if (activityName === "readProjects") {
+            response = await crudProject.listen('read')
             return handleRespond(response, userID)
         }
-        response = await currentApp.listen('showKeyboard')
+        response = await crudProject.listen('showKeyboard')
         return handleRespond(response, userID)
 
     } catch (e) {
@@ -560,22 +583,22 @@ bot.onText(/\/assignProject/, (context, match)=>{
     initAssignProject(chat.id, chat.first_name, 'assignProject')
 })
 
-async function initAssignProject(userID, name, prefix){
+async function initAssignProject(userID, name, activityName){
     try{
-        lookUp[`${prefix}@${userID}`] = new assignUsersProject(userID, name, prefix)
-        console.log(userID, `created ${prefix}@${userID} lookup`)
-        const currentApp = lookUp[`${prefix}@${userID}`]
-        const response = await currentApp.listen('onStart')
+        const prefix = `${activityName}@${userID}`
+        const _assignProject = new assignUsersProject(userID, name, activityName)
+        addLookUp(userID, prefix, _assignProject)
+        const response = await _assignProject.listen('onStart')
         return handleRespond(response, userID)
     }catch(err){
         console.log(err)
     }
 }
 async function initListDayOff(userID, name){
-    lookUp[`${'listDayOff'}@${userID}`] = new ListCuti('listDayOff', userID, name)
-    console.log(userID, `created '${'listDayOff'}@${userID}' lookup`)
-    const currentApp = lookUp[`${'listDayOff'}@${userID}`]
-    let response = await currentApp.listen('onStart')
+    const prefix = `${'listDayOff'}@${userID}`
+    const listCuti = new ListCuti('listDayOff', userID, name)
+    addLookUp(userID, prefix, listCuti)
+    let response = await listCuti.listen('onStart')
     handleRespond(response, userID)
 }
 
@@ -583,22 +606,22 @@ const initSpam = (userID)=>{
     const prefix = `Spammer@${userID}`
     currentState[`autostart@${userID}`] = userID
     const spam = new Spammer(userID,bot)
-    lookUp[prefix] = spam
+    addLookUp(userID, prefix, spam)
     spam.setSchedule(' * * * * *')
     spam.init()
 }
-async function initProblems(prefix, userID, name){
-    lookUp[`${prefix}@${userID}`] = new InsertProblems(userID, name, prefix)
-    console.log(userID, `created '${prefix}@${userID}' lookup`)
-    const currentApp = lookUp[`${prefix}@${userID}`]
-    let response = await currentApp.listen('onStart')
+async function initProblems(activityName, userID, name){
+    const prefix = `${activityName}@${userID}`
+    const insertProblems = new InsertProblems(userID, name, activityName)
+    addLookUp(userID, prefix, insertProblems)
+    const response = await currentApp.listen('onStart')
     return handleRespond(response, userID)
 }
 
 function initCuti(chat) {
     const prefix = `CalendarKeyboard@${chat.id}`;
     const calendar = new CalendarKeyboard(prefix, chat.id);
-    lookUp[prefix] = calendar;
+    addLookUp(chat.id, prefix, calendar)
     const date = new Date();
     bot.sendMessage(chat.id, "Pilih Tanggal Awal dan Akhir", {
         parse_mode: 'Markdown',
@@ -621,15 +644,17 @@ async function remindMessage(type,user){
     }
     if(type===10){
         await dict.reminder.first.getMessage(user.name,user.userID).then(message=>{
+            const prefix = `Menu@${user.userID}@cron`
             const menu = new Menu(user.userID).addCache(`from@${user.userID}`, { from: context.from })
-            lookUp[`Menu@${user.userID}@cron`] = menu
+            addLookUp(user.userID, prefix, menu)
             initMenuCron(context, message)
         })
     }else{
         await dict.reminder.second.getMessage(user.name,user.userID).then(message=>{
             if(message!=false){
                 const menu = new Menu(user.userID).addCache(`from@${user.userID}`, { from: context.from })
-                lookUp[`Menu@${user.userID}@cron`] = menu
+                const prefix = `Menu@${user.userID}@cron`
+                addLookUp(user.userID, prefix, menu)
                 initMenuCron(context, message)    
             }
         })

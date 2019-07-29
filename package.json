@@ -6,7 +6,7 @@
   "scripts": {
     "start": "nodemon main.js",
     "prod" : "pm2-runtime main.js",
-    "test": "mocha test/"
+    "test": "mocha test/QA.test.js"
   },
   "repository": {
     "type": "git",

@@ -35,6 +35,14 @@ module.exports = {
                     }
                 }
             }
+        },
+        sendNotificationToQA:{
+            getMessage: (QAName, name, taskList)=> `Halo ${name}, Berikt task *${name}* yang baru saja *done*:\n${taskList}.`,
+            getOptions: ()=> {
+                return {
+                    parse_mode:"Markdown"
+                }
+            }
         }
     }
 }

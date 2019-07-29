@@ -19,6 +19,7 @@ class assignUsersProject extends App{
             'onSure'
         ])
         this.addCache('idxProject', {})
+        this.id = userID
     }
 
     /**
