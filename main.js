@@ -718,37 +718,6 @@ const cron13 = cron.schedule(SCHEDULE_13,()=>{
 })
 
 /**
- * Initialization spam message
- * SCHEDULE_SPAMMER
- */
-const cronspam = cron.schedule(SCHEDULE_SPAMMER,()=>{
-    console.log('1.30 P.M')
-    allowReminder().then(allowed=>{
-        if(allowed){
-            let arr = []
-            db.getUsersData('all').then(async results => {
-                results.forEach(user => {
-                    db.getStatistic(user.userID).then(stat=>{
-                        if ((user.status === 'active')&&(stat.Done===0&&((stat.Recurring+stat.Added)>0))) {
-                            arr.push(initSpam(user.userID))
-                        } else {
-                            console.log(user.name + ' is inactive, or his/her jobs has done')
-                        }
-                    })
-                })
-                await Promise.all(arr).then(e=>{
-                    e.forEach(a=>{
-                        console.log(a)
-                    })
-                })
-            })
-        }
-    })
-})
-
-
-
-/**
  * Set a user active or not based on day-off databases
  * SCHEDULE_RESET
  */
@@ -772,7 +741,6 @@ const cronreset = cron.schedule(SCHEDULE_RESET,()=>{
 function cronstart(){
     cron10.stop()
     cron13.stop()
-    cronspam.stop()
     cronreset.stop()
 }
 
