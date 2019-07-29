@@ -11,7 +11,7 @@ const projects  = []
 const tasks     = new Set([])
 
 load = () => {
-    getUserRole(699298349).then(res=>{
+    getQA().then(res=>{
         console.log(res)
     })
 }
@@ -567,6 +567,21 @@ const getUserRole=(userID)=>{
     })
 }
 
+const getQA=()=>{
+    const QAs = []
+
+    return db.collection('users').where('role','==','QA')
+    .get().then(users=>{
+        users.forEach(user=>{
+            const tmp = {
+                name:user.data().name,
+                role:user.data().role
+            }
+            QAs.push(tmp)
+        })
+        return QAs
+    })
+}
 
 //---------------------------ADD SECTION---------------------------------//
 
@@ -1313,5 +1328,6 @@ module.exports = {
     resetStat,
     takeOverTask,
     getDayOff,
+    getQA,
     db
 }
