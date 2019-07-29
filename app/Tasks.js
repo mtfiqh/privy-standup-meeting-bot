@@ -20,6 +20,7 @@ class Tasks extends App{
         this.addCache('prefix', prefix)
         this.addCache('token', Math.random().toString(36).substring(8))
         this.addCache('countTasks',0)
+        this.id = userID
 
     }
 

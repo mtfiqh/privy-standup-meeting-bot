@@ -35,6 +35,7 @@ class DayOff extends App{
             name:{},
             date:{}
         }
+        this.id = userID
     }
 
     async onStart({from,chat},first = false){

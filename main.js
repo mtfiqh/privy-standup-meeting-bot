@@ -57,7 +57,7 @@ function addLookUp(id, prefix, value){
     lookUp[id][prefix]=value
 }
 
-bot.onText(/\/startbot/, context => {
+bot.onText(/\/start/, context => {
     const { from, chat, message_id } = context
     currentState[`autostart@${from.id}`] = context
     db.saveUser(from.id, {
@@ -80,7 +80,7 @@ bot.onText(/\/startbot/, context => {
 
 bot.onText(/\/menu/, async (context, match) => {
     const prefix = `Menu@${context.from.id}`
-    if (prefix in lookUp[context.from.id]) {
+    if ((lookUp[context.from.id]!=undefined)&& (prefix in lookUp[context.from.id])) {
         bot.deleteMessage(context.from.id, context.message_id)
         return
     }
@@ -205,10 +205,9 @@ bot.onText(/\/listCuti/, context =>{
 
 bot.onText(/\/restart/, context =>{
     const { chat } = context
+    bot.deleteMessage(chat.id, context.message_id)
     bot.sendMessage(chat.id, "*Restarted!*", {parse_mode: "Markdown"})
-    
-    lookUp[chat.id] = {}
-    // delete lookUp[`Menu@${chat.id}@cron`]
+    delete lookUp[chat.id]
 })
 
 bot.onText(/\/advice/, context => {
@@ -274,9 +273,8 @@ bot.on('callback_query', async query => {
         const { from, message, data: command } = query
         const [lookUpKey, action, address] = command.split('-')
         if (command == '/menu') return await initMenu(from.id)
-        console.log(lookUp)
         const currentApp = lookUp[from.id][lookUpKey]
-        const response = await currentApp.listen(action, address)
+        const response = currentApp.isNewSession() ? currentApp.startNewSession() : await currentApp.listen(action, address)
         handleRespond(response, from.id, message.message_id, query.id)
         if (response && response.destroy == true) {
             if(history[currentApp.prefix]!==undefined) deleteHistory(currentApp.prefix)
@@ -343,6 +341,10 @@ function handleRespond(response, to, message_id,query_id) {
         bot.sendMessage(to, response.message).then(async context => await handleAuto(context))
     }else if(type == 'NoAction'){
         bot.answerCallbackQuery(query_id, {text: response.message})
+    }else if(type=="Restart"){
+        delete lookUp[response.id][response.activity]
+        bot.answerCallbackQuery(query_id, {text: "Time Out!"})
+        bot.deleteMessage(to, message_id)
     }
     else {
         if (response.multiple === true) {
@@ -460,8 +462,8 @@ async function initMenu(id) {
     const menu = new Menu(from.id)
     const msg_bot = currentState[`autostartBot@${id}`] == undefined ? message_id : currentState[`autostartBot@${id}`]
     const prefix  =`Menu@${from.id}`
-    const res = await menu.onMain(context, true)
     addLookUp(id, prefix, menu)
+    const res = await menu.onMain(context, true)
     handleRespond(res, from.id, message_id)
     bot.deleteMessage(chat.id, msg_bot)
     delete currentState[`autostart@${id}`]
@@ -496,7 +498,7 @@ async function initOfferTask(id, name) {
     const prefix = `TakeOfferTask@${id}`
     const injector = `Menu@${id}`
     // user was regitered
-    if (prefix in lookUp[id]) return { active: true }
+    if (lookUp[id]!=undefined && prefix in lookUp[id]) return { active: true }
     const response = {
         message: dict.initOfferTask.done.getMessage(name),
         options:  dict.initOfferTask.done.getOptions(injector)
@@ -521,7 +523,7 @@ async function initUserReport(id, name) {
     const prefix = `Report@${id}`
     const injector = `Menu@${id}`
     // user report was regitered
-    if (prefix in lookUp[id]) return { active: true }
+    if ((lookUp[id]!=undefined) && (prefix in lookUp[id])) return { active: true }
     const response = {
         message: dict.initUserReport.done.getMessage(name),
         options: dict.initUserReport.done.getOptions(injector)
