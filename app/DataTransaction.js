@@ -1354,5 +1354,6 @@ module.exports = {
     takeOverTask,
     getDayOff,
     getQA,
-    db
+    db,
+    getUserTaskCountAndDayOff
 }
