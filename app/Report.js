@@ -67,6 +67,9 @@ class Report extends App {
         dataTosend[this.id]=[...this.bucket]
         db.updateTaskStatus(dataTosend)
 
+        //send notifitaions to QA
+        this.sendNotificationToQA()
+
         // cleaning temp
         this.bucket.splice(0, this.bucket.length)
         this.selected.clear()
@@ -117,6 +120,10 @@ class Report extends App {
         else
             this.selected.add(item)
         return this.toggleCheckIcon(position)
+    }
+
+    sendNotificationToQA(){
+
     }
 
 }
