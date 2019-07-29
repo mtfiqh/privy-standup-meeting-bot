@@ -11,6 +11,9 @@ const projects  = []
 const tasks     = new Set([])
 
 load = () => {
+    getUserRole(699298349).then(res=>{
+        console.log(res)
+    })
 }
 
 listenUsers = async () => {
@@ -551,6 +554,19 @@ const getAdvice=async ()=>{
         return advices
     })
 }
+
+const getUserRole=(userID)=>{
+    const role = {}
+
+    return db.collection('users').where('userID','==',userID)
+    .get().then(users=>{
+        users.forEach(user=>{
+            role[user.data().userID] = user.data().role
+        })
+        return role[userID]
+    })
+}
+
 
 //---------------------------ADD SECTION---------------------------------//
 
@@ -1261,6 +1277,7 @@ load()
 module.exports = {
     load,
     getRoleList,
+    getUserRole,
     listenProjects,
     listenUsers,
     updateUser,

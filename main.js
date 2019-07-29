@@ -58,6 +58,7 @@ bot.onText(/\/start/, context => {
         status: 'active',
         type: 'user',
         userID: from.id,
+        role:'user',
         username: from.username
     })
     bot.sendMessage(chat.id,
