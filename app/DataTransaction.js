@@ -11,15 +11,12 @@ const projects  = []
 const tasks     = new Set([])
 
 load = () => {
-    isUserActive(886120759).then(res=>{
-        console.log(res)
-    })
 }
 
+/**
+ * Listen to users change in firebase document
+ */
 listenUsers = async () => {
-    /**
-     * Listen to users change in firebase document
-     */
     db.collection('users')
     .onSnapshot(user => {
         user.docChanges().forEach(data => {
@@ -37,10 +34,10 @@ listenUsers = async () => {
     })
 }
 
+/**
+ * Listen to projects change in firebase document
+ */
 listenProjects = async () => {
-    /**
-     * Listen to projects change in firebase document
-     */
     db.collection('projects')
     .onSnapshot(project => {
         let tasks = []
@@ -68,10 +65,10 @@ listenProjects = async () => {
     })
 }
 
+/**
+ * Listen to tasks change in firebase document
+ */
 listenTasks = async () => {
-    /**
-     * Listen to tasks change in firebase document
-     */
     db.collection('tasks')
     .onSnapshot(user => {
         let counter = 0
@@ -112,13 +109,13 @@ listenTasks = async () => {
 
 //-------------------------GET SECTION-------------------------------------//
 
+/**
+ * Get users data from firebase document
+ * @param {id} - userID of a user or keyword 'all' to get all users data
+ * 
+ * @return {Array} - Array of user data or single object of user data 
+ */
 const getUsersData = async (id) => {
-    /**
-     * Get users data from firebase document
-     * @param {id} - userID of a user or keyword 'all' to get all users data
-     * 
-     * @return {Array} - Array of user data or single object of user data 
-     */
 
     let userData = new Set([])
 
@@ -148,15 +145,15 @@ const getUsersData = async (id) => {
     }
 }
 
+/**
+ * Get user tasks in order by priority HIGH, MEDIUM or LOW
+ * 
+ * @param {uid}     - userID of a user
+ * @param {order}   - order of tasks can be ASC or DESC
+ *
+ * @returns {Array} - An array containing user data in requested order 
+ */
 const getUserTasksOrderByPriority = async (uid, order) => {
-    /**
-     * Get user tasks in order by priority HIGH, MEDIUM or LOW
-     * 
-     * @param {uid}     - userID of a user
-     * @param {order}   - order of tasks can be ASC or DESC
-     *
-     * @returns {Array} - An array containing user data in requested order 
-     */
     let taskList = []
     
     dbRef = db.collection('tasks').orderBy('priority', order)
@@ -182,13 +179,13 @@ const getUserTasksOrderByPriority = async (uid, order) => {
 
 }
 
+/**
+ * Get all projects
+ * @param {type} - type of projects like 'finished' or 'In Progress'
+ * 
+ * @returns {Set} - returns a set of project names
+ */
 const getProjects = async (type) => {
-    /**
-     * Get all projects
-     * @param {type} - type of projects like 'finished' or 'In Progress'
-     * 
-     * @returns {Set} - returns a set of project names
-     */
 
     let projectNames = new Set([])
 
@@ -212,6 +209,10 @@ const getProjects = async (type) => {
     })
 }
 
+/**
+ * 
+ * @param {int} uid | userID of a  user
+ */
 const getUserTasks = async (uid) => {
 
     let taskList = new Set([])
@@ -242,17 +243,14 @@ const getUserTasks = async (uid) => {
         // })
         return sortingTask(Array.from(taskList))
     }).catch(err => {
-        // console.log('Error : ' + err.details)
-    })
-    .finally(() => {
-        // console.log('Tasks for ' + uid + ' successfully loaded')
+         console.log('Error : ' + err.details)
     })
 }
 
+/**
+ * Sorting an array from tasklist to its project based on priority
+ */
 const sortingTask=(taskList)=>{
-    /**
-     * Sorting an array from tasklist to its project based on priority
-     */
     const all = {}
     const high      = []
     const medium    = []
@@ -286,14 +284,14 @@ const sortingTask=(taskList)=>{
     return res
 }
 
+/**
+ * Get project(s) of a user
+ * 
+ * @param {uid} - userID of a user
+ * 
+ * @returns {Project List} - returns project list of a user in an Array
+ */
 const getUserProjects = async (uid) => {
-    /**
-     * Get project(s) of a user
-     * 
-     * @param {uid} - userID of a user
-     * 
-     * @returns {Project List} - returns project list of a user in an Array
-     */
     let projectList = []
     dbRef = db.collection('projects').where('users', 'array-contains', uid)
     
@@ -315,25 +313,23 @@ const getUserProjects = async (uid) => {
         return projectList
     })
     .catch(err => {
-        // console.log('Error : ' + err.details)
+        console.log('Error : ' + err.details)
     })
-    .finally(() => {
-        // console.log('Projects for ' + uid + ' successfully loaded')
-    })
+
 }
 
+/**
+ * Get current date
+ * 
+ * @returns {Object} - returns an object containing information below
+ * {
+ *      day   :01,
+ *      month :01,
+ *      year  :2001
+ *      timestamp:January, 01 2001 12:00 A.M
+ * }
+*/
 const getDate = () => {
-    /**
-     * Get current date
-     * 
-     * @returns {Object} - returns an object containing information below
-     * {
-     *      day   :01,
-     *      month :01,
-     *      year  :2001
-     *      timestamp:January, 01 2001 12:00 A.M
-     * }
-    */
     const date    = dateTime.create();
     let timestamp = new Date(date.format('Y') +'/'+date.format('m')+'/'+date.format('d'))
     return {
@@ -383,6 +379,10 @@ const getTodayReport = async () => {
     })
 }
 
+/**
+ * 
+ * @param {String} taskName | Task name in the project
+ */
 const getProjectByTask = async (taskName) => {
     return db.collection('tasks').where('name', '==', taskName)
     .get().then(results => {
@@ -393,6 +393,7 @@ const getProjectByTask = async (taskName) => {
         return tmp
     })
 }
+
 
 const getTaskCount = async () => {
     let temp = {}
@@ -443,6 +444,10 @@ const getPastTaskToExcel= ()=>{
 
 }
 
+/**
+ * 
+ * @param {int} year
+ */
 const getHoliday= async (year)=>{
     const holidays = []
     const dbRef = db.collection('day-off').where('year','==',year).orderBy('timestamp','asc')
@@ -477,6 +482,11 @@ const getYearsFromDayOff = async ()=>{
     })
 }
 
+/**
+ * 
+ * @param {Object} Date | {day,month,year} 
+ * @param {String} by   | Filter day off by day, month or year
+ */
 const getDayOff=async ({day,month,year},by)=>{
     day = parseInt(day)
     month = parseInt(month)
@@ -790,15 +800,21 @@ const insertDayOff=async(date,userID,reason)=>{
  * {taskName: nama, problem :problem,userID:12345}
  * ]
  */
-const addProblems = (payload)=>{
+const addProblems = async (payload)=>{
     let {timestamp} = getDate()
     for(item of payload){
         let problem = `${item.taskName} : ${item.problem}`
         let temp = {}
+
         temp[item.userID] = {}
         temp[item.userID]['problems'] = admin.firestore.FieldValue.arrayUnion(problem)
-        
-        db.collection('reports').doc(timestamp.toString())
+        await db.collection('tasks').where('name','==',item.taskName)
+        .get().then(results=>{
+            results.forEach(result=>{
+                db.collection('tasks').doc(result.data().taskID).set({problems:admin.firestore.FieldValue.arrayUnion(problem)},{merge:true})
+            })
+        })        
+        await db.collection('reports').doc(timestamp.toString())
         .set(temp, { merge: true })
     }
 }
@@ -1274,7 +1290,12 @@ const takeOverTask = (payloads) => {
             temp[uidL] = {}
             temp[uidB]['inProgress'] = admin.firestore.FieldValue.arrayUnion(res.data().name)
             temp[uidL]['inProgress'] = admin.firestore.FieldValue.arrayRemove(res.data().name)
-            
+
+            res.data().problems.forEach(problem=>{
+                temp[uidB]['problems'] = admin.firestore.FieldValue.arrayUnion(problem)
+                temp[uidL]['problems'] = admin.firestore.FieldValue.arrayRemove(problem)
+            })
+
             db.collection('reports').doc(timestamp.toString())
             .set(temp, { merge: true })
             

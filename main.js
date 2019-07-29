@@ -770,10 +770,10 @@ const cronreset = cron.schedule(SCHEDULE_RESET,()=>{
 })
 
 function cronstart(){
-    cron10.start()
-    cron13.start()
-    cronspam.start()
-    cronreset.start()
+    cron10.stop()
+    cron13.stop()
+    cronspam.stop()
+    cronreset.stop()
 }
 
 cronstart()
