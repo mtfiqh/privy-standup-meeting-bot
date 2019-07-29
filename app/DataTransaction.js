@@ -11,9 +11,7 @@ const projects  = []
 const tasks     = new Set([])
 
 load = () => {
-    getUserRole(699298349).then(res=>{
-        console.log(res)
-    })
+
 }
 
 listenUsers = async () => {
@@ -567,6 +565,48 @@ const getUserRole=(userID)=>{
     })
 }
 
+const getQA=()=>{
+    const QAs = []
+
+    return db.collection('users').where('role','==','QA')
+    .get().then(users=>{
+        users.forEach(user=>{
+            const tmp = {
+                name:user.data().name,
+                role:user.data().role
+            }
+            QAs.push(tmp)
+        })
+        return QAs
+    })
+}
+
+const getUserTaskCountAndDayOff= async (userID)=>{
+    const user = {}
+    let {timestamp} = getDate()
+    await db.collection('tasks')
+    .where('userID','==',userID)
+    .where('status','==','In Progress')
+    .get()
+    .then(items=>{
+        user['task'] = items.size
+    })
+
+    await db.collection('day-off').doc(timestamp.toString()).get()
+    .then(items=>{
+        user['cuti'] = false
+        if(items.data()){
+            console.log(items.data())
+            items.data().users.forEach(item=>{
+                if(item.userID==userID){
+                    user['cuti'] = true
+                }
+            })
+        }
+    })
+
+    return user
+}
 
 //---------------------------ADD SECTION---------------------------------//
 
@@ -1313,5 +1353,6 @@ module.exports = {
     resetStat,
     takeOverTask,
     getDayOff,
+    getQA,
     db
 }
