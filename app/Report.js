@@ -66,24 +66,29 @@ class Report extends App {
         
         // Mark tasks as done=
         dataTosend[this.id]=[...this.bucket]
-        // db.updateTaskStatus(dataTosend)
+        // response
+        const taskList  =  helper.selectedButtonToString(dataTosend[this.id],"Done")
+        db.updateTaskStatus(dataTosend)
 
         //send notifitaions to QA
-        await this.sendNotificationToQA()
+        const responses = await this.sendNotificationToQA(taskList)
 
         // cleaning temp
         this.bucket.splice(0, this.bucket.length)
         this.selected.clear()
         delete this.cache[this.prefix]
 
-        // response
-        const taskList  =  helper.selectedButtonToString(dataTosend[this.id],"Done")
-        return {
-            // destroy:true,
-            id:this.id,
-            type: "Edit",
-            message : dict.send.success.getMessage(taskList),
-            options : dict.send.success.getOptions(this.prefix)
+        return {   
+            type: "Batch",
+            responses: [{
+                    // destroy:true,
+                    id:this.id,
+                    type: "Edit",
+                    message : dict.send.success.getMessage(taskList),
+                    options : dict.send.success.getOptions(this.prefix),
+                },
+                ...responses
+            ]
         }
         
     }
@@ -122,9 +127,20 @@ class Report extends App {
         return this.toggleCheckIcon(position)
     }
 
-    async sendNotificationToQA(){
+    async sendNotificationToQA(taskList){
         const qa = await QA.getInstance()
         const qaList = qa.QAs
+        const responses = []
+        for(let v of qaList){
+            responses.push({
+                id:this.id,
+                type: "Send",
+                message : dict.sendNotificationToQA.getMessage(v.name, this.name, taskList),
+                options:    dict.sendNotificationToQA.getOptions()
+            })
+        }
+
+        return responses
         
     }
 

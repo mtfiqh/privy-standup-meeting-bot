@@ -332,6 +332,10 @@ function handleRespond(response, to, message_id,query_id) {
         bot.sendMessage(to, response.message).then(async context => await handleAuto(context))
     }else if(type == 'NoAction'){
         bot.answerCallbackQuery(query_id, {text: response.message})
+    }else if(type == 'Batch'){
+        for(let r of response.responses){
+            handleRespond(r, to, message_id, query_id)
+        }
     }
     else {
         if (response.multiple === true) {
