@@ -435,6 +435,9 @@ const getPastTaskToExcel= ()=>{
                 
                 temp[res.data().userID] = {}
                 temp[res.data().userID]['inProgress'] = admin.firestore.FieldValue.arrayUnion(res.data().name)
+                if(res.data().problems!=undefined){
+                    temp[res.data().userID]['problems'] = res.data().problems
+                }
 
                 db.collection('reports').doc(timestamp.toString())
                 .set(temp, { merge: true })  
@@ -637,6 +640,14 @@ const getGroupID = ()=>{
     })
 }
 
+const getProblems=async(taskID)=>{
+    return db.collection('tasks').doc(taskID).get()
+    .then(result=>{
+        return result.data().problems
+    })
+}
+
+
 //---------------------------ADD SECTION---------------------------------//
 
 const saveUser = (userID, data) => {
@@ -815,7 +826,9 @@ const insertDayOff=async(date,userID,reason)=>{
 const addProblems = async (payload)=>{
     let {timestamp} = getDate()
     for(item of payload){
-        let problem = `${item.taskName} : ${item.problem}`
+        const user = await getUsersData(item.userID)
+        console.log(user)
+        let problem = `${user.name} : ${item.problem}`
         let temp = {}
 
         temp[item.userID] = {}
@@ -1306,10 +1319,12 @@ const takeOverTask = (payloads) => {
             temp[uidB]['inProgress'] = admin.firestore.FieldValue.arrayUnion(res.data().name)
             temp[uidL]['inProgress'] = admin.firestore.FieldValue.arrayRemove(res.data().name)
 
-            res.data().problems.forEach(problem=>{
-                temp[uidB]['problems'] = admin.firestore.FieldValue.arrayUnion(problem)
-                temp[uidL]['problems'] = admin.firestore.FieldValue.arrayRemove(problem)
-            })
+            if(res.data().problems!=undefined){
+                res.data().problems.forEach(problem=>{
+                    temp[uidB]['problems'] = admin.firestore.FieldValue.arrayUnion(problem)
+                    temp[uidL]['problems'] = admin.firestore.FieldValue.arrayRemove(problem)
+                })
+            }
 
             db.collection('reports').doc(timestamp.toString())
             .set(temp, { merge: true })

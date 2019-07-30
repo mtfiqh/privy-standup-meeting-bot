@@ -21,6 +21,7 @@ require('dotenv').config()
 const SCHEDULE_10  = process.env.SCHEDULE_10
 const SCHEDULE_13  = process.env.SCHEDULE_13
 const SCHEDULE_RESET   = process.env.SCHEDULE_RESET
+const SCHEDULE_MENTION = process.env.SCHEDULE_MENTION
 // -------------------------------------- (global vars) ----------------------------------------------- //
 
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true })
@@ -405,6 +406,10 @@ async function handleAuto(context) {
             handleRespond(response, chat.id)
             break
         case '/dayOff':
+            if ((lookUp[chat.id]!=undefined) && (`DayOff@${chat.id}` in lookUp[chat.id])){
+                bot.deleteMessage(chat.id,message_id)
+                return 
+            }
             const dayOff = new DayOff(bot, chat.id)
             const res = await dayOff.onStart(context, true)
             addLookUp(chat.id, `DayOff@${chat.id}`, dayOff)
@@ -699,13 +704,34 @@ function deleteHistory(prefix){
 async function allowReminder(){
     const isHoliday = await db.isHoliday()
     const todayDate = new Date()
-
+    
     if((!isHoliday)&&(todayDate.getDate()!=6)&&(todayDate.getDate()!=0)){
         return true
     }
     return false
 }
 
+async function mentionUser(){
+    const inactiveUsers = []
+    const allUser = await db.getUsersData('all')
+    for(let user of allUser){
+        if(user.status=='active'){
+            const isHaveActivity = await db.isUserActive(user.userID)
+            if(!isHaveActivity){
+                inactiveUsers.push(user)
+            }
+        }
+    }
+    let i = 1
+    const groupID = await db.getGroupID()
+    let message = `Selamat siang, teruntuk nama dibawah ini dimohon segera melapor via bot.\n`
+    inactiveUsers.forEach(user=>{
+        message = message.concat(`${i}. [${user.name}](tg://user?id=${user.userID})
+        \n`)
+        i++
+    })
+    bot.sendMessage(groupID,message,{parse_mode:'Markdown'})
+}
 
 /**
  * Cron function for reminder every 9 A.M
@@ -738,29 +764,8 @@ const cron13 = cron.schedule(SCHEDULE_13,()=>{
     })
 })
 
-async function mentionUser(){
-    const inactiveUsers = []
-    const allUser = await db.getUsersData('all')
-    for(let user of allUser){
-        if(user.status=='active'){
-            const isHaveActivity = await db.isUserActive(user.userID)
-            if(!isHaveActivity){
-                inactiveUsers.push(user)
-            }
-        }
-    }
-    let i = 1
-    const groupID = await db.getGroupID()
-    let message = `Selamat siang, teruntuk nama dibawah ini\ndimohon segera melapor via bot.\n`
-    inactiveUsers.forEach(user=>{
-        message = message.concat(`${i}. [${user.name}](tg://user?id=${user.userID})
-        \n`)
-        i++
-    })
-    bot.sendMessage(groupID,message,{parse_mode:'Markdown'})
-}
 
-cron.schedule('* * * * *',function(){
+cron.schedule(SCHEDULE_MENTION,function(){
     allowReminder().then(async allowed=>{
         if(allowed){
             mentionUser()

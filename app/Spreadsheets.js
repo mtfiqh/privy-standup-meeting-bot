@@ -2,13 +2,9 @@
 
 function save(date, report) {
     const data=report
-    let spreadsheetId = process.env.sheet_key
-    console.log(spreadsheetId)
+    let {parseSheetID} = require('./helper/reader')
+    let spreadsheetId = parseSheetID()
     let maxLength=0
-    console.log("\n\n")
-    console.log(data)
-    console.log("\n\n")
-
     const {
         google
     } = require('googleapis')
