@@ -17,6 +17,7 @@ const { ChangeRole } = require('./app/ChangeRole')
 const {CalendarKeyboard} = require('./app/Calendar')
 const { ListCuti } = require('./app/ListCuti')
 const { Advice } = require('./app/advice')
+const { MonitoringUsers } = require('./app/MonitoringUsers')
 require('dotenv').config()
 const SCHEDULE_10  = process.env.SCHEDULE_10
 const SCHEDULE_13  = process.env.SCHEDULE_13
@@ -250,6 +251,10 @@ bot.onText(/\/advice/, context => {
         })
 })
 
+bot.onText(/\/monit/, context=>{
+    const { chat } = context
+    initMonit(chat.id, chat.first_name)
+})
 // ----------------------------------------- (on Messages) ----------------------------------------------- //
 
 bot.on("message", async context => {
@@ -409,8 +414,8 @@ async function handleAuto(context) {
             const prefix = `showTasks@${chat.id}`
             const task =  new Tasks(chat.id, 'showTasks', chat.name)
             addLookUp(chat.id, prefix, task)
-            response = await task.showTasks(chat)
-            handleRespond(response, chat.id)
+            const resp = await task.showTasks(chat)
+            handleRespond(resp, chat.id)
             break
         case '/dayOff':
             if ((lookUp[chat.id]!=undefined) && (`DayOff@${chat.id}` in lookUp[chat.id])){
@@ -456,6 +461,28 @@ async function handleAuto(context) {
         case '/cuti':
             bot.deleteMessage(chat.id, message_id)
             initCuti(chat);
+            break
+        case'/monit':
+            bot.deleteMessage(chat.id, message_id)
+            initMonit(chat.id, chat.first_name)
+            break;
+        case '/advice':
+            bot.deleteMessage(chat.id, message_id)
+            const advice = new Advice(`Advice@${chat.id}`, chat.id, chat.first_name)
+            addLookUp(chat.id, `Advice@${chat.id}`, advice)
+            response = advice.onRequest()
+            bot.sendMessage(chat.id, response.message, response.options)
+                .then( ctx => {
+                    bot.once("message", async c => {
+                        if(!commands.has(c.text)){
+                            const res = advice.onRespond(c.text)
+                            bot.deleteMessage(chat.id, c.message_id)
+                            handleRespond(res,ctx.chat.id, ctx.message_id)
+                        }else{
+                            bot.deleteMessage(ctx.chat.id, ctx.message_id)
+                        }
+                    })
+                })
             break
         default:
             console.log("waiting...")
@@ -645,6 +672,13 @@ function initCuti(chat) {
     });
 }
 
+async function initMonit(userID, name){
+    const prefix = `monitUsers@${userID}`
+    const monit = new MonitoringUsers(userID, name)
+    addLookUp(userID, prefix, monit)
+    let res = await monit.onStart()
+    handleRespond(res, userID)
+}
 // ----------------------------------------- (remainder function) ----------------------------------------------- //
 
 async function remindMessage(type,user){

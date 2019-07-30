@@ -309,7 +309,6 @@ const getUserProjects = async (uid) => {
             tmp.push(dt)
             projectList.push(tmp)
         }
-    
         return projectList
     })
     .catch(err => {
