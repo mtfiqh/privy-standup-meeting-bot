@@ -1,4 +1,4 @@
-const {addProjects, getProjects, deleteProject, editProjectName,getTaskCount} = require('./DataTransaction')
+const {addProjects, getProjects, deleteProject, editProjectName,getTaskCount, isAdmin, getUserProjects} = require('./DataTransaction')
 const{toggleCheck} = require('./helper/helper')
 const {
     onTypeListenMessage,
@@ -120,6 +120,13 @@ class CrudProject extends App{
         }
         await getTaskCount().then(setAllProjects.bind(this))
     }
+    async getAssignedProjects(){
+        this.addCache('projects', {})
+        const setAllProjects = function(projects){
+            this.cache.projects = new Set(projects)
+        }
+        await getUserProjects(this.cache.userID).then(setAllProjects.bind(this))
+    }
 
     async showKeyboard(next){
         console.log('next', next)
@@ -219,16 +226,29 @@ class CrudProject extends App{
     }
 
     async read(){
-        await this.getAllProjectsCounts()
+        await this.isUserAdmin()
         let message
-        console.log(this.cache.projects)
-        if(this.cache.projects.size<1){
-            message='Tidak ada project yang sedang berlangsung untuk saat ini'
+        if(this.cache.admin===true){
+            await this.getAllProjectsCounts()
+            console.log('admin')
+            console.log(this.cache.projects)
+            if(this.cache.projects.size<1){
+                message='Tidak ada project yang sedang berlangsung untuk saat ini'
+            }else{
+                message='Berikut projects yang sedang berlangsung untuk saat ini\n'
+                let i=1
+                Object.keys(this.cache.projects).forEach(project =>{
+                    message+=`${i}. ${project} [${this.cache.projects[project].taskDone}/${this.cache.projects[project].allTask}]\n\n`
+                    i++
+                })
+            }
         }else{
+            console.log('not admin')
+            await this.getAssignedProjects()
             message='Berikut projects yang sedang berlangsung untuk saat ini\n'
-            let i=1
-            Object.keys(this.cache.projects).forEach(project =>{
-                message+=`${i}. ${project} [${this.cache.projects[project].taskDone}/${this.cache.projects[project].allTask}]\n\n`
+            let i=1            
+            this.cache.projects.forEach(project=>{
+                message+=`${i}. ${project}\n\n`
                 i++
             })
         }
@@ -236,7 +256,12 @@ class CrudProject extends App{
         return onShowProjects(message, this.prefix, 'cl'+this.cache.token)
 
     }
-    
+    async isUserAdmin(){
+        const ansIsAdmin= (ans)=>{
+            this.cache.admin = ans
+        }
+        await isAdmin(this.cache.userID).then(ansIsAdmin.bind(this))
+    }
     onClose(token){
         if(token!=='cl'+this.cache.token){
             console.log('token invalid')
