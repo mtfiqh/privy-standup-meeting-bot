@@ -113,7 +113,7 @@ function getButton(prefix, key, args){
     }
 }
 
-
+//---------------------------------------- Menu Admin ---------------------
 const menuAdmin = (prefix, from) => {
     return {
         type: 'Edit',
@@ -129,7 +129,11 @@ const menuAdmin = (prefix, from) => {
                 ], [
                     {...getButton(prefix, 'monitoring', from)},
                     {...getButton(prefix, 'dayoff', from)}
-                ], [
+                ],
+                [
+                    {...getButton(prefix,'assignRole', from)}
+                ],
+                [
                     {...getButton(prefix, 'toexcel', from)}            
                 ], [
                     {...getButton(prefix, 'close', from)}
@@ -138,6 +142,86 @@ const menuAdmin = (prefix, from) => {
         }
     }
 }
+
+const menuProjectsAdmin = (from, prefix) => {
+    return {
+        type: 'Edit',
+        id: from.id,
+        from: prefix,
+        message: 'Silahkan pilih menu dibawah ini',
+        options: {
+            parse_mode: 'HTML',
+            reply_markup: {
+                inline_keyboard: [
+                    [
+                        {...getButton(prefix, 'addproject',from)}, 
+                    ], [
+                        {...getButton(prefix, "editproject", from)},
+                        {...getButton(prefix,'deleteproject', from)}
+                    ],[
+                        {...getButton(prefix,'assignproject', from)},
+                    ],[
+                        {...getButton(prefix, "back", from)},
+                        {...getButton(prefix, "close", from)}
+                    ]
+                ]
+            }
+        }
+    }
+}
+
+
+
+const menuTasksAdmin = (prefix, from) => {
+    return {
+        type: 'Edit',
+        id: from.id,
+        from: prefix,
+        message: 'Silahkan pilih menu dibawah ini',
+        options: {
+            parse_mode: 'HTML',
+            reply_markup: {
+                inline_keyboard: [
+                    [
+                        { ...getButton(prefix, 'addtask', from)},
+                        {...getButton(prefix, "problem", from)}
+                    ], [
+                        { ...getButton(prefix, "done", from)}, 
+                        { ...getButton(prefix, "offer", from)}
+                    ], [
+                        {...getButton(prefix, "assignment", from)},
+                    ], [
+                        { ...getButton(prefix, "back", from)}, 
+                        { ...getButton(prefix, "close", from)}
+                    ]
+                ]
+            }
+        }
+    }
+
+}
+
+const menuMonitoringAdmin = (prefix, from) => {
+    return {
+        type: 'Edit',
+        id: from.id,
+        from: prefix,
+        message: 'Silahkan pilih menu dibawah ini',
+        options: {
+            parse_mode: 'HTML',
+            reply_markup: {
+                inline_keyboard: [
+                    [
+                        {...getButton(prefix,'listproject', from)},
+                        { ...getButton(prefix,"listtask", from) }
+                    ]
+                ]
+            }
+        }
+    }
+}
+
+// -------------------------- USER MENU ---------------------------
 
 const menuUser = (prefix, from) => {
     return {
@@ -159,35 +243,6 @@ const menuUser = (prefix, from) => {
             ]
         },
 
-    }
-}
-
-const menuProjectsAdmin = (from, prefix) => {
-    return {
-        type: 'Edit',
-        id: from.id,
-        from: prefix,
-        message: 'Silahkan pilih menu dibawah ini',
-        options: {
-            parse_mode: 'HTML',
-            reply_markup: {
-                inline_keyboard: [
-                    [
-                        {...getButton(prefix, 'addproject',from)}, 
-                        {...getButton(prefix, "editproject", from)}
-                    ], [
-                        {...getButton(prefix,'listproject', from)},
-                        {...getButton(prefix,'deleteproject', from)}
-                    ],[
-                        {...getButton(prefix,'assignproject', from)},
-                        {...getButton(prefix,'assignRole', from)}
-                    ],[
-                        {...getButton(prefix, "back", from)},
-                        {...getButton(prefix, "close", from)}
-                    ]
-                ]
-            }
-        }
     }
 }
 
@@ -234,35 +289,6 @@ const menuTasksUser = (prefix, from) => {
                     ], [
                         {...getButton(prefix, "back", from)}, 
                         {...getButton(prefix, 'close', from)}
-                    ]
-                ]
-            }
-        }
-    }
-}
-
-const menuTasksAdmin = (prefix, from) => {
-    return {
-        type: 'Edit',
-        id: from.id,
-        from: prefix,
-        message: 'Silahkan pilih menu dibawah ini',
-        options: {
-            parse_mode: 'HTML',
-            reply_markup: {
-                inline_keyboard: [
-                    [
-                        { ...getButton(prefix, 'addtask', from)},
-                        { ...getButton(prefix,"listtask", from) }
-                    ], [
-                        { ...getButton(prefix, "done", from)}, 
-                        { ...getButton(prefix, "offer", from)}
-                    ], [
-                        {...getButton(prefix, "assignment", from)},
-                        {...getButton(prefix, "problem", from)}
-                    ], [
-                        { ...getButton(prefix, "back", from)}, 
-                        { ...getButton(prefix, "close", from)}
                     ]
                 ]
             }

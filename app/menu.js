@@ -243,6 +243,12 @@ class Menu extends App{
         }
     }
 
+    onMonitoring(){
+        return {
+            type:'Auto',
+            message:'/monitoring'
+        }
+    }
     //-----------------SUPPORT FUNCTION-------------------------
     
     /**
