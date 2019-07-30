@@ -356,8 +356,9 @@ function handleRespond(response, to, message_id,query_id) {
         bot.answerCallbackQuery(query_id, {text: "Time Out!"})
         bot.deleteMessage(to, message_id)
     }else if(type == 'Batch'){
+        console.log(response.responses)
         for(let r of response.responses){
-            handleRespond(r, to, message_id, query_id)
+            handleRespond(r, r.id, message_id, query_id)
         }
     }
     else {

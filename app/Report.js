@@ -132,12 +132,14 @@ class Report extends App {
         const qaList = qa.QAs
         const responses = []
         for(let v of qaList){
-            responses.push({
-                id:this.id,
-                type: "Send",
-                message : dict.sendNotificationToQA.getMessage(v.name, this.name, taskList),
-                options:    dict.sendNotificationToQA.getOptions()
-            })
+            if(v.userID != this.id){
+                responses.push({
+                    id:v.userID,
+                    type: "Send",
+                    message : dict.sendNotificationToQA.getMessage(v.name, this.name, taskList),
+                    options:    dict.sendNotificationToQA.getOptions()
+                })
+            }
         }
 
         return responses
