@@ -1,5 +1,6 @@
 const {getUserRole,exportToExcel} = require("./DataTransaction")
 const {App} = require('../core/App')
+const {settings}= require('./helper/reader')
 const {
     menuAdmin,
     menuUser,
@@ -122,6 +123,7 @@ class Menu extends App{
     }
     
     async onSave(){
+        const spreadsheetURL = settings.spreadsheetURL
         try {
            await exportToExcel()           
            this.onVisit(this.onVisit.name) 
@@ -135,7 +137,7 @@ class Menu extends App{
         return {
             type:'Send',
             id:this.userID,
-            message:'Success Export to Excel'
+            message:`Success Export to Excel\nLink : ${spreadsheetURL}`
         } 
     }
 
