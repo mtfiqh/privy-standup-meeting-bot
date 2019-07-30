@@ -628,7 +628,7 @@ async function initProblems(activityName, userID, name){
     const prefix = `${activityName}@${userID}`
     const insertProblems = new InsertProblems(userID, name, activityName)
     addLookUp(userID, prefix, insertProblems)
-    const response = await currentApp.listen('onStart')
+    const response = await insertProblems.listen('onStart')
     return handleRespond(response, userID)
 }
 
