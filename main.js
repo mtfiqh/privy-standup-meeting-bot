@@ -17,6 +17,7 @@ const { ChangeRole } = require('./app/ChangeRole')
 const {CalendarKeyboard} = require('./app/Calendar')
 const { ListCuti } = require('./app/ListCuti')
 const { Advice } = require('./app/advice')
+const { Problems } = require('./app/Problems')
 const { MonitoringUsers } = require('./app/MonitoringUsers')
 require('dotenv').config()
 const SCHEDULE_10  = process.env.SCHEDULE_10
@@ -70,7 +71,7 @@ bot.onText(/\/start/, context => {
         type: 'user',
         userID: from.id,
         role:'user',
-        username: from.username
+        username: from.username==undefined?"null":from.username
     })
     bot.sendMessage(chat.id,
         dict.start.getMessage(from.first_name),
@@ -249,6 +250,15 @@ bot.onText(/\/advice/, context => {
                 }
             })
         })
+})
+
+bot.onText(/\/listprob/,async context=>{
+    const {chat}= context
+    const prefix = `Problems@${chat.id}`
+    const problems = new Problems(chat.id,prefix)
+    addLookUp(chat.id,prefix,problems)
+    const response = await problems.onGetTask()
+    handleRespond(response,chat.id,context.message_id)
 })
 
 bot.onText(/\/monit/, context=>{

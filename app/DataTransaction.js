@@ -646,6 +646,16 @@ const getProblems=async(taskID)=>{
     })
 }
 
+const getAllTasks= async ()=>{
+    const tasks = []
+    return db.collection('tasks').get()
+    .then(results=>{
+        results.forEach(result=>{
+            tasks.push(result.data())
+        })
+        return tasks
+    })
+}
 
 //---------------------------ADD SECTION---------------------------------//
 
@@ -718,7 +728,7 @@ const addTaskTransaction = async (data) => {
                         projectName: dt.projectName,
                         status     : 'In Progress',
                         projectID  : item.id,
-                        userID     : dt.userID,
+                        userID     : userID,
                         date       : timestamp,
                         priority   : dt.priority 
                     }
@@ -741,21 +751,14 @@ const addTaskTransaction = async (data) => {
         .catch(err => {
             // console.log(err)
         })
-        .finally(() => {
-            // console.log('Task successfully added')
-            // console.log('Task ID : ' + taskID)
-        })
+        
 
     }
-    
-    db.collection('statistics').doc(timestamp.toString())
-    .get().then(results=>{
-        db.collection('statistics').doc(timestamp.toString())
-        .set({[userID.toString()]:{Added:results.data()[userID.toString()].Added+data.length}},{merge:true})
-    })
+    updateStatistic(data.length,userID,'add')
 
     return taskIDs
 }
+
 
 const userDayOff=async ({userID,startDate,long,reason})=>{
     let start = generateTimestamp(startDate)
@@ -1054,7 +1057,7 @@ const updateTaskStatus = (payload) => {
     let stat = {}
     Object.keys(payload).forEach(key => {
         items = payload[key]
-        stat[key] = 0
+        stat[key] = items.length
         items.forEach(item => {
             const { projectName, userId: userID, name } = item
             const taskReference = db.collection('tasks')
@@ -1072,26 +1075,62 @@ const updateTaskStatus = (payload) => {
                     db.collection('reports').doc(timestamp.toString())
                     .set(temp, { merge: true })
 
-                    stat[key]++
-
                 })
 
             }).catch(err => {
                 // console.log("Error when updating task", err)
             }).finally(`Task ${name} Updated!`)
         })
-        
-        db.collection('statistics').doc(timestamp.toString())
-        .get().then(results=>{
-            db.collection('statistics').doc(timestamp.toString())
-            .set({[key.toString()]:{Done:results.data()[key.toString()].Done+stat[key]}},{merge:true})
-        })
+
+        updateStatistic(stat[key],key,'done')
+        // db.collection('statistics').doc(timestamp.toString())
+        // .get().then(results=>{
+        //     db.collection('statistics').doc(timestamp.toString())
+        //     .set({[key.toString()]:{Done:results.data()[key.toString()].Done+stat[key]}},{merge:true})
+        // })
         
     })
 }
 
 const updateUser = (userID,payload)=>{
     db.collection('users').doc(userID.toString()).set(payload,{merge:true})
+}
+
+const updateStatistic =(taskCount,userID,type)=>{
+    const {timestamp} = getDate()
+    let payload = {}
+    
+    db.collection('statistics').doc(timestamp.toString())
+    .get().then(async results=>{
+
+        if(!results.exists){
+            if(type=='add'){
+                payload['Added'] = taskCount
+            }else{
+                payload['Done'] = taskCount
+            }
+            await db.collection('statistics').doc(timestamp.toString())
+            .set({[userID.toString()]:payload}, { merge: true })
+        }else{
+            if(type=='add'){
+                let oldAdded = results.data()[userID.toString()] && results.data()[userID.toString()].Added 
+                payload['Added'] = oldAdded==undefined?taskCount:oldAdded+taskCount
+            }else{
+                let oldAdded = results.data()[userID.toString()]&&results.data()[userID.toString()].Done
+                payload['Done'] = oldAdded==undefined?taskCount:oldAdded+taskCount
+            }
+            console.log(payload)
+            if(results.data()[userID.toString()]!=undefined){
+                await db.collection('statistics').doc(timestamp.toString())
+                .set({[userID.toString()]:payload},{merge:true})
+
+            }else{
+                await db.collection('statistics').doc(timestamp.toString())
+                .set({[userID.toString()]:payload}, { merge: true })
+            }
+        }
+ 
+    })
 }
 
 
@@ -1395,7 +1434,9 @@ module.exports = {
     getUserTasksOrderByPriority,
     getDayOff,
     getQA,
+    getProblems,
     getUserTaskCountAndDayOff,
+    getAllTasks,
     addAdvice,
     checkDayOff,
     addHoliday,
