@@ -70,7 +70,7 @@ bot.onText(/\/start/, context => {
         type: 'user',
         userID: from.id,
         role:'user',
-        username: from.username
+        username: from.username==undefined?"null":from.username
     })
     bot.sendMessage(chat.id,
         dict.start.getMessage(from.first_name),
