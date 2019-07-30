@@ -67,13 +67,14 @@ class TakeOfferTask extends App {
 
     async process(){
         await this.setUserKeyboard().then(this.prepareTaskForOffer.bind(this))
+        
         if(this.userKeyboard==null) 
             throw new Error("User keyboard is null on 'process'!")
 
         if(this.bucket.length==0) 
             return this.noaction("", "Select task!")
 
-        const taskList = helper.selectedButtonToString(this.bucket, 'Selected')
+        const taskList = this.renderMessage()
         this.cache['messageOnProcess'] = {
             message: dict.process.success.getMessage(this.name, taskList),
             options: dict.process.success.getOptions(this.userKeyboard)
@@ -117,7 +118,7 @@ class TakeOfferTask extends App {
 
         this.bucket = dataOffer
         dataOffer = undefined
-        const taskList =helper.selectedButtonToString(this.bucket,"waiting")
+        const taskList = this.cache["messageOnProcess"].message
         return {
             type:"Confirm",
             receiver:{
@@ -169,7 +170,7 @@ class TakeOfferTask extends App {
         console.log("Respond Yes")
         if(this.friend==null) return
         const friend = this.friend
-        const taskList = helper.selectedButtonToString(this.bucket, "transfered")
+        const taskList = this.cache["messageOnProcess"].message
         
         db.takeOverTask(this.bucket)
         
@@ -216,14 +217,19 @@ class TakeOfferTask extends App {
     }
 
     prepareTaskForOffer(){
+        this.toRender = {}
         for(let item of this.selected){
             const [projectId, taskId] = item.split(this.separator)
             const task = this.projects[projectId].task[taskId]
             this.bucket.push({
                 senderId: this.id,
                 taskId:taskId,
-                name:task.name
+                name:task.name,
             })
+            if(this.toRender[projectId]==undefined){
+                this.toRender[projectId] = []
+            }
+            this.toRender[projectId].push(taskId)
         }
     }
 
@@ -259,6 +265,33 @@ class TakeOfferTask extends App {
             this.friend = userId
         }
         console.log("Friend Selected", userId)
+    }
+
+    renderMessage(){
+        const message = ["Daftar Task yang ditawarkan:\n"]
+        let i = 0, j = 1;
+        for(let kp of Object.keys(this.toRender)){
+            const project = this.projects[kp]
+            message.push(`\n*${String.fromCharCode(65+i)}. ${project.name}*\n`)
+            for(let kt of this.toRender[kp]){
+                const task = project.task[kt]
+                if(task.problems!=undefined){
+                    let temp =  ""
+                    let k = 0
+                    for(let problem of task.problems){
+                        temp+=`\n   *${String.fromCharCode(97+k)}.* `
+                        temp+=problem.split(':').pop().trim()
+                        k+=1
+                    }
+                    message.push(` *${j}.* ${task.name} [${task.priority}]\n   *Problems*:${temp}\n`)
+                }else{
+                    message.push(` *${j}.* ${task.name} [${task.priority}]\n`)
+                }
+                j++;
+            }
+            i++; j=1;
+        }
+        return message.join('')
     }
 }
 
