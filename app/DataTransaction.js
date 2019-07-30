@@ -760,13 +760,28 @@ const addTaskTransaction = async (data) => {
     }
     
     db.collection('statistics').doc(timestamp.toString())
-    .get().then(results=>{
-        db.collection('statistics').doc(timestamp.toString())
-        .set({[userID.toString()]:{Added:results.data()[userID.toString()].Added+data.length}},{merge:true})
+    .get().then(async results=>{
+
+        if(results.data()[userID.toString()]==undefined){
+            await db.collection('statistics').doc(timestamp.toString())
+            .set({[userID.toString()]:{Done:0,Added:data.length,Recurring:0}}, { merge: true }).then(()=>{
+                getUserTasks(userID).then(task=>{
+                    db.collection('statistics').doc(timestamp.toString())
+                    .get().then(results=>{
+                        db.collection('statistics').doc(timestamp.toString())
+                        .set({[userID.toString()]:{Recurring:results.data()[userID.toString()].Recurring+task.length}},{merge:true})
+                    })
+                })
+            })
+        }else{
+            db.collection('statistics').doc(timestamp.toString())
+            .set({[userID.toString()]:{Added:results.data()[userID.toString()].Added+data.length}},{merge:true})
+        }
     })
 
     return taskIDs
 }
+
 
 const userDayOff=async ({userID,startDate,long,reason})=>{
     let start = generateTimestamp(startDate)
