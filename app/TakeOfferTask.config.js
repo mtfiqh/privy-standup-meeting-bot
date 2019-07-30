@@ -71,13 +71,6 @@ module.exports = {
                 getOptions: (prefix, id) => {
                     return {
                         "parse_mode": "Markdown",
-                        "reply_markup":{
-                            "inline_keyboard":[
-                                [
-                                    {text:"Close", callback_data:`${prefix}-close-${id}`}
-                                ]
-                            ]
-                        }
                     }
                 }
             },
@@ -86,13 +79,6 @@ module.exports = {
                 getOptions: (prefix, id) => {
                     return {
                         "parse_mode": "Markdown",
-                        "reply_markup":{
-                            "inline_keyboard":[
-                                [
-                                    {text:"Close", callback_data:`${prefix}-close-${id}`}
-                                ]
-                            ]
-                        }
                     }
                 }
             }
@@ -103,13 +89,6 @@ module.exports = {
                 getOptions: (prefix, id) => {
                     return {
                         "parse_mode": "Markdown",
-                        "reply_markup":{
-                            "inline_keyboard":[
-                                [
-                                    {text:"Close", callback_data:`${prefix}-close-${id}`}
-                                ]
-                            ]
-                        }
                     }
                 }
             },
@@ -118,13 +97,6 @@ module.exports = {
                 getOptions: (prefix, id) => {
                     return {
                         "parse_mode": "Markdown",
-                        "reply_markup":{
-                            "inline_keyboard":[
-                                [
-                                    {text:"Close", callback_data:`${prefix}-close-${id}`}
-                                ]
-                            ]
-                        }
                     }
                 }
             }

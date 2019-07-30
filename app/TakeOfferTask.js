@@ -25,7 +25,6 @@ class TakeOfferTask extends App {
         this.userKeyboard = null
         this.prevFriend   = null
         this.friend       = null
-        this.destroyBatch = 2
 
         this.register([
             'select', 
@@ -150,15 +149,7 @@ class TakeOfferTask extends App {
     }
 
     close(params){
-        const id = parseInt(params)
-        console.log("close")
-        const count = this.destroyBatch
-        this.destroyBatch--
-        return {
-            id:id,
-            destroyBatch:count,
-            type:"Delete"
-        }
+        // TODO :
     }
 
     respondNo(){
@@ -169,20 +160,18 @@ class TakeOfferTask extends App {
 
         return {
             type:"Confirm",
-            // destroy:true,
+            destroy:true,
             receiver:{
                 id:friend,
                 type:"Edit",
                 message: dict.respondNo.receiver.getMessage(),
                 options: dict.respondNo.receiver.getOptions(this.prefix, friend),
-                special:true,
             },
             sender:{
                 id:this.id,
-                type: "Edit",
+                type: "Send",
                 message: dict.respondNo.sender.getMessage(),
                 options:dict.respondNo.sender.getOptions(this.prefix, this.id),
-                special:true,
 
             }
         }
@@ -203,23 +192,20 @@ class TakeOfferTask extends App {
         this.selected.clear()
         delete this.cache[this.prefix]
 
-        console.log(taskList)
         return {
             type:"Confirm",
-            // destroy:true,
+            destroy:true,
             receiver:{
                 id:friend,
                 type:"Edit",
                 message: dict.respondYes.receiver.getMessage(taskList),
                 options: dict.respondYes.receiver.getOptions(this.prefix, friend),
-                special:true,
             },
             sender:{
                 id:this.id,
-                type:"Edit",
+                type:"Send",
                 message: dict.respondYes.sender.getMessage(taskList),
                 options:dict.respondYes.sender.getOptions(this.prefix, this.id),
-                special:true,
             }
         }
 

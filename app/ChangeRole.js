@@ -16,6 +16,7 @@ class ChangeRole extends App{
             'onClose',
             'onSure',
         ])
+        this.id = userID
     }
     
     

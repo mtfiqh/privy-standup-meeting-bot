@@ -45,6 +45,7 @@ class Menu extends App{
         this.isAdmin    = {}
         this.state      = []
         this.visited    = new Set([])
+        this.id         = userID
         
     }
 

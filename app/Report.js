@@ -3,6 +3,7 @@ const { App }                     = require('../core/App')
 const { dictionary:dict }         = require('./Report.config')
 const helper                      = require('./helper/helper')
 const  db                         = require('./DataTransaction')
+const {QA}                        = require('./QA')
 
 class Report extends App {
 
@@ -39,7 +40,7 @@ class Report extends App {
         }
     }
 
-    send(){
+    async send(){
         if(this.selected.size==0) 
             return {
                 destroy:true,
@@ -65,21 +66,29 @@ class Report extends App {
         
         // Mark tasks as done=
         dataTosend[this.id]=[...this.bucket]
+        // response
+        const taskList  =  helper.selectedButtonToString(dataTosend[this.id],"Done")
         db.updateTaskStatus(dataTosend)
+
+        //send notifitaions to QA
+        const responses = await this.sendNotificationToQA(taskList)
 
         // cleaning temp
         this.bucket.splice(0, this.bucket.length)
         this.selected.clear()
         delete this.cache[this.prefix]
 
-        // response
-        const taskList  =  helper.selectedButtonToString(dataTosend[this.id],"Done")
-        return {
-            // destroy:true,
-            id:this.id,
-            type: "Edit",
-            message : dict.send.success.getMessage(taskList),
-            options : dict.send.success.getOptions(this.prefix)
+        return {   
+            type: "Batch",
+            responses: [{
+                    // destroy:true,
+                    id:this.id,
+                    type: "Edit",
+                    message : dict.send.success.getMessage(taskList),
+                    options : dict.send.success.getOptions(this.prefix),
+                },
+                ...responses
+            ]
         }
         
     }
@@ -95,7 +104,6 @@ class Report extends App {
     }
 
     close(){
-        console.log("close")
         return {
             destroy:true,
             id:this.id,
@@ -117,6 +125,23 @@ class Report extends App {
         else
             this.selected.add(item)
         return this.toggleCheckIcon(position)
+    }
+
+    async sendNotificationToQA(taskList){
+        const qa = await QA.getInstance()
+        const qaList = qa.QAs
+        const responses = []
+        for(let v of qaList){
+            responses.push({
+                id:this.id,
+                type: "Send",
+                message : dict.sendNotificationToQA.getMessage(v.name, this.name, taskList),
+                options:    dict.sendNotificationToQA.getOptions()
+            })
+        }
+
+        return responses
+        
     }
 
 }

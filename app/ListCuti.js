@@ -4,6 +4,7 @@ const { getDayOff } = require('./DataTransaction')
 class ListCuti extends App{
     constructor(prefix, userID, name){
         super()
+        this.id = userID
         this.addCache('prefix', prefix)
         this.addCache('userID', userID)
         this.addCache('name', name)

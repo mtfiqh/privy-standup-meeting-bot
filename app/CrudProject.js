@@ -31,6 +31,7 @@ class CrudProject extends App{
         this.addCache('prefix', prefix)
         this.prefix=prefix+'@'+userID
         this.addCache('token', Math.random().toString(36).substring(8))
+        this.id = userID
     }
     onTypeListen(context){
         const {text} = context

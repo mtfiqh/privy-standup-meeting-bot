@@ -21,6 +21,7 @@ class Spammer extends App{
             chatId:undefined,
             msgId :undefined
         }
+        this.id = userID
     }
 
     init(){
