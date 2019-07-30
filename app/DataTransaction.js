@@ -309,7 +309,6 @@ const getUserProjects = async (uid) => {
             tmp.push(dt)
             projectList.push(tmp)
         }
-    
         return projectList
     })
     .catch(err => {
@@ -1354,5 +1353,6 @@ module.exports = {
     takeOverTask,
     getDayOff,
     getQA,
-    db
+    db,
+    getUserTaskCountAndDayOff
 }

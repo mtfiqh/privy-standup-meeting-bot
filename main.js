@@ -17,6 +17,7 @@ const { ChangeRole } = require('./app/ChangeRole')
 const {CalendarKeyboard} = require('./app/Calendar')
 const { ListCuti } = require('./app/ListCuti')
 const { Advice } = require('./app/advice')
+const { MonitoringUsers } = require('./app/MonitoringUsers')
 require('dotenv').config()
 const SCHEDULE_10  = process.env.SCHEDULE_10
 const SCHEDULE_13  = process.env.SCHEDULE_13
@@ -230,6 +231,10 @@ bot.onText(/\/advice/, context => {
         })
 })
 
+bot.onText(/\/monit/, context=>{
+    const { chat } = context
+    initMonit(chat.id, chat.first_name)
+})
 // ----------------------------------------- (on Messages) ----------------------------------------------- //
 
 bot.on("message", async context => {
@@ -616,6 +621,13 @@ function initCuti(chat) {
     });
 }
 
+async function initMonit(userID, name){
+    const prefix = `monitUsers@${userID}`
+    const monit = new MonitoringUsers(userID, name)
+    addLookUp(userID, prefix, monit)
+    let res = await monit.onStart()
+    handleRespond(res, userID)
+}
 // ----------------------------------------- (remainder function) ----------------------------------------------- //
 
 async function remindMessage(type,user){
