@@ -290,22 +290,28 @@ bot.on('callback_query', async query => {
     try {
         const { from, message, data: command } = query
         const [lookUpKey, action, address] = command.split('-')
+        let  currentApp;
         if (command == '/menu') return await initMenu(from.id)
-        const currentApp = lookUp[from.id][lookUpKey]
+        if(lookUpKey.includes("TakeOfferTask@")){
+            const senderId   = parseInt(lookUpKey.split('@').pop())
+            currentApp = lookUp[senderId][lookUpKey]
+        }else{
+            currentApp = lookUp[from.id][lookUpKey]
+        }
         const response = currentApp.isNewSession() ? currentApp.startNewSession() : await currentApp.listen(action, address)
         handleRespond(response, from.id, message.message_id, query.id)
         if (response && response.destroy == true) {
             if(history[currentApp.prefix]!==undefined) deleteHistory(currentApp.prefix)
-            delete lookUp[from.id][currentApp.prefix]
+            delete lookUp[currentApp.id][currentApp.prefix]
         }
         if (response && response.record === true) {
             if(history[response.prefix+'@'+response.userID]===undefined) history[response.prefix+'@'+response.userID]=new Set([])
             history[response.prefix+'@'+response.userID].add(message.message_id)
-        
             console.log('History ',history[response.prefix+'@'+response.userID])
         }
         
     } catch (error) {
+        console.log(error.message)
         bot.answerCallbackQuery(query.id, {text: "Session Over!"})
     }
 

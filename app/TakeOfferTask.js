@@ -67,15 +67,11 @@ class TakeOfferTask extends App {
 
     async process(){
         await this.setUserKeyboard().then(this.prepareTaskForOffer.bind(this))
-        if(this.userKeyboard==null) throw new Error("User keyboard is null on 'process'!")
+        if(this.userKeyboard==null) 
+            throw new Error("User keyboard is null on 'process'!")
 
-        if(this.bucket.length==0) return {
-            id: this.id,
-            type: "Edit",
-            destroy:true,
-            message: dict.process.failed.getMessage(),
-            options:dict.process.failed.getOptions()
-        }
+        if(this.bucket.length==0) 
+            return this.noaction("", "Select task!")
 
         const taskList = helper.selectedButtonToString(this.bucket, 'Selected')
         this.cache['messageOnProcess'] = {
@@ -108,14 +104,8 @@ class TakeOfferTask extends App {
     }
 
     offer(){
-        
-        if(this.friend==null) return  {
-            id:this.id,
-            type:"Edit",
-            destroy: false,
-            message: dict.offer.failed.getMessage(this.cache["messageOnProcess"].message),
-            options: this.cache["messageOnProcess"].options
-        }
+        if(this.friend==null) 
+            return  this.noaction(null, "Select friend!")
 
         let dataOffer = []
         this.bucket.forEach(item => {
@@ -128,8 +118,6 @@ class TakeOfferTask extends App {
         this.bucket = dataOffer
         dataOffer = undefined
         const taskList =helper.selectedButtonToString(this.bucket,"waiting")
-
-        console.log("Waiting Task", taskList)
         return {
             type:"Confirm",
             receiver:{
@@ -175,9 +163,6 @@ class TakeOfferTask extends App {
 
             }
         }
-
-
-
     }
 
     respondYes(){
@@ -210,6 +195,13 @@ class TakeOfferTask extends App {
         }
 
 
+    }
+    
+    noaction(args ,message="No Action") {
+        return {
+            type: "NoAction",
+            message:message
+        };
     }
 
     async setUserKeyboard(){

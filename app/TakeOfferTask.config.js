@@ -11,12 +11,6 @@ module.exports = {
                         }
                     }
                 }
-            },
-            failed: {
-                getMessage: () => `*Mohon Maaf!*, Anda Harus memilih task.`,
-                getOptions: () => {
-                    return { "parse_mode": "Markdown" }
-                }
             }
         },
         select: {
@@ -57,13 +51,6 @@ module.exports = {
                     }
                 }
             },
-            failed: {
-                getMessage: (nextMessage) => `*Anda Harus Memilih User!*\n ${nextMessage}`,
-                getOptions: () => {
-                    return { "parse_mode": "Markdown" }
-                }
-            }
-
         },
         respondYes: {
             receiver: {
