@@ -18,6 +18,7 @@ const {CalendarKeyboard} = require('./app/Calendar')
 const { ListCuti } = require('./app/ListCuti')
 const { Advice } = require('./app/advice')
 const { Problems } = require('./app/Problems')
+const { MonitoringUsers } = require('./app/MonitoringUsers')
 require('dotenv').config()
 const SCHEDULE_10  = process.env.SCHEDULE_10
 const SCHEDULE_13  = process.env.SCHEDULE_13
@@ -260,11 +261,16 @@ bot.onText(/\/listprob/,async context=>{
     handleRespond(response,chat.id,context.message_id)
 })
 
+bot.onText(/\/monit/, context=>{
+    const { chat } = context
+    initMonit(chat.id, chat.first_name)
+})
 // ----------------------------------------- (on Messages) ----------------------------------------------- //
 
 bot.on("message", async context => {
     const { from, chat, text } = context
     if (currentState[from.id]) {
+        if(commands.has(text)) return
         console.log(from.id, 'Type Listen')
         const currentApp = lookUp[from.id][`${currentState[from.id]}@${from.id}`]
         const response = await currentApp.listen('onTypeListen', context)
@@ -366,8 +372,9 @@ function handleRespond(response, to, message_id,query_id) {
         bot.answerCallbackQuery(query_id, {text: "Time Out!"})
         bot.deleteMessage(to, message_id)
     }else if(type == 'Batch'){
+        console.log(response)
         for(let r of response.responses){
-            handleRespond(r, to, message_id, query_id)
+            handleRespond(r, r.id, message_id, query_id)
         }
     }
     else {
@@ -407,10 +414,16 @@ async function handleAuto(context) {
             break
         case '/addTasks':
             bot.deleteMessage(chat.id, message_id)
+            if ((lookUp[chat.id]!=undefined) && (`addTasks@${chat.id}` in lookUp[chat.id])){
+                return 
+            }
             await initTasks('addTasks', chat.id, chat.first_name)
             break
         case '/assignTasks':
             bot.deleteMessage(chat.id, message_id)
+            if ((lookUp[chat.id]!=undefined) && (`assignTasks@${chat.id}` in lookUp[chat.id])){
+                return 
+            }
             await initTasks('assignTasks', chat.id, chat.first_name)
             break
         case '/showTasks':
@@ -418,8 +431,8 @@ async function handleAuto(context) {
             const prefix = `showTasks@${chat.id}`
             const task =  new Tasks(chat.id, 'showTasks', chat.name)
             addLookUp(chat.id, prefix, task)
-            response = await task.showTasks(chat)
-            handleRespond(response, chat.id)
+            const resp = await task.showTasks(chat)
+            handleRespond(resp, chat.id)
             break
         case '/dayOff':
             if ((lookUp[chat.id]!=undefined) && (`DayOff@${chat.id}` in lookUp[chat.id])){
@@ -433,30 +446,51 @@ async function handleAuto(context) {
             break
         case '/createProjects':
             bot.deleteMessage(chat.id, message_id)
+            if ((lookUp[chat.id]!=undefined) && (`createProjects@${chat.id}` in lookUp[chat.id])){
+                return 
+            }
             initProjects('createProjects', chat.id, chat.first_name)
             break
         case '/deleteProjects':
             bot.deleteMessage(chat.id, message_id)
+            if ((lookUp[chat.id]!=undefined) && (`deleteProjects@${chat.id}` in lookUp[chat.id])){
+                return 
+            }
             initProjects('deleteProjects', chat.id, chat.first_name)
             break
         case '/updateProjects':
             bot.deleteMessage(chat.id, message_id)
+            if ((lookUp[chat.id]!=undefined) && (`updateProjects@${chat.id}` in lookUp[chat.id])){
+                return 
+            }
             initProjects('updateProjects', chat.id, chat.first_name)
             break
         case '/listProjects':
             bot.deleteMessage(chat.id, message_id)
+            if ((lookUp[chat.id]!=undefined) && (`readProjects@${chat.id}` in lookUp[chat.id])){
+                return 
+            }
             initProjects('readProjects', chat.id, chat.first_name)
             break
         case '/assignProject':
             bot.deleteMessage(chat.id, message_id)
+            if ((lookUp[chat.id]!=undefined) && (`assignProject@${chat.id}` in lookUp[chat.id])){
+                return 
+            }
             initAssignProject(chat.id,chat.first_name,'assignProject')
             break
         case '/role':
             bot.deleteMessage(chat.id, message_id)
+            if ((lookUp[chat.id]!=undefined) && (`changerole@${chat.id}` in lookUp[chat.id])){
+                return 
+            }
             initChangeRole(chat.id, chat.first_name)
             break
         case '/problems':
                 bot.deleteMessage(chat.id, message_id)
+                if ((lookUp[chat.id]!=undefined) && (`problems@${chat.id}` in lookUp[chat.id])){
+                    return 
+                }
                 initProblems('problems',chat.id,chat.first_name)
             break
         case '/listCuti':
@@ -465,6 +499,34 @@ async function handleAuto(context) {
         case '/cuti':
             bot.deleteMessage(chat.id, message_id)
             initCuti(chat);
+            break
+        case'/monit':
+            bot.deleteMessage(chat.id, message_id)
+            if ((lookUp[chat.id]!=undefined) && (`monitUsers@${chat.id}` in lookUp[chat.id])){
+                return 
+            }
+            initMonit(chat.id, chat.first_name)
+            break;
+        case '/advice':
+            bot.deleteMessage(chat.id, message_id)
+            if ((lookUp[chat.id]!=undefined) && (`Advice@${chat.id}` in lookUp[chat.id])){
+                return 
+            }
+            const advice = new Advice(`Advice@${chat.id}`, chat.id, chat.first_name)
+            addLookUp(chat.id, `Advice@${chat.id}`, advice)
+            response = advice.onRequest()
+            bot.sendMessage(chat.id, response.message, response.options)
+                .then( ctx => {
+                    bot.once("message", async c => {
+                        if(!commands.has(c.text)){
+                            const res = advice.onRespond(c.text)
+                            bot.deleteMessage(chat.id, c.message_id)
+                            handleRespond(res,ctx.chat.id, ctx.message_id)
+                        }else{
+                            bot.deleteMessage(ctx.chat.id, ctx.message_id)
+                        }
+                    })
+                })
             break
         default:
             console.log("waiting...")
@@ -637,7 +699,7 @@ async function initProblems(activityName, userID, name){
     const prefix = `${activityName}@${userID}`
     const insertProblems = new InsertProblems(userID, name, activityName)
     addLookUp(userID, prefix, insertProblems)
-    const response = await currentApp.listen('onStart')
+    const response = await insertProblems.listen('onStart')
     return handleRespond(response, userID)
 }
 
@@ -654,6 +716,13 @@ function initCuti(chat) {
     });
 }
 
+async function initMonit(userID, name){
+    const prefix = `monitUsers@${userID}`
+    const monit = new MonitoringUsers(userID, name)
+    addLookUp(userID, prefix, monit)
+    let res = await monit.onStart()
+    handleRespond(res, userID)
+}
 // ----------------------------------------- (remainder function) ----------------------------------------------- //
 
 async function remindMessage(type,user){

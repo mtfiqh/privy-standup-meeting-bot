@@ -97,7 +97,7 @@ function generateTasksKeyboard(projects, prefix, trueAction="Send", falseAction=
 function parseToReportFormat(report) {
     const result = {}
     for (let item of report) {
-        const { projectID, status, name, projectName, date, taskID, userID } = item
+        const { projectID, projectName, taskID, userID } = item
         if(result[userID]===undefined){
             result[userID] = {}
         }
@@ -108,9 +108,7 @@ function parseToReportFormat(report) {
             }
         }
         result[userID][projectID].task[taskID] = {
-            name: name,
-            status: status,
-            time: date
+            ...item
         }
     }
     return result

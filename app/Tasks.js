@@ -38,6 +38,17 @@ class Tasks extends App{
                 let readableDate = tempDate.getDate()+'/'+(tempDate.getMonth()+1)+'/'+tempDate.getFullYear()
                 this.text+=`\n<b>#${task.projectName}</b>\n${i}. ${task.name} [${task.priority}]\nDibuat pada: ${readableDate}\n`
                 i++
+                if(task.problems!=undefined){
+                    let temp =  ""
+                    let k = 0
+                    for(let problem of task.problems){
+                        temp+=`\n   <b>${String.fromCharCode(97+k)}.</b> `
+                        temp+=problem.split(':').pop().trim()
+                        k+=1
+                    }
+                    this.text+=`Problems:${temp}`
+                }
+                this.text+='\n'
             }
             if(tasks.length<1) this.text="Mohon maaf, kamu belum mempunyai task apapun!"
         }

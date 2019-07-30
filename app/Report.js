@@ -71,7 +71,7 @@ class Report extends App {
         db.updateTaskStatus(dataTosend)
 
         //send notifitaions to QA
-        const responses = await this.sendNotificationToQA(taskList)
+        await this.sendNotificationToQA(taskList)
 
         // cleaning temp
         this.bucket.splice(0, this.bucket.length)
@@ -87,7 +87,7 @@ class Report extends App {
                     message : dict.send.success.getMessage(taskList),
                     options : dict.send.success.getOptions(this.prefix),
                 },
-                ...responses
+                ...this.responses
             ]
         }
         
@@ -130,18 +130,17 @@ class Report extends App {
     async sendNotificationToQA(taskList){
         const qa = await QA.getInstance()
         const qaList = qa.QAs
-        const responses = []
+        this.responses = []
         for(let v of qaList){
-            responses.push({
-                id:this.id,
-                type: "Send",
-                message : dict.sendNotificationToQA.getMessage(v.name, this.name, taskList),
-                options:    dict.sendNotificationToQA.getOptions()
-            })
+            if(v.userID != this.id){
+                this.responses.push({
+                    id:v.userID,
+                    type: "Send",
+                    message : dict.sendNotificationToQA.getMessage(v.name, this.name, taskList),
+                    options:    dict.sendNotificationToQA.getOptions()
+                })
+            }
         }
-
-        return responses
-        
     }
 
 }
