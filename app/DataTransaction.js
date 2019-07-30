@@ -647,6 +647,16 @@ const getProblems=async(taskID)=>{
     })
 }
 
+const getAllTasks= async ()=>{
+    const tasks = []
+    return db.collection('tasks').get()
+    .then(results=>{
+        results.forEach(result=>{
+            tasks.push(result.data())
+        })
+        return tasks
+    })
+}
 
 //---------------------------ADD SECTION---------------------------------//
 
@@ -1396,7 +1406,9 @@ module.exports = {
     getUserTasksOrderByPriority,
     getDayOff,
     getQA,
+    getProblems,
     getUserTaskCountAndDayOff,
+    getAllTasks,
     addAdvice,
     checkDayOff,
     addHoliday,
