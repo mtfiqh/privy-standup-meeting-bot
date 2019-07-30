@@ -625,6 +625,17 @@ const isUserActive = async (userID)=>{
     return (userStatistic.Done + userStatistic.Added)!=0
 }
 
+const getGroupID = ()=>{
+    let id = {}
+    return db.collection('groups').get()
+    .then(groups=>{
+        groups.forEach(group=>{
+            id = group.id
+        })
+        return id
+    })
+}
+
 //---------------------------ADD SECTION---------------------------------//
 
 const saveUser = (userID, data) => {
@@ -892,6 +903,9 @@ const setAdmin = (userID) => {
     })
 }
 
+const setGroupID = ({id,payload})=>{
+    db.collection('groups').doc(id.toString()).set(payload)
+}
 
 //-------------------------CHECKING SECTION------------------------------//
 
@@ -1344,44 +1358,47 @@ load()
 
 module.exports = {
     load,
-    getRoleList,
-    getUserRole,
     listenProjects,
     listenUsers,
     updateUser,
     addProjects,
     addTaskTransaction,
     addProblems,
-    addAdvice,
+    getRoleList,
+    getUserRole,
     getAdvice,
+    getTaskCount,
+    getDate,
+    getStatistic,
+    getUserProjects,
+    getUserTasks,
+    getGroupID,
+    getUsersData,
+    getProjects,
+    getHoliday,
+    getYearsFromDayOff,
+    getUserTasksOrderByPriority,
+    getDayOff,
+    getQA,
+    getUserTaskCountAndDayOff,
+    addAdvice,
     checkDayOff,
     addHoliday,
     userDayOff,
     deleteProject,
-    getTaskCount,
-    getDate,
     exportToExcel,
-    getStatistic,
-    getUserProjects,
-    getUserTasks,
     editProjectName,
-    getUsersData,
     generateTimestamp,
-    getProjects,
     saveUser,
-    getHoliday,
-    getYearsFromDayOff,
     isUserExist,
-    getUserTasksOrderByPriority,
+    isUserActive,
     assignUserToProjects,
     updateTaskStatus,
     isHoliday,
     isAdmin,
     setAdmin,
-    getUserTaskCountAndDayOff,
     resetStat,
     takeOverTask,
-    getDayOff,
-    getQA,
+    setGroupID,
     db
 }

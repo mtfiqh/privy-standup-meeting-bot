@@ -20,7 +20,6 @@ const { Advice } = require('./app/advice')
 require('dotenv').config()
 const SCHEDULE_10  = process.env.SCHEDULE_10
 const SCHEDULE_13  = process.env.SCHEDULE_13
-const SCHEDULE_SPAMMER = process.env.SCHEDULE_SPAMMER
 const SCHEDULE_RESET   = process.env.SCHEDULE_RESET
 // -------------------------------------- (global vars) ----------------------------------------------- //
 
@@ -53,6 +52,9 @@ const commands = new Set([
 bot.onText(/\/start/, context => {
     const { from, chat, message_id } = context
     currentState[`autostart@${from.id}`] = context
+    if(chat.type=='group'){
+        setupGroup(context)
+    }
     db.saveUser(from.id, {
         name: `${from.first_name += from.last_name ? ' ' + from.last_name : ''}`,
         status: 'active',
@@ -70,6 +72,23 @@ bot.onText(/\/start/, context => {
     })
 })
 
+async function setupGroup(context){
+    try {
+        const id = context.chat.id
+        const admin = await bot.getChatAdministrators(id)
+        const members = await bot.getChatMembersCount(id)
+        const payload = {
+            id : id,
+            title: context.chat.title,
+            admin:admin,
+            members:members
+        }
+        db.setGroupID({id:id,payload:payload})
+        
+    } catch (error) {
+        console.log(error)
+    }
+}
 
 bot.onText(/\/menu/, async (context, match) => {
     const prefix = `Menu@${context.from.id}`
@@ -254,8 +273,6 @@ bot.on("message", async context => {
     }
 
 })
-
-
 
 // ----------------------------------------- (Calback Query) ----------------------------------------------- //
 
@@ -713,6 +730,32 @@ const cron13 = cron.schedule(SCHEDULE_13,()=>{
     allowReminder().then(allowed=>{
         if(allowed){
             reminder(13)
+        }
+    })
+})
+
+cron.schedule('* * * * *',function(){
+    allowReminder().then(async allowed=>{
+        if(allowed){
+            const inactiveUsers = []
+            const allUser = await db.getUsersData('all')
+            for(let user of allUser){
+                const isActive = await db.isUserActive(user.userID)
+                if(!isActive){
+                    // console.log('inactive')
+                    // console.log(user)
+                    inactiveUsers.push(user)
+                }
+            }
+            let i = 1
+            const groupID = await db.getGroupID()
+            let message = `Selamat siang, teruntuk nama dibawah ini\ndimohon segera melapor via bot.\n`
+            inactiveUsers.forEach(user=>{
+                message = message.concat(`${i}. [${user.name}](tg://user?id=${user.userID})
+                \n`)
+                i++
+            })
+            bot.sendMessage(groupID,message,{parse_mode:'Markdown'})
         }
     })
 })
