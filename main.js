@@ -260,6 +260,7 @@ bot.onText(/\/monit/, context=>{
 bot.on("message", async context => {
     const { from, chat, text } = context
     if (currentState[from.id]) {
+        if(commands.has(text)) return
         console.log(from.id, 'Type Listen')
         const currentApp = lookUp[from.id][`${currentState[from.id]}@${from.id}`]
         const response = await currentApp.listen('onTypeListen', context)
@@ -403,10 +404,16 @@ async function handleAuto(context) {
             break
         case '/addTasks':
             bot.deleteMessage(chat.id, message_id)
+            if ((lookUp[chat.id]!=undefined) && (`addTasks@${chat.id}` in lookUp[chat.id])){
+                return 
+            }
             await initTasks('addTasks', chat.id, chat.first_name)
             break
         case '/assignTasks':
             bot.deleteMessage(chat.id, message_id)
+            if ((lookUp[chat.id]!=undefined) && (`assignTasks@${chat.id}` in lookUp[chat.id])){
+                return 
+            }
             await initTasks('assignTasks', chat.id, chat.first_name)
             break
         case '/showTasks':
@@ -429,30 +436,51 @@ async function handleAuto(context) {
             break
         case '/createProjects':
             bot.deleteMessage(chat.id, message_id)
+            if ((lookUp[chat.id]!=undefined) && (`createProjects@${chat.id}` in lookUp[chat.id])){
+                return 
+            }
             initProjects('createProjects', chat.id, chat.first_name)
             break
         case '/deleteProjects':
             bot.deleteMessage(chat.id, message_id)
+            if ((lookUp[chat.id]!=undefined) && (`deleteProjects@${chat.id}` in lookUp[chat.id])){
+                return 
+            }
             initProjects('deleteProjects', chat.id, chat.first_name)
             break
         case '/updateProjects':
             bot.deleteMessage(chat.id, message_id)
+            if ((lookUp[chat.id]!=undefined) && (`updateProjects@${chat.id}` in lookUp[chat.id])){
+                return 
+            }
             initProjects('updateProjects', chat.id, chat.first_name)
             break
         case '/listProjects':
             bot.deleteMessage(chat.id, message_id)
+            if ((lookUp[chat.id]!=undefined) && (`readProjects@${chat.id}` in lookUp[chat.id])){
+                return 
+            }
             initProjects('readProjects', chat.id, chat.first_name)
             break
         case '/assignProject':
             bot.deleteMessage(chat.id, message_id)
+            if ((lookUp[chat.id]!=undefined) && (`assignProject@${chat.id}` in lookUp[chat.id])){
+                return 
+            }
             initAssignProject(chat.id,chat.first_name,'assignProject')
             break
         case '/role':
             bot.deleteMessage(chat.id, message_id)
+            if ((lookUp[chat.id]!=undefined) && (`changerole@${chat.id}` in lookUp[chat.id])){
+                return 
+            }
             initChangeRole(chat.id, chat.first_name)
             break
         case '/problems':
                 bot.deleteMessage(chat.id, message_id)
+                if ((lookUp[chat.id]!=undefined) && (`problems@${chat.id}` in lookUp[chat.id])){
+                    return 
+                }
                 initProblems('problems',chat.id,chat.first_name)
             break
         case '/listCuti':
@@ -464,10 +492,16 @@ async function handleAuto(context) {
             break
         case'/monit':
             bot.deleteMessage(chat.id, message_id)
+            if ((lookUp[chat.id]!=undefined) && (`monitUsers@${chat.id}` in lookUp[chat.id])){
+                return 
+            }
             initMonit(chat.id, chat.first_name)
             break;
         case '/advice':
             bot.deleteMessage(chat.id, message_id)
+            if ((lookUp[chat.id]!=undefined) && (`Advice@${chat.id}` in lookUp[chat.id])){
+                return 
+            }
             const advice = new Advice(`Advice@${chat.id}`, chat.id, chat.first_name)
             addLookUp(chat.id, `Advice@${chat.id}`, advice)
             response = advice.onRequest()
