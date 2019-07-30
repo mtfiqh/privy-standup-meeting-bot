@@ -585,7 +585,8 @@ const getQA=()=>{
         users.forEach(user=>{
             const tmp = {
                 name:user.data().name,
-                role:user.data().role
+                role:user.data().role,
+                userID:user.data().userID
             }
             QAs.push(tmp)
         })

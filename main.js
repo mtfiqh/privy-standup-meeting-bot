@@ -734,28 +734,32 @@ const cron13 = cron.schedule(SCHEDULE_13,()=>{
     })
 })
 
+async function mentionUser(){
+    const inactiveUsers = []
+    const allUser = await db.getUsersData('all')
+    for(let user of allUser){
+        if(user.status=='active'){
+            const isHaveActivity = await db.isUserActive(user.userID)
+            if(!isHaveActivity){
+                inactiveUsers.push(user)
+            }
+        }
+    }
+    let i = 1
+    const groupID = await db.getGroupID()
+    let message = `Selamat siang, teruntuk nama dibawah ini\ndimohon segera melapor via bot.\n`
+    inactiveUsers.forEach(user=>{
+        message = message.concat(`${i}. [${user.name}](tg://user?id=${user.userID})
+        \n`)
+        i++
+    })
+    bot.sendMessage(groupID,message,{parse_mode:'Markdown'})
+}
+
 cron.schedule('* * * * *',function(){
     allowReminder().then(async allowed=>{
         if(allowed){
-            const inactiveUsers = []
-            const allUser = await db.getUsersData('all')
-            for(let user of allUser){
-                const isActive = await db.isUserActive(user.userID)
-                if(!isActive){
-                    // console.log('inactive')
-                    // console.log(user)
-                    inactiveUsers.push(user)
-                }
-            }
-            let i = 1
-            const groupID = await db.getGroupID()
-            let message = `Selamat siang, teruntuk nama dibawah ini\ndimohon segera melapor via bot.\n`
-            inactiveUsers.forEach(user=>{
-                message = message.concat(`${i}. [${user.name}](tg://user?id=${user.userID})
-                \n`)
-                i++
-            })
-            bot.sendMessage(groupID,message,{parse_mode:'Markdown'})
+            mentionUser()
         }
     })
 })
