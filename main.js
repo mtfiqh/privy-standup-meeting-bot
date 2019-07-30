@@ -293,6 +293,7 @@ bot.on('callback_query', async query => {
         }
         
     } catch (error) {
+        console.log(error)
         bot.answerCallbackQuery(query.id, {text: "Session Over!"})
     }
 
@@ -389,8 +390,8 @@ async function handleAuto(context) {
             const prefix = `showTasks@${chat.id}`
             const task =  new Tasks(chat.id, 'showTasks', chat.name)
             addLookUp(chat.id, prefix, task)
-            response = await task.showTasks(chat)
-            handleRespond(response, chat.id)
+            const resp = await task.showTasks(chat)
+            handleRespond(resp, chat.id)
             break
         case '/dayOff':
             const dayOff = new DayOff(bot, chat.id)
@@ -432,6 +433,28 @@ async function handleAuto(context) {
         case '/cuti':
             bot.deleteMessage(chat.id, message_id)
             initCuti(chat);
+            break
+        case'/monit':
+            bot.deleteMessage(chat.id, message_id)
+            initMonit(chat.id, chat.first_name)
+            break;
+        case '/advice':
+            bot.deleteMessage(chat.id, message_id)
+            const advice = new Advice(`Advice@${chat.id}`, chat.id, chat.first_name)
+            addLookUp(chat.id, `Advice@${chat.id}`, advice)
+            const response = advice.onRequest()
+            bot.sendMessage(chat.id, response.message, response.options)
+                .then( ctx => {
+                    bot.once("message", async c => {
+                        if(!commands.has(c.text)){
+                            const res = advice.onRespond(c.text)
+                            bot.deleteMessage(chat.id, c.message_id)
+                            handleRespond(res,ctx.chat.id, ctx.message_id)
+                        }else{
+                            bot.deleteMessage(ctx.chat.id, ctx.message_id)
+                        }
+                    })
+                })
             break
         default:
             console.log("waiting...")

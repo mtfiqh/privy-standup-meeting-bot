@@ -246,7 +246,7 @@ class ChangeRole extends App{
             }
         }
         this.cache.users.forEach(user=>{
-            updateUser(user.userID, {type:`${this.roles[this.cache.role].title}`})
+            updateUser(user.userID, {type:`${this.roles[this.cache.role].title}`,role:`${this.roles[this.cache.role].title}`})
         })
 
         return{

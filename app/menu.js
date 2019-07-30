@@ -1,12 +1,22 @@
-const {isAdmin,exportToExcel} = require("./DataTransaction")
+const {getUserRole,exportToExcel} = require("./DataTransaction")
 const {App} = require('../core/App')
 const {
     menuAdmin,
     menuUser,
     menuProjectsAdmin,
-    menuProjectsUser,
     menuTasksUser,
-    menuTasksAdmin
+    menuTasksAdmin,
+    menuMonitoringAdmin,
+    menuMonitoringUser,
+    menuPM,
+    menuTasksPM,
+    menuMonitoringPM,
+    menuQA,
+    menuTasksQA,
+    menuMonitoringQA,
+    menuLead,
+    menuTasksLead,
+    menuMonitoringLead
 } = require('./resources/menu.config')
 
 class Menu extends App{
@@ -36,12 +46,15 @@ class Menu extends App{
             'onDeleteProjects',
             'onListProjects',
             'onAssignUserToProjects',
-            'onAssignRole'
+            'onAssignRole',
+            'onMonitoringClicked',
+            'onMonitoringUsers',
+            'onAddFeedback'
         ])
         // Define Class variable here
         this.prefix     = `${Menu.name}@${userID}`
         this.userID     =  userID
-        this.isAdmin    = {}
+        this.role       = {}
         this.state      = []
         this.visited    = new Set([])
         this.id         = userID
@@ -61,8 +74,11 @@ class Menu extends App{
         this.message = ""
         this.from = from
 
-        const load = result => { this.isAdmin = result }
-        await isAdmin(from.id).then(load.bind(this))
+        const load = result => { this.role = result }
+        await getUserRole(from.id).then(load.bind(this))
+
+        console.log(this.role)
+
         const opts = this.getMessageOptionOnMenu(from.id)
         const greetings = this.generateGreetings()
         this.visited.clear()
@@ -76,6 +92,13 @@ class Menu extends App{
         
     }
     
+    onAddFeedback(){
+        return{
+            type:'Auto',
+            message:'/advice'
+        }
+    }
+
     onDayOff(){
         return {
             type:'Auto',
@@ -134,7 +157,14 @@ class Menu extends App{
     //-----------------TASK SECTION---------------------------
     onTasksClicked(){
         this.onVisit('onTasksClicked')
-        if(this.isAdmin) return menuTasksAdmin(this.prefix,this.from)
+        if(this.role==="admin") 
+            return menuTasksAdmin(this.prefix,this.from)
+        else if(this.role==="QA")
+            return menuTasksQA(this.prefix, this.from)
+        else if(this.role==="PM")
+            return menuTasksPM(this.prefix, this.from)
+        else if(this.role==="lead")
+            return menuTasksLead(this.prefix, this.from)
         return menuTasksUser(this.prefix,this.from)
     }
 
@@ -147,7 +177,7 @@ class Menu extends App{
     }
 
     onListTasks(){
-        this.onVisit('onTasksClicked')
+        this.onVisit('onMonitoringClicked')
         return {
             type:'Auto',
             message:'/showTasks',
@@ -189,8 +219,14 @@ class Menu extends App{
     //----------------PROJECT SECTION------------------------
     onProjectsClicked(){
         this.onVisit('onProjectsClicked')
-        if(this.isAdmin)
+        if(this.role==="admin") 
             return menuProjectsAdmin(this.from,this.prefix)
+        else if(this.role==="QA")
+            return menuProjectsQA(this.prefix, this.from)
+        else if(this.role==="PM")
+            return menuProjectsPM(this.prefix, this.from)
+        else if(this.role==="lead")
+            return menuProjectsLead(this.prefix, this.from)
 
         return menuProjectsUser(this.from,this.prefix)
     }
@@ -228,7 +264,7 @@ class Menu extends App{
     }
 
     onListProjects(){
-        this.onVisit('onProjectsClicked')
+        this.onVisit('onMonitoringClicked')
         return {
             type:'Auto',
             message:'/listProjects',
@@ -243,11 +279,25 @@ class Menu extends App{
         }
     }
 
-    onMonitoring(){
-        return {
+    onMonitoringUsers(){
+        this.onVisit('onMonitoringClicked')
+        return{
             type:'Auto',
-            message:'/monitoring'
+            message:'/monit'
         }
+    }
+    onMonitoringClicked(userID){
+        this.onVisit('onMonitoringClicked')
+        if(this.role==="admin") 
+            return menuMonitoringAdmin(this.prefix,userID)
+        else if(this.role==="QA")
+            return menuMonitoringQA(this.prefix, userID)
+        else if(this.role==="PM")
+            return menuMonitoringPM(this.prefix, userID)
+        else if(this.role==="lead")
+            return menuMonitoringLead(this.prefix, userID)
+
+        return menuMonitoringUser(this.prefix,userID)
     }
     //-----------------SUPPORT FUNCTION-------------------------
     
@@ -257,8 +307,14 @@ class Menu extends App{
      * @returns {Object} messageOption - Message that will be rendered as button
      */
     getMessageOptionOnMenu(userID){
-        if(this.isAdmin)
+        if(this.role==="admin") 
             return menuAdmin(this.prefix,userID)
+        else if(this.role==="QA")
+            return menuQA(this.prefix, userID)
+        else if(this.role==="PM")
+            return menuPM(this.prefix, userID)
+        else if(this.role==="lead")
+            return menuLead(this.prefix, userID)
 
         return menuUser(this.prefix,userID)
     }
