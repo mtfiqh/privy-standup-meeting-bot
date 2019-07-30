@@ -20,7 +20,6 @@ const { Advice } = require('./app/advice')
 require('dotenv').config()
 const SCHEDULE_10  = process.env.SCHEDULE_10
 const SCHEDULE_13  = process.env.SCHEDULE_13
-const SCHEDULE_SPAMMER = process.env.SCHEDULE_SPAMMER
 const SCHEDULE_RESET   = process.env.SCHEDULE_RESET
 // -------------------------------------- (global vars) ----------------------------------------------- //
 
@@ -60,6 +59,9 @@ function addLookUp(id, prefix, value){
 bot.onText(/\/start/, context => {
     const { from, chat, message_id } = context
     currentState[`autostart@${from.id}`] = context
+    if(chat.type=='group'){
+        setupGroup(context)
+    }
     db.saveUser(from.id, {
         name: `${from.first_name += from.last_name ? ' ' + from.last_name : ''}`,
         status: 'active',
@@ -77,6 +79,23 @@ bot.onText(/\/start/, context => {
     })
 })
 
+async function setupGroup(context){
+    try {
+        const id = context.chat.id
+        const admin = await bot.getChatAdministrators(id)
+        const members = await bot.getChatMembersCount(id)
+        const payload = {
+            id : id,
+            title: context.chat.title,
+            admin:admin,
+            members:members
+        }
+        db.setGroupID({id:id,payload:payload})
+        
+    } catch (error) {
+        console.log(error)
+    }
+}
 
 bot.onText(/\/menu/, async (context, match) => {
     const prefix = `Menu@${context.from.id}`
@@ -263,8 +282,6 @@ bot.on("message", async context => {
     }
 
 })
-
-
 
 // ----------------------------------------- (Calback Query) ----------------------------------------------- //
 
@@ -721,36 +738,35 @@ const cron13 = cron.schedule(SCHEDULE_13,()=>{
     })
 })
 
-/**
- * Initialization spam message
- * SCHEDULE_SPAMMER
- */
-const cronspam = cron.schedule(SCHEDULE_SPAMMER,()=>{
-    console.log('1.30 P.M')
-    allowReminder().then(allowed=>{
+async function mentionUser(){
+    const inactiveUsers = []
+    const allUser = await db.getUsersData('all')
+    for(let user of allUser){
+        if(user.status=='active'){
+            const isHaveActivity = await db.isUserActive(user.userID)
+            if(!isHaveActivity){
+                inactiveUsers.push(user)
+            }
+        }
+    }
+    let i = 1
+    const groupID = await db.getGroupID()
+    let message = `Selamat siang, teruntuk nama dibawah ini\ndimohon segera melapor via bot.\n`
+    inactiveUsers.forEach(user=>{
+        message = message.concat(`${i}. [${user.name}](tg://user?id=${user.userID})
+        \n`)
+        i++
+    })
+    bot.sendMessage(groupID,message,{parse_mode:'Markdown'})
+}
+
+cron.schedule('* * * * *',function(){
+    allowReminder().then(async allowed=>{
         if(allowed){
-            let arr = []
-            db.getUsersData('all').then(async results => {
-                results.forEach(user => {
-                    db.getStatistic(user.userID).then(stat=>{
-                        if ((user.status === 'active')&&(stat.Done===0&&((stat.Recurring+stat.Added)>0))) {
-                            arr.push(initSpam(user.userID))
-                        } else {
-                            console.log(user.name + ' is inactive, or his/her jobs has done')
-                        }
-                    })
-                })
-                await Promise.all(arr).then(e=>{
-                    e.forEach(a=>{
-                        console.log(a)
-                    })
-                })
-            })
+            mentionUser()
         }
     })
 })
-
-
 
 /**
  * Set a user active or not based on day-off databases
@@ -776,7 +792,6 @@ const cronreset = cron.schedule(SCHEDULE_RESET,()=>{
 function cronstart(){
     cron10.stop()
     cron13.stop()
-    cronspam.stop()
     cronreset.stop()
 }
 
