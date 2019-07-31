@@ -5,7 +5,7 @@
   "main": "main.js",
   "scripts": {
     "start": "nodemon main.js",
-    "prod" : "pm2-runtime main.js",
+    "prod": "pm2-runtime main.js",
     "test": "mocha test/"
   },
   "repository": {
@@ -30,6 +30,7 @@
     "node-datetime": "^2.1.2",
     "node-telegram-bot-api": "^0.30.0",
     "nodemon": "^1.19.1",
-    "pm2": "^3.5.1"
+    "pm2": "^3.5.1",
+    "simple-node-logger": "^18.12.23"
   }
 }

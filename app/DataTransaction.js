@@ -3,6 +3,7 @@ const { save }  = require('./Spreadsheets.js')
 
 const dateTime  = require('node-datetime');
 const dateCalc  = require("add-subtract-date");
+const log       = require('simple-node-logger').createSimpleLogger('./log/DB.log')
 
 const admin     = firebase.admin()
 const db        = firebase.database();
@@ -10,7 +11,23 @@ const users     = new Set([])
 const projects  = []
 const tasks     = new Set([])
 
+class DBLogger{
+    static err(name, reason){
+        const message = `@${name} : ${reason} at ${new Date().toISOString()}`
+        log.setLevel('error')
+        log.error(message)
+        return new Error(message)
+    }
+
+    static info(name,info){
+        const message = `@${name} : ${info} at ${new Date().toISOString()}`
+        log.setLevel('info')
+        log.info(message)
+    }
+}
+
 load = () => {
+    
 }
 
 /**
@@ -122,12 +139,16 @@ const getUsersData = async (id) => {
     if (id === 'all') {
         return db.collection('users').get()
         .then(items => {
-
-            items.forEach(item => {
-                userData.add(item.data())
-            })
-            
-            return Array.from(userData)
+            if(!items.empty){
+                items.forEach(item => {
+                    userData.add(item.data())
+                })
+                
+                return Array.from(userData)
+            }
+            return new Array()
+        }).catch(err=>{
+            DBLogger.err(getUsersData.name,err.message)
         })
 
     } else {
@@ -135,12 +156,16 @@ const getUsersData = async (id) => {
         
         return dbRef.get()
         .then(data => {
-
-            data.forEach(details => {
-                userData.add(details.data())
-            })
-          
-            return Array.from(userData)[0]
+            if(!data.empty){
+                data.forEach(details => {
+                    userData.add(details.data())
+                })
+              
+                return Array.from(userData)[0]
+            }
+            return new Array()
+        }).catch(err=>{
+            DBLogger.err(getUsersData.name,err.message)
         })
     }
 }
@@ -161,22 +186,20 @@ const getUserTasksOrderByPriority = async (uid, order) => {
     return dbRef.get()
     .then(results => {
         results.forEach(result => {
-
-            if (result.data().status != 'done' && result.data().userID === uid) {
-                taskList.push(result.data())
+            if(result.data().status!=undefined&&result.data().userID!=undefined){
+                if (result.data().status != 'done' && result.data().userID === uid) {
+                    taskList.push(result.data())
+                }
+            }else{
+                DBLogger.info(getUserTasksOrderByPriority.name,`undefined status or userID`)
             }
-
         })
         
         return taskList
     })
     .catch(err => {
-        // console.log('Error : ' + err.details)
+        DBLogger.err(getUserTasksOrderByPriority.name,err.message)
     })
-    .finally(() => {
-        // console.log('Tasks for ' + uid + ' successfully loaded')
-    })
-
 }
 
 /**
@@ -192,20 +215,18 @@ const getProjects = async (type) => {
     return db.collection('projects').get()
     .then(projects => {
         projects.forEach(project => {
-
-            if (project.data().status == type) {
-                projectNames.add(project.data().projectName)
+            if(project.data().status!=undefined){
+                if (project.data().status == type) {
+                    projectNames.add(project.data().projectName)
+                }
+            }else{
+                DBLogger.err(getProjects.name,`projects status undefined`)
             }
-
         })
-
         return projectNames
     })
     .catch(err => {
-        // console.log('Error : ' + err.details)
-    })
-    .finally(() => {
-        // console.log('Projects loaded!')
+        DBLogger.err(getProjects.name,err.message)
     })
 }
 
@@ -214,18 +235,20 @@ const getProjects = async (type) => {
  * @param {int} uid | userID of a  user
  */
 const getUserTasks = async (uid) => {
-
     let taskList = new Set([])
-    let projects = new Set([])
+    // let projects = new Set([])
 
     dbRef = db.collection('tasks').where('userID', '==', uid)
     return dbRef.get()
     .then(async data => {
-        
         data.forEach( dt => {
-            if (dt.data().status == 'In Progress') {
-                taskList.add(dt.data())            
-            } 
+            if(dt.data().status!=undefined){
+                if (dt.data().status == 'In Progress') {
+                    taskList.add(dt.data())            
+                } 
+            }else{
+                DBLogger.err(getUserTasks.name,`task status undefined`)
+            }
         })
         //Code below to hide task of finished projects
         // await db.collection('projects').get()
@@ -241,9 +264,11 @@ const getUserTasks = async (uid) => {
         //         taskList.delete(task)
         //     }
         // })
+        if(taskList.size==0) return new Array()
+        if(taskList.size==1) return Array.from(taskList)
         return sortingTask(Array.from(taskList))
     }).catch(err => {
-         console.log('Error : ' + err.details)
+        DBLogger.err(getUserTasks.name,err.message)
     })
 }
 
@@ -258,15 +283,19 @@ const sortingTask=(taskList)=>{
     let temp
     
     taskList.forEach(task=>{
-        if(task.priority==='HIGH'){
-            high.push(task)
-        }else if(task.priority==='MEDIUM'){
-            medium.push(task)
+        if(task.priority!=undefined){
+            if(task.priority==='HIGH'){
+                high.push(task)
+            }else if(task.priority==='MEDIUM'){
+                medium.push(task)
+            }else{
+                low.push(task)
+            }
+            
+            all[task.projectName] = []
         }else{
-            low.push(task)
+            DBLogger.err(sortingTask.name,`task priority undefined`)
         }
-        
-        all[task.projectName] = []
     })
 
     temp = high.concat(medium,low)
@@ -297,22 +326,21 @@ const getUserProjects = async (uid) => {
     
     return dbRef.get()
     .then(data => {
+        if(data.size == 0) return new Array()
         let temp = new Set([])
-
-        data.forEach(dt => {
-            temp.add(dt.data().projectName)
+        data.forEach(project => {
+            temp.add(project.data().projectName)
         })
     
-        for (dt of temp) {
+        for (project of temp) {
             let tmp = []
-    
-            tmp.push(dt)
+            tmp.push(project)
             projectList.push(tmp)
         }
         return projectList
     })
     .catch(err => {
-        console.log('Error : ' + err.details)
+        DBLogger.err(getUserProjects.name,err.message)
     })
 
 }
@@ -344,10 +372,11 @@ const getStatistic = async (uid)=>{
     const {timestamp} = getDate()
     return db.collection('statistics').doc(timestamp.toString())
     .get().then(results=>{
-        if(results.data()==undefined){
-            return null
-        }
+        if(results.data()==undefined||results.data()[uid.toString()]==undefined) return null
         return results.data()[uid.toString()]
+    })
+    .catch(err=>{
+        DBLogger.err(getStatistic.name,err.message)    
     })
 }
 
@@ -363,9 +392,13 @@ const getRoleList = async () =>{
     return db.collection('roles').get()
     .then(result=>{
         result.forEach(res=>{
-            list.push({title:res.id,description:res.data().description})
+            const desc = res.data().description==undefined?`${res.id}`:res.data().description
+            list.push({title:res.id,description:desc})
         })
         return list
+    })
+    .catch(err=>{
+        DBLogger.err(getRoleList.name,err.message)
     })
 }
 
@@ -374,7 +407,14 @@ const getTodayReport = async () => {
     
     return db.collection('reports').doc(timestamp.toString()).get()
     .then(data => {
+        if(data.data()==undefined) {
+            DBLogger.info(getTodayReport.name,`report at ${timestamp.toString()} is unavailable`) 
+            return undefined
+        }
         return data.data()
+    })
+    .catch(err=>{
+        DBLogger.err(getTodayReport.name,err.message)
     })
 }
 
@@ -391,34 +431,42 @@ const getProjectByTask = async (taskName) => {
         })
         return tmp
     })
+    .catch(err=>{
+        DBLogger.err(getProjectByTask.name,err.message)
+    })
 }
-
 
 const getTaskCount = async () => {
     let temp = {}
 
     return db.collection('tasks').get()
     .then(async results => {
-
-        await db.collection('projects').get()
-            .then(result => {
-                result.forEach(item => {
-                    if (item.data().status != 'finished') {
-                        temp[item.data().projectName] = {
-                            taskDone: 0,
-                            allTask: 0
+        if(!results.empty){
+            await db.collection('projects').get()
+                .then(result => {
+                    result.forEach(item => {
+                        if ((item.data().status!=undefined)&&(item.data().status != 'finished')) {
+                            let tmpProjectName = item.data().projectName!=undefined?item.data().projectName:'null'
+                            
+                            temp[tmpProjectName] = {
+                                taskDone: 0,
+                                allTask: 0
+                            }
                         }
+                    })
+                })
+                results.forEach(result => {
+                    let tmpProjectName = result.data().projectName!=undefined?result.data().projectName:'null'
+                    if (temp[tmpProjectName] != undefined) {
+                        if (result.data().status == 'done') {
+                            temp[tmpProjectName].taskDone++
+                        }
+                        temp[tmpProjectName].allTask++
                     }
                 })
-            })
-        results.forEach(result => {
-            if (temp[result.data().projectName] != undefined) {
-                if (result.data().status == 'done') {
-                    temp[result.data().projectName].taskDone++
-                }
-                temp[result.data().projectName].allTask++
-            }
-        })
+        }else{
+            DBLogger.info(getTaskCount.name,`Results empty`)
+        }
         return temp
     })
 }
@@ -428,7 +476,7 @@ const getPastTaskToExcel= ()=>{
     return db.collection('tasks').get()
     .then(result=>{
         result.forEach(res=>{
-            if(res.data().status=='In Progress'){
+            if((res.data()!=undefined)&&(res.data().status=='In Progress')){
                 let temp = {}
                 let {timestamp} = getDate()
                 
@@ -439,9 +487,15 @@ const getPastTaskToExcel= ()=>{
                 }
 
                 db.collection('reports').doc(timestamp.toString())
-                .set(temp, { merge: true })  
+                .set(temp, { merge: true })
+                .catch(err=>{
+                    DBLogger.err(getPastTaskToExcel.name,err.message)
+                })
             }
         })
+    })
+    .catch(err=>{
+        DBLogger.err(getPastTaskToExcel.name,err.message)
     })
 
 }
@@ -455,7 +509,7 @@ const getHoliday= async (year)=>{
     const dbRef = db.collection('day-off').where('year','==',year).orderBy('timestamp','asc')
     return dbRef.get().then(results=>{
         results.forEach(res=>{
-            if(res.data().type == 'holiday'){
+            if((res.data()!=undefined)&&(res.data().type == 'holiday')){
                 holidays.push(
                 {
                     date:`${res.data().year}/${res.data().month}/${res.data().day}`,
@@ -464,6 +518,9 @@ const getHoliday= async (year)=>{
             }
         )
         return holidays
+    })
+    .catch(err=>{
+        DBLogger.err(getHoliday.name,err.message)
     })
 }
 
@@ -506,6 +563,9 @@ const getDayOff=async ({day,month,year},by)=>{
             })
             return dayOffParser(tmp)
         })
+        .catch(err=>{
+            DBLogger.err(getDayOff.name,`@year, ${err.message}`)
+        })
     }else if(by==='month'){
         return db.collection('day-off')
         .where('year','==',year)
@@ -519,6 +579,9 @@ const getDayOff=async ({day,month,year},by)=>{
                 }
             })
             return dayOffParser(tmp)
+        })
+        .catch(err=>{
+            DBLogger.err(getDayOff.name,`@month, ${err.message}`)
         })
     }else if(by==='day'){
         return db.collection('day-off')
@@ -535,6 +598,9 @@ const getDayOff=async ({day,month,year},by)=>{
             })
             return dayOffParser(tmp)
         })
+        .catch(err=>{
+            DBLogger.err(getDayOff.name,`@day, ${err.message}`)
+        })
     }
 }
 
@@ -550,12 +616,14 @@ const dayOffParser = (list)=>{
             })
         })
     })
-    if(newList.length==0){
-        return []
-    }
+    if(newList.length==0) return new Array()
     return newList
 }
 
+/**
+ * Get advice/feedback from users
+ * @returns {Array}
+ */
 const getAdvice=async ()=>{
     const advices = []
     return db.collection('advices').get()
@@ -565,8 +633,16 @@ const getAdvice=async ()=>{
         })
         return advices
     })
+    .catch(err=>{
+        DBLogger.err(getAdvice.name,err.message)
+    })
 }
 
+/**
+ * Get user role from specific userid
+ * @param {int} userID | userid of a user
+ * @returns {String} user's role
+ */
 const getUserRole=(userID)=>{
     const role = {}
 
@@ -577,8 +653,14 @@ const getUserRole=(userID)=>{
         })
         return role[userID]
     })
+    .catch(err=>{
+        DBLogger.err(getUserRole.name,err.message)
+    })
 }
 
+/**
+ * Get list of QA's
+ */
 const getQA=()=>{
     const QAs = []
 
@@ -586,13 +668,16 @@ const getQA=()=>{
     .get().then(users=>{
         users.forEach(user=>{
             const tmp = {
-                name:user.data().name,
-                role:user.data().role,
-                userID:user.data().userID
+                name:user.data().name==undefined?`null`:user.data().name,
+                role:user.data().role==undefined?`null`:user.data().role,
+                userID:user.data().userID==undefined?`null`:user.data().userID
             }
             QAs.push(tmp)
         })
         return QAs
+    })
+    .catch(err=>{
+        DBLogger.err(getUserRole.name,err.message)
     })
 }
 
@@ -606,12 +691,14 @@ const getUserTaskCountAndDayOff= async (userID)=>{
     .then(items=>{
         user['task'] = items.size
     })
+    .catch(err=>{
+        DBLogger.err(getUserTaskCountAndDayOff.name,`on task ${err.message}`)
+    })
 
     await db.collection('day-off').doc(timestamp.toString()).get()
     .then(items=>{
         user['cuti'] = false
         if(items.data()){
-            console.log(items.data())
             items.data().users.forEach(item=>{
                 if(item.userID==userID){
                     user['cuti'] = true
@@ -619,7 +706,9 @@ const getUserTaskCountAndDayOff= async (userID)=>{
             })
         }
     })
-
+    .catch(err=>{
+        DBLogger.err(getUserTaskCountAndDayOff.name,`on day-off ${err.message}`)
+    })
     return user
 }
 
@@ -638,12 +727,18 @@ const getGroupID = ()=>{
         })
         return id
     })
+    .catch(err=>{
+        DBLogger.err(getGroupID.name,err.message)
+    })
 }
 
 const getProblems=async(taskID)=>{
     return db.collection('tasks').doc(taskID).get()
     .then(result=>{
-        return result.data().problems
+        return result.data().problems==undefined? new Array():result.data().problems
+    })
+    .catch(err=>{
+        DBLogger.err(getProblems.name,err.message)
     })
 }
 
@@ -656,6 +751,9 @@ const getAllTasks= async ()=>{
         })
         return tasks
     })
+    .catch(err=>{
+        DBLogger.err(getAllTasks.name,err.message)
+    })
 }
 
 //---------------------------ADD SECTION---------------------------------//
@@ -664,7 +762,8 @@ const saveUser = (userID, data) => {
     isUserExist(userID).then(res=>{
         if(!res){
             db.collection('users').doc(userID.toString()).set(data)
-            .catch(err => {
+            .catch(err=>{
+                DBLogger.err(saveUser.name,err.message)
             })
             
         }else{
@@ -675,37 +774,38 @@ const saveUser = (userID, data) => {
 
 const addAdvice=(advice,name)=>{
     db.collection('advices').doc().set({name:name,advice:advice})
+    .catch(err=>{
+        DBLogger.err(addAdvice.name,err.message)
+    })
 }
 
 const assignUserToProjects = (projectName, userID) => {
-    // console.log(projectName)
     let projectRef = db.collection("projects").where("projectName", "==", projectName)
     projectRef.get()
-        .then(data => {
-            data.forEach(dt => {
-                db.collection('projects').doc(dt.id)
-                .update({ users: admin.firestore.FieldValue.arrayUnion(userID) })
+    .then(data => {
+        data.forEach(project => {
+            db.collection('projects').doc(project.id)
+            .update({ users: admin.firestore.FieldValue.arrayUnion(userID) })
+            .catch(err=>{
+                DBLogger.err(assignUserToProjects.name,`on update projects ${err.message}`)
             })
         })
-        .catch(err => {
-            // console.log('Error : ' + err.details)
-        })
-        .finally(() => {
-            // console.log('Assign ' + userID + ' to ' + projectName + ' succeeded')
-        })
+    })
+    .catch(err=>{
+        DBLogger.err(assignUserToProjects.name,`on get projects ${err.message}`)
+    })
 }
 
+/**
+ * Add task(s) to tasks document in firebase 
+ * @param {Object} - an object that contains information of task
+ * 
+ */
 const addTaskTransaction = async (data) => {
-    /**
-     * Add task(s) to tasks document in firebase 
-     * @param {data} - an object that contains information of task
-     * 
-     */
     let { timestamp } = getDate()    
     let taskIDs = []
     let userID
     for (dt of data) {
-        // console.log(data)
         let taskRef       = db.collection('tasks').doc()
         let taskID        = taskRef.id
         let projectRef    = db.collection("projects").where("projectName", "==", dt.projectName)
@@ -734,23 +834,28 @@ const addTaskTransaction = async (data) => {
 
                 db.collection('projects').doc(item.id)
                 .update({ Task: admin.firestore.FieldValue.arrayUnion(taskRef) })
+                .catch(err=>{
+                    DBLogger.err(addTaskTransaction.name,`on projects Task update ${err.message}`)
+                })
 
                 db.collection('projects').doc(item.id)
                 .update({ users: admin.firestore.FieldValue.arrayUnion(dt.userID) })
+                .catch(err=>{
+                    DBLogger.err(addTaskTransaction.name,`on projects users update ${err.message}`)
+                })
 
                 db.collection('reports').doc(timestamp.toString())
                 .set(temp, { merge: true })
-                
-                
+                .catch(err=>{
+                    DBLogger.err(addTaskTransaction.name,`on projects reports update ${err.message}`)
+                })
                     
             })
             
         })
-        .catch(err => {
-            // console.log(err)
+        .catch(err=>{
+            DBLogger.err(addTaskTransaction.name,`on get projects ${err.message}`)
         })
-        
-
     }
     updateStatistic(data.length,userID,'add')
 
@@ -762,18 +867,16 @@ const userDayOff=async ({userID,startDate,long,reason})=>{
     let start = generateTimestamp(startDate)
     
     for(let i=0;i < long;i++){
-        await isHoliday(`${start.getFullYear()}/${start.getMonth()+1}/${start.getDate()}`).then(async res=>{
+        await isHoliday(`${start.getFullYear()}/${start.getMonth()+1}/${start.getDate()}`)
+        .then(async res=>{
             if(start.getDay()==0||start.getDay()==6||res){
                 i--
             }else{
                 await insertDayOff(start,userID,reason)
             }
             start=generateTimestamp(dateCalc.add(start,1,'day'))
-    
         })
-        
     }
-    
 }
 
 const insertDayOff=async(date,userID,reason)=>{
@@ -793,24 +896,35 @@ const insertDayOff=async(date,userID,reason)=>{
                 
                 await db.collection('day-off').doc(date.toString())
                 .set(schema,{merge:true})
+                .catch(err=>{
+                    DBLogger.err(insertDayOff.name,`on set schema ${err.message}`)
+                })
     
                 await getUsersData(userID).then(async res=>{
                     await db.collection('day-off').doc(date.toString())
                     .update({ users:admin.firestore.FieldValue.arrayUnion({userID:userID,reason:reason,name:res.name}) })
+                    .catch(err=>{
+                        DBLogger.err(insertDayOff.name,`on update day-off, ${err.message}`)
+                    })  
+                })
+                .catch(err=>{
+                    DBLogger.err(insertDayOff.name,`on get user, ${err.message}`)
                 })
     
             }else{
                 if(results.data().type!='holiday'){
                     db.collection('day-off').doc(date.toString())
                     .update({users:admin.firestore.FieldValue.arrayUnion({userID:userID,reason:reason}) })
+                    .catch(err=>{
+                        DBLogger.err(insertDayOff.name,`on update day-off ${err.message}`)
+                    })
                 } 
             }
         }
         
     })
-    .catch(e=>{
-        // console.log(e)
-        return e
+    .catch(err=>{
+        DBLogger.err(insertDayOff.name,`${err.message}`)
     })
 }
 
@@ -827,7 +941,6 @@ const addProblems = async (payload)=>{
     let {timestamp} = getDate()
     for(item of payload){
         const user = await getUsersData(item.userID)
-        console.log(user)
         let problem = `${user.name} : ${item.problem}`
         let temp = {}
 
@@ -836,11 +949,23 @@ const addProblems = async (payload)=>{
         await db.collection('tasks').where('name','==',item.taskName)
         .get().then(results=>{
             results.forEach(result=>{
-                db.collection('tasks').doc(result.data().taskID).set({problems:admin.firestore.FieldValue.arrayUnion(problem)},{merge:true})
+                db.collection('tasks').doc(result.data().taskID).set({
+                    problems:admin.firestore.FieldValue.arrayUnion(problem)},{merge:true}
+                )
+                .catch(err=>{
+                    DBLogger.err(addProblems.name,`on set tasks, ${err.message}`)
+                }) 
             })
+        })
+        .catch(err=>{
+            DBLogger.err(addProblems.name,`on get tasks, ${err.message}`)
         })        
+
         await db.collection('reports').doc(timestamp.toString())
         .set(temp, { merge: true })
+        .catch(err=>{
+            DBLogger.err(addProblems.name,`on set reports, ${err.message}`)
+        }) 
     }
 }
 
@@ -854,34 +979,32 @@ const addProjects = (projects) => {
         .set(
             {
                 projectName: project.projectName,
+                deadline   : project.deadline,
                 date       : timestamp,
                 status     : 'In Progress',
                 Task       : [],
                 users      : []
             }
         )
-        .catch(err => {
-            // console.log('Add project failed, error : ' + err.details)
-        })
-        .finally(() => {
-            // console.log('Project successfully added')
-            // console.log('Project ID : ' + projectID)
-        })
+        .catch(err=>{
+            DBLogger.err(addProjects.name,`${err.message}`)
+        }) 
+
         pids.add(projectID)
     })
     return pids
 }
 
+/**
+ * Function to set holiday in firebase document
+ * @param {Object}
+ * => {
+ *      name: 'Idul Fitri',
+ *      date:'yyyy/mm/dd'
+ *    }
+ * 
+ */
 const addHoliday=({name,date})=>{
-    /**
-     * Function to set holiday in firebase document
-     * @param {Object}
-     * => {
-     *      name: 'Idul Fitri',
-     *      date:'yyyy/mm/dd'
-     *    }
-     * 
-     */
     const timestamp = generateTimestamp(date)
     const [year,month,day] = date.split('/')
     db.collection('day-off').doc(timestamp.toString())
@@ -893,7 +1016,12 @@ const addHoliday=({name,date})=>{
         month:parseInt(month),
         day:parseInt(day),
         timestamp:timestamp
-    },{merge:true})
+    },{merge:true}
+    )
+    .catch(err=>{
+        DBLogger.err(addHoliday.name,`${err.message}`)
+    }) 
+    
 }
 
 //---------------------------SET SECTION------------------------------//
@@ -906,64 +1034,63 @@ const setAdmin = (userID) => {
      */
 
     db.collection('users').doc(userID.toString())
-    .update({ type: 'admin' })
-    .catch(err => {
-        if (err) {
-            // console.log('Error : ' + err.details)
-        }
-    })
-    .finally(() => {
-        // console.log(userID + ' are successfully set as admin')
+    .update({ role:'admin',type: 'admin' })
+    .then(()=>{DBLogger.info(setAdmin.name,`${userID} set as admin`)})
+    .catch(err=>{
+        DBLogger.err(setAdmin.name,`${err.message}`)
     })
 }
 
 const setGroupID = ({id,payload})=>{
     db.collection('groups').doc(id.toString()).set(payload)
+    .catch(err=>{
+        DBLogger.err(setGroupID.name,`${err.message}`)
+    })
 }
 
 //-------------------------CHECKING SECTION------------------------------//
 
 const isUserExist = async (userID) => {
     return db.collection('users').doc(userID.toString()).get()
-        .then(data => {
-            if (!data.exists) {
-                return false
-            } else {
-                return true
-            }
-        })
-        .catch(err => {
-            // console.log('Error : ' + err.details)
-        })
+    .then(data => {
+        if (data.exists) return true
+        return true
+    })
+    .catch(err=>{
+        DBLogger.err(isUserExist.name,`${err.message}`)
+    })
 }
 
+/**
+ * 
+ * @param {int} userID 
+ * 
+ * @returns {boolean}
+ */
 const isAdmin = async (userID) => {
     return db.collection('users').doc(userID.toString())
-        .get().then(data => {
-            if (data.exists) {
-                if (data.data().type === 'admin') {
-                    return true
-                } else {
-                    return false
-                }
+    .get().then(data => {
+        if (data.exists) {
+            if (data.data().type === 'admin') {
+                return true
             } else {
-                return 'User not available'
+                return false
             }
-        })
-        .catch(err => {
-            // console.log('Error : ' + err.details)
-        })
+        } else {
+            return 'User not available'
+        }
+    })
+    .catch(err=>{
+        DBLogger.err(isAdmin.name,`${err.message}`)
+    })
 }
 
-
-
+/**
+ * Function to check user(s) who free today
+ * 
+ * @returns {Array} [] OR [userID,userID]
+ */
 const checkDayOff = async()=>{
-    /**
-     * Function to check user(s) who free today
-     * 
-     * @returns {Array} [] OR [userID,userID]
-     */
-
     let {timestamp} = getDate()
     todayDate = timestamp
     let result = []
@@ -971,14 +1098,16 @@ const checkDayOff = async()=>{
     return db.collection('day-off').doc(todayDate.toString())
     .get().then(results=>{
         if(results.data()===undefined){
-            return []
+            return new Array()
         }else{
             results.data().users.forEach(res=>{
                 result.push(res.userID)
             })
         }
-        // console.log(result)
         return result
+    })
+    .catch(err=>{
+        DBLogger.err(checkDayOff.name,`${err.message}`)
     })
 }
 
@@ -987,14 +1116,16 @@ const isHoliday = async (date=null)=>{
     if(date!=null){
       timestamp = generateTimestamp(date)   
     }
-    // console.log(timestamp)
+    
     return db.collection('day-off').doc(timestamp.toString())
     .get().then(result=>{
-        // console.log(result.data())
         if(result.data()&&(result.data().type=='holiday')){
             return true
         }
         return false
+    })
+    .catch(err=>{
+        DBLogger.err(isHoliday.name,`${err.message}`)
     })
 }
 
@@ -1008,10 +1139,16 @@ const editProjectName = (oldName, newName) => {
     .then(data => {
         data.forEach(dt => {
             db.collection('projects').doc(dt.id).set({ projectName: newName }, { merge: true })
+            .then(()=>{
+                DBLogger.info(editProjectName.name,`project ${oldName} edited to ${newName}`)
+            })
+            .catch(err=>{
+                DBLogger.err(editProjectName.name,`on set project ${err.message}`)
+            })
         })
     })
-    .catch(e => {
-        // console.log(e)
+    .catch(err=>{
+        DBLogger.err(editProjectName.name,`on get project, ${err.message}`)
     })
 }
 
@@ -1019,33 +1156,30 @@ const editProjectName = (oldName, newName) => {
 
 const deleteProject = async (projectName) => {
     let projectRef = db.collection('projects').where('projectName', '==', projectName)
-    // console.log(projectRef)
     return projectRef.get()
     .then(data => {
-        console.log(data)
-        let a = 0
+        let isSuccess = false
         
         data.forEach(dt => {
             db.collection('projects').doc(dt.id).set(
-                { status: 'finished' }, { merge: true }).then(a => {
+                { status: 'finished' }, { merge: true })
+            .then(()=>{
+                isSuccess = true
+                DBLogger.info(deleteProject.name,`project ${projectName} deleted`)
             })
-            a++
+            .catch((err)=>{
+                DBLogger.err(deleteProject.name,err.message)
+            })
+            for(let taskID of dt.data().Task){
+                taskID.set({status:'deleted'},{merge:true})
+            }
         })
+        return isSuccess
+    })
+    .catch(err => {
+        DBLogger.err(deleteProject.name,err.message)
+    })
 
-        if (a < 1) {
-            return false
-        } else {
-            return true
-        }
-
-        })
-        .catch(e => {
-            return 'Delete Project Failed'
-        })
-        .finally(e => {
-            return 'Delete Project Succeeded'
-        }
-    )
 }
 
 //-----------------------UPDATE SECTION------------------------------------//
@@ -1056,6 +1190,7 @@ const updateTaskStatus = (payload) => {
     Object.keys(payload).forEach(key => {
         items = payload[key]
         stat[key] = items.length
+
         items.forEach(item => {
             const { projectName, userId: userID, name } = item
             const taskReference = db.collection('tasks')
@@ -1064,7 +1199,9 @@ const updateTaskStatus = (payload) => {
             
             taskReference.get().then(results => {
                 results.forEach(result => {
-                    db.collection('tasks').doc(result.id).update({ status: 'done' })
+                    db.collection('tasks').doc(result.id).update({ status: 'done' }).catch(err=>{
+                        DBLogger.err(updateTaskStatus.name,`update status done fail, ${err.message}`)
+                    })
                     let temp = {}
                     temp[userID] = {}
                     temp[userID]['done'] = admin.firestore.FieldValue.arrayUnion(name)
@@ -1072,26 +1209,29 @@ const updateTaskStatus = (payload) => {
 
                     db.collection('reports').doc(timestamp.toString())
                     .set(temp, { merge: true })
+                    .catch(err=>{
+                        DBLogger.err(updateTaskStatus.name,`set reports fail, ${err.message}`)
+                    })
 
                 })
 
             }).catch(err => {
-                // console.log("Error when updating task", err)
-            }).finally(`Task ${name} Updated!`)
+                DBLogger.err(updateTaskStatus.name,err.message)  
+            })
         })
 
         updateStatistic(stat[key],key,'done')
-        // db.collection('statistics').doc(timestamp.toString())
-        // .get().then(results=>{
-        //     db.collection('statistics').doc(timestamp.toString())
-        //     .set({[key.toString()]:{Done:results.data()[key.toString()].Done+stat[key]}},{merge:true})
-        // })
-        
     })
 }
 
 const updateUser = (userID,payload)=>{
     db.collection('users').doc(userID.toString()).set(payload,{merge:true})
+    .then(()=>{
+        DBLogger.info(updateUser.name,`${userID} data has been updated!`)
+    })
+    .catch(err=>{
+        DBLogger.err(updateUser.name,err.message)
+    })
 }
 
 const updateStatistic =(taskCount,userID,type)=>{
@@ -1100,7 +1240,6 @@ const updateStatistic =(taskCount,userID,type)=>{
     
     db.collection('statistics').doc(timestamp.toString())
     .get().then(async results=>{
-
         if(!results.exists){
             if(type=='add'){
                 payload['Added'] = taskCount
@@ -1109,6 +1248,9 @@ const updateStatistic =(taskCount,userID,type)=>{
             }
             await db.collection('statistics').doc(timestamp.toString())
             .set({[userID.toString()]:payload}, { merge: true })
+            .catch(err=>{
+                DBLogger.err(updateStatistic.name,`set new statistics, ${err.message}`)
+            })
         }else{
             if(type=='add'){
                 let oldAdded = results.data()[userID.toString()] && results.data()[userID.toString()].Added 
@@ -1117,17 +1259,18 @@ const updateStatistic =(taskCount,userID,type)=>{
                 let oldAdded = results.data()[userID.toString()]&&results.data()[userID.toString()].Done
                 payload['Done'] = oldAdded==undefined?taskCount:oldAdded+taskCount
             }
-            console.log(payload)
-            if(results.data()[userID.toString()]!=undefined){
-                await db.collection('statistics').doc(timestamp.toString())
-                .set({[userID.toString()]:payload},{merge:true})
 
-            }else{
-                await db.collection('statistics').doc(timestamp.toString())
-                .set({[userID.toString()]:payload}, { merge: true })
-            }
+            await db.collection('statistics').doc(timestamp.toString())
+            .set({[userID.toString()]:payload},{merge:true})
+            .catch(err=>{
+                DBLogger.err(updateStatistic.name,`set new user statistics, ${err.message}`)
+            })
+
         }
  
+    })
+    .catch(err=>{
+        DBLogger.err(updateStatistic.name,`${err.message}`)
     })
 }
 
@@ -1137,16 +1280,30 @@ const updateStatistic =(taskCount,userID,type)=>{
 const resetStat = ()=>{
     let {timestamp} = getDate()
     getUsersData('all').then(results=>{
+        
         results.forEach(res=>{
+            
             db.collection('statistics').doc(timestamp.toString())
             .set({[res.userID.toString()]:{Done:0,Added:0,Recurring:0}}, { merge: true }).then(()=>{
+                
                 getUserTasks(res.userID).then(task=>{
+                    
                     db.collection('statistics').doc(timestamp.toString())
                     .get().then(results=>{
+                        
                         db.collection('statistics').doc(timestamp.toString())
                         .set({[res.userID.toString()]:{Recurring:results.data()[res.userID.toString()].Recurring+task.length}},{merge:true})
+                        .catch(err=>{
+                            DBLogger.err(resetStat.name,`set new statistics, ${err.message}`)
+                        })
+                    })
+                    .catch(err=>{
+                        DBLogger.err(resetStat.name,`get old statistics, ${err.message}`)
                     })
                 })
+            })
+            .catch(err=>{
+                DBLogger.err(resetStat.name,`set statistics, ${err.message}`)
             })
         })
     })
@@ -1170,7 +1327,9 @@ const exportToExcel = async () => {
     })
 
     await getTodayReport().then(result => {
-        usersReport = result
+        if(result!=undefined){
+            usersReport = result
+        }
     })
 
     await userIDs.forEach(result => {
@@ -1345,10 +1504,12 @@ const takeOverTask = (payloads) => {
 
         const {taskId:tid, receiverId:uidB, senderId:uidL} = payload
         db.collection('tasks').doc(tid).set({ userID: uidB }, { merge: true })
+        .catch(err=>{
+            DBLogger.err(takeOverTask.name,`set new userID, ${err.message}`)
+        })
 
         db.collection('tasks').doc(tid).get()
         .then(res=>{
-            // console.log(res.data())
             let temp = {}
             temp[uidB] = {}
             temp[uidL] = {}
@@ -1364,9 +1525,15 @@ const takeOverTask = (payloads) => {
 
             db.collection('reports').doc(timestamp.toString())
             .set(temp, { merge: true })
+            .catch(err=>{
+                DBLogger.err(takeOverTask.name,`set reports, ${err.message}`)
+            })
             
         })
-        
+        .catch(err=>{
+            DBLogger.err(takeOverTask.name,`get task, ${err.message}`)
+        })
+
         let ProjectRef = db.collection('projects')
         .where('Task', 'array-contains', db.collection('tasks').doc(tid))
     
@@ -1388,8 +1555,13 @@ const takeOverTask = (payloads) => {
                 //     tmp.ref.update({ users: admin.firestore.FieldValue.arrayRemove(uidL) })
                 // }
                 tmp.ref.update({ users: admin.firestore.FieldValue.arrayUnion(uidB) })
-                console.log('OK')
+                .catch(err=>{
+                    DBLogger.err(takeOverTask.name,`update user in projects, ${err.message}`)
+                })
             }
+        })
+        .catch(err=>{
+            DBLogger.err(takeOverTask.name,`get projects, ${err.message}`)
         })
     })
 
