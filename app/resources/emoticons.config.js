@@ -19,5 +19,6 @@ module.exports = {
     close   :'🚪',
     left    :'⬅️',
     calendar:'📅',
-    exc     :'❗'
+    exc     :'❗',
+    smile   :'😊'
 }

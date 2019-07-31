@@ -20,10 +20,12 @@ const { Advice } = require('./app/advice')
 const { Problems } = require('./app/Problems')
 const { MonitoringUsers } = require('./app/MonitoringUsers')
 require('dotenv').config()
+const moment = require('moment')
 const SCHEDULE_10  = process.env.SCHEDULE_10
 const SCHEDULE_13  = process.env.SCHEDULE_13
 const SCHEDULE_RESET   = process.env.SCHEDULE_RESET
 const SCHEDULE_MENTION = process.env.SCHEDULE_MENTION
+
 // -------------------------------------- (global vars) ----------------------------------------------- //
 
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true })
@@ -66,6 +68,7 @@ bot.onText(/\/start/, async context => {
         await setupGroup(context)
         await setupAdmin(context)
     }else{
+
         db.saveUser(from.id, {
             name: `${from.first_name += from.last_name ? ' ' + from.last_name : ''}`,
             status: 'active',
@@ -781,6 +784,25 @@ async function remindMessage(type,user){
     }
     
 }
+
+async function remindProjects(){
+    const projects = await db.getDetailedProject('In Progress')
+    moment.locale('id')
+    const groupID = await db.getGroupID()
+    for(let project of projects){
+        let today     = new Date()
+        let deadline  = project.deadline==null? new Date(0) : project.deadline.toDate()
+        let limit   = 7*24*60*60*1000
+        let diff    = deadline-today
+        let diffLocale =  moment(`${deadline.getFullYear()}
+        ${deadline.getMonth()<10?`0${deadline.getMonth()+1}`:deadline.getMonth()+1}${deadline.getDate()<10?`0${deadline.getDate()}`:deadline.getDate()}`,'YYYYMMDD').fromNow()
+
+        if(diff>0&&diff<limit){
+            bot.sendMessage(groupID,`Mengingatkan deadline Project *${project.projectName}* akan berakhir *${diffLocale}* ${emoticon.smile}`,{parse_mode:'Markdown'})
+        }
+    }
+}
+remindProjects()
 
 function reminder(type) {
     db.getUsersData('all').then(async results => {

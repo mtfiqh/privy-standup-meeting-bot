@@ -17,7 +17,6 @@ class Problems extends App{
     async onGetTask(first=true){
         const allTask = await getAllTasks()
         const taskHaveProblems = []
-        console.log('in')
         allTask.forEach(task=>{
             if((task.problems!=undefined)&&(task.problems.length!=0&&task.status=="In Progress")){
                 taskHaveProblems.push(task)

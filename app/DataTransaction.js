@@ -26,9 +26,6 @@ class DBLogger{
     }
 }
 
-load = () => {
-    
-}
 
 /**
  * Listen to users change in firebase document
@@ -39,10 +36,8 @@ listenUsers = async () => {
         user.docChanges().forEach(data => {
     
             if (data.type === 'added') {
-                // console.log('Users added : ' + data.doc.data().userID)
                 users.add(data.doc.data())
             } else if (data.type === 'removed') {
-                // console.log('Users removed : ' + data.doc.data().userID)
                 users.delete(data.doc.data())
             }
     
@@ -94,20 +89,10 @@ listenTasks = async () => {
             
             if (data.type === 'added') {
                 tasks.add(data.doc.data())
-                
-                if (counter < 5) {
-                    // console.log('Task added : ' + data.doc.data().name)
-                }
-                
-                if (counter === 5) {
-                    // console.log('More tasks loading in background')
-                }
-
+               
                 counter++
             } else if (data.type === 'removed') {
-                
-                // console.log('Tasks removed : ' + data.doc.data().name)
-
+               
                 db.collection('projects').doc(data.doc.data().projectID)
                 .update(
                 { 
@@ -118,7 +103,7 @@ listenTasks = async () => {
                 tasks.delete(data.doc.data())
             
             } else if (data.type === 'modified') {
-                // console.log('Task modified : ' + data.doc.data().name)
+            
             }
         })
     })
@@ -208,7 +193,7 @@ const getUserTasksOrderByPriority = async (uid, order) => {
  * 
  * @returns {Set} - returns a set of project names
  */
-const getProjects = async (type) => {
+const getProjectName = async (type) => {
 
     let projectNames = new Set([])
 
@@ -220,13 +205,34 @@ const getProjects = async (type) => {
                     projectNames.add(project.data().projectName)
                 }
             }else{
-                DBLogger.err(getProjects.name,`projects status undefined`)
+                DBLogger.err(getProjectName.name,`projects status undefined`)
             }
         })
         return projectNames
     })
     .catch(err => {
-        DBLogger.err(getProjects.name,err.message)
+        DBLogger.err(getProjectName.name,err.message)
+    })
+}
+
+const getDetailedProject = async (type) => {
+    let projectsData = new Set([])
+
+    return db.collection('projects').get()
+    .then(projects => {
+        projects.forEach(project => {
+            if(project.data().status!=undefined){
+                if (project.data().status == type) {
+                    projectsData.add(project.data())
+                }
+            }else{
+                DBLogger.err(getDetailedProject.name,`projects status undefined`)
+            }
+        })
+        return projectsData
+    })
+    .catch(err => {
+        DBLogger.err(getDetailedProject.name,err.message)
     })
 }
 
@@ -1152,6 +1158,26 @@ const editProjectName = (oldName, newName) => {
     })
 }
 
+const editProjectDeadline = (projectName, deadline) => {
+    let projectRef = db.collection('projects').where('projectName', '==', projectName)
+
+    projectRef.get()
+    .then(data => {
+        data.forEach(dt => {
+            db.collection('projects').doc(dt.id).set({deadline:deadline }, { merge: true })
+            .then(()=>{
+                DBLogger.info(editProjectDeadline.name,`project ${oldName} edited to ${newName}`)
+            })
+            .catch(err=>{
+                DBLogger.err(editProjectDeadline.name,`on set project ${err.message}`)
+            })
+        })
+    })
+    .catch(err=>{
+        DBLogger.err(editProjectDeadline.name,`on get project, ${err.message}`)
+    })
+}
+
 //------------------------------DELETE SECTION-----------------------//
 
 const deleteProject = async (projectName) => {
@@ -1575,13 +1601,7 @@ const generateTimestamp=(date)=>{
     return timestamp
 }
 
-
-
-
-load()
-
 module.exports = {
-    load,
     listenProjects,
     listenUsers,
     updateUser,
@@ -1598,7 +1618,8 @@ module.exports = {
     getUserTasks,
     getGroupID,
     getUsersData,
-    getProjects,
+    getDetailedProject,
+    getProjects: getProjectName,
     getHoliday,
     getYearsFromDayOff,
     getUserTasksOrderByPriority,
