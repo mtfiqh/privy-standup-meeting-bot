@@ -1,3 +1,6 @@
+const START_MONTH = 0;
+const END_MONTH = 11;
+
 const {addProjects, getProjects, deleteProject, editProjectName,getTaskCount, isAdmin, getUserProjects} = require('./DataTransaction')
 const{toggleCheck} = require('./helper/helper')
 const clndr = require('./Calendar')
@@ -29,7 +32,9 @@ class CrudProject extends clndr.CalendarKeyboard{
             'onSelectDeadline',
             "onProcess",
             "onSkip",
-            "onCancel"
+            "onCancel",
+            'onNext',
+            'onPrev'
 
         ])
         this.addCache('userID', userID)
@@ -90,7 +95,11 @@ class CrudProject extends clndr.CalendarKeyboard{
         if(text.includes(checkIcon)){
             this.deadline = null
         }else{
-            this.deadline=`${data.year}/${data.month}/${data.day}`
+            this.deadline={
+                'year':data.year,
+                'month':data.month,
+                'day':data.day
+            }
         }
         this.calendar[data.row][data.col].text = toggleCheck(text)
         
@@ -134,8 +143,10 @@ class CrudProject extends clndr.CalendarKeyboard{
             let i=1
             edit=false
             action='create'
+            let date
             this.cache.projects.forEach(project=>{
-                text+=`${i}. ${project.projectName}\ndeadline:${this.deadline ? this.deadline :'Deadline tidak ditentukan'}`
+                if(this.deadline!==null) date = `${this.deadline.year}/${parseInt(this.deadline.month)+1}/${this.deadline.day}`
+                text+=`${i}. ${project.projectName}\ndeadline:${this.deadline ? date :'Deadline tidak ditentukan'}`
                 i++
             })
         }else if(this.cache.prefix==='deleteProjects'){
@@ -170,8 +181,16 @@ class CrudProject extends clndr.CalendarKeyboard{
             console.log(this.cache.userID, 'token is invalid')
             return
         }
-
-        addProjects(this.cache.projects)
+        let date
+        if(this.deadline!==null){
+            date = `${this.deadline.year}/${parseInt(this.deadline.month)+1}/${this.deadline.day}`
+            this.deadline = new Date(date)
+            console.log(this.deadline)
+        }
+        addProjects([{
+            'projectName':this.cache.projects[0].projectName,
+            'deadline':this.deadline
+        }])
         return onCreated()
     }
     
@@ -346,6 +365,61 @@ class CrudProject extends clndr.CalendarKeyboard{
             type:'Delete',
             id:this.cache.userID
         }
+    }
+
+    onNext(args) {
+        const data = clndr.parseArgs(args);
+        if (data.month == END_MONTH) {
+            data.month = START_MONTH;
+            data.year += 1;
+        } else {
+            data.month += 1;
+        }
+
+        const message = this.renderMesage();
+        return {
+            id: this.id,
+            type: "Edit",
+            message: message == false ? "Next" : message,
+            options: {
+                parse_mode: "Markdown",
+                reply_markup: {
+                    inline_keyboard: this.makeCalendar(
+                        data.year,
+                        data.month,
+                        "onSelectDeadline",
+                        "Skip"
+                    )
+                }
+            }
+        };
+    }
+    onPrev(args) {
+        const data = clndr.parseArgs(args);
+        if (data.month == START_MONTH) {
+            data.month = END_MONTH;
+            data.year -= 1;
+        } else {
+            data.month -= 1;
+        }
+
+        const message = this.renderMesage();
+        return {
+            id: this.id,
+            type: "Edit",
+            message: message == false ? "Prev" : message,
+            options: {
+                parse_mode: "Markdown",
+                reply_markup: {
+                    inline_keyboard: this.makeCalendar(
+                        data.year,
+                        data.month,
+                        "onSelectDeadline",
+                        "Skip"                        
+                    )
+                }
+            }
+        };
     }
 }
 
