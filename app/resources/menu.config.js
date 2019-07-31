@@ -114,6 +114,11 @@ const Mapper = {
         text:"Read Feedback",
         icon:em.list,
         action:'onReadFeedback'
+    },
+    'editDeadline':{
+        text:"Edit project deadline",
+        icon:em.offer,
+        action:"onEditDeadline"
     }
 
     
@@ -179,6 +184,7 @@ const menuProjectsAdmin = (from, prefix) => {
                         {...getButton(prefix,'deleteproject', from)}
                     ],[
                         {...getButton(prefix,'assignproject', from)},
+                        {...getButton(prefix, 'editDeadline', from)}
                     ],[
                         {...getButton(prefix, "back", from)},
                         {...getButton(prefix, "close", from)}

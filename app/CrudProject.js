@@ -19,7 +19,7 @@ const {App} = require('../core/App')
 
 class CrudProject extends clndr.CalendarKeyboard{
     constructor(userID, name, prefix){
-        super(`${userID}@${prefix}`, userID)
+        super(`${prefix}@${userID}`, userID)
         this.register([
             'onTypeListen',
             'create',
