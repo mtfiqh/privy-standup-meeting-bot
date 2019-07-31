@@ -50,7 +50,8 @@ class Menu extends App{
             'onAssignRole',
             'onMonitoringClicked',
             'onMonitoringUsers',
-            'onAddFeedback'
+            'onAddFeedback',
+            'onReadFeedback'
         ])
         // Define Class variable here
         this.prefix     = `${Menu.name}@${userID}`
@@ -97,6 +98,13 @@ class Menu extends App{
         return{
             type:'Auto',
             message:'/advice'
+        }
+    }
+    
+    onReadFeedback(){
+        return{
+            type:'Auto',
+            message:'/readAdvice'
         }
     }
 
