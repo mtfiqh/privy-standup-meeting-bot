@@ -802,7 +802,6 @@ async function remindProjects(){
         }
     }
 }
-remindProjects()
 
 function reminder(type) {
     db.getUsersData('all').then(async results => {

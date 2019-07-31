@@ -1,0 +1,7 @@
+14:33:47.904 INFO  INFO @deleteProject : project project 1 deleted at 2019-07-31T07:33:47.904Z 
+14:38:03.849 INFO  @deleteProject : project project kedua deleted at 2019-07-31T07:38:03.849Z 
+16:20:12.075 ERROR @getUserRole : users is not iterable at 2019-07-31T09:20:12.075Z 
+16:21:49.868 ERROR @getUserRole : users is not iterable at 2019-07-31T09:21:49.868Z 
+16:27:44.718 INFO  @deleteProject : project kucing deleted at 2019-07-31T09:27:44.718Z 
+16:33:02.347 INFO  @deleteProject : project Project BOT MESSAGE deleted at 2019-07-31T09:33:02.346Z 
+16:36:18.355 INFO  @deleteProject : project Test 1 deleted at 2019-07-31T09:36:18.354Z 
