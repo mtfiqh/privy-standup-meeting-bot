@@ -625,6 +625,7 @@ const getUserTaskCountAndDayOff= async (userID)=>{
 
 const isUserActive = async (userID)=>{
     const userStatistic = await getStatistic(userID)
+    if(userStatistic==null) return false
     return (userStatistic.Done + userStatistic.Added)!=0
 }
 
@@ -664,13 +665,10 @@ const saveUser = (userID, data) => {
         if(!res){
             db.collection('users').doc(userID.toString()).set(data)
             .catch(err => {
-                // console.log('Error : ' + err.details)
             })
-            .finally(result => {
-                // console.log('result')
-            })
+            
         }else{
-            // console.log(userID+' already registered!')
+            console.log(userID+' already registered!')
         }
     })
 }

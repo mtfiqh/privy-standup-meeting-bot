@@ -59,20 +59,22 @@ function addLookUp(id, prefix, value){
     lookUp[id][prefix]=value
 }
 
-bot.onText(/\/start/, context => {
+bot.onText(/\/start/, async context => {
     const { from, chat, message_id } = context
     currentState[`autostart@${from.id}`] = context
     if(chat.type=='group'){
-        setupGroup(context)
+        await setupGroup(context)
+        await setupAdmin(context)
+    }else{
+        db.saveUser(from.id, {
+            name: `${from.first_name += from.last_name ? ' ' + from.last_name : ''}`,
+            status: 'active',
+            type: 'user',
+            userID: from.id,
+            role:'user',
+            username: from.username==undefined?"null":from.username
+        })
     }
-    db.saveUser(from.id, {
-        name: `${from.first_name += from.last_name ? ' ' + from.last_name : ''}`,
-        status: 'active',
-        type: 'user',
-        userID: from.id,
-        role:'user',
-        username: from.username==undefined?"null":from.username
-    })
     bot.sendMessage(chat.id,
         dict.start.getMessage(from.first_name),
         dict.start.getOptions()
@@ -96,6 +98,26 @@ async function setupGroup(context){
         db.setGroupID({id:id,payload:payload})
         
     } catch (error) {
+        console.log(error)
+    }
+}
+
+async function setupAdmin(context){
+    try{
+        const id = context.chat.id
+        const admin = await bot.getChatAdministrators(id)
+        for(let user of admin){
+            db.saveUser(user.user.id, {
+                name: `${user.user.first_name += user.user.last_name ? ' ' + user.user.last_name : ''}`,
+                status: 'active',
+                type: 'admin',
+                userID: user.user.id,
+                role:'admin',
+                username: user.user.username==undefined?"null":user.user.username
+            })
+        }
+        
+    }catch(error){
         console.log(error)
     }
 }
@@ -850,7 +872,7 @@ const cron13 = cron.schedule(SCHEDULE_13,()=>{
 })
 
 
-cron.schedule(SCHEDULE_MENTION,function(){
+const cronMention = cron.schedule(SCHEDULE_MENTION,function(){
     allowReminder().then(async allowed=>{
         if(allowed){
             mentionUser()
@@ -882,6 +904,7 @@ const cronreset = cron.schedule(SCHEDULE_RESET,()=>{
 function cronstart(){
     cron10.stop()
     cron13.stop()
+    cronMention.stop()
     cronreset.stop()
 }
 
