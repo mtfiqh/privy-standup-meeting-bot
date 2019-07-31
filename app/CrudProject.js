@@ -160,7 +160,10 @@ class CrudProject extends App{
         if(this.cache.select===undefined) this.addCache('select', new Set([]))
         if(idx==='c') return onCancelMessage("Delete", this.cache.userID, this.cache.prefix)
         if(idx==='s'){
-            if(this.cache.select.size<1) return onSelectMessage(this.cache.keyboard, this.cache.userID, false, 'Kamu harus memilih projectnya')
+            if(this.cache.select.size<1) return {
+                type:'NoAction',
+                message:'Kamu harus memilih setidaknya 1 !'
+            }
             if(this.cache.prefix==='updateProjects'){
                 return onUpdate(this.cache.userID, this.cache.prefix, this.cache.projectsArray[this.cache.selectIdx])
             }
