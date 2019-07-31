@@ -1,3 +1,7 @@
 {
-    "spreadsheetURL":"https://docs.google.com/spreadsheets/d/1ErzIEo7FMyiNJnZcqDt136q1M7vlomYToFYHwY9-M8w/edit#gid=0"
+    "spreadsheetURL":"",
+    "sessionTimeout":120,
+    "takeOfferTask":{
+        "timeout": 15
+    }
 }
