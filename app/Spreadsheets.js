@@ -2,7 +2,7 @@
 
 function save(date, report) {
     const data=report
-    let {parseSheetID} = require('./helper/reader')
+    let {parseSheetID} = require('./helper/config')
     let spreadsheetId = parseSheetID()
     let maxLength=0
     const {

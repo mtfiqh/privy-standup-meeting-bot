@@ -25,7 +25,10 @@ const SCHEDULE_13  = process.env.SCHEDULE_13
 const SCHEDULE_RESET   = process.env.SCHEDULE_RESET
 const SCHEDULE_MENTION = process.env.SCHEDULE_MENTION
 // -------------------------------------- (global vars) ----------------------------------------------- //
+const {settings}  = require("./app/helper/config")
+const TAKE_OFFER_TASK_TIMEOUT = (1000 * settings.takeOfferTask.timeout)
 
+// -------------------------------------- (global vars) ----------------------------------------------- //
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true })
 const currentState = {}
 const history = {}
@@ -357,7 +360,7 @@ function handleRespond(response, to, message_id,query_id) {
                 handleRespond(response.onTimeout, to , message_id)
                 delete lookUpTime[response.prefix]
                 delete lookUp[response.id][response.prefix]
-            }, 15000)
+            }, TAKE_OFFER_TASK_TIMEOUT)
             if(lookUpTime[response.id]==undefined){
                 lookUpTime[response.id]={}
             }

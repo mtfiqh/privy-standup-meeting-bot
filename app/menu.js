@@ -1,6 +1,6 @@
 const {getUserRole,exportToExcel} = require("./DataTransaction")
 const {App} = require('../core/App')
-const {settings}= require('./helper/reader')
+const {settings}= require('./helper/config')
 const {
     menuAdmin,
     menuUser,

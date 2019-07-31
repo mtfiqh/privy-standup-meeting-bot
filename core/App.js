@@ -1,4 +1,4 @@
-const TIME_OUT = 120
+const TIME_OUT = require('../app/helper/config').settings.sessionTimeout
 class App {
     constructor() {
         if (this.constructor === App) {
@@ -6,7 +6,7 @@ class App {
         }
         this.lookUp = new Set([]) // action-methods name
         this.cache = {}
-        this.startTime = new Date().getTime()
+        this.startTime = new Date().getTime()        
     }
 
     addCache(key, payloads){
