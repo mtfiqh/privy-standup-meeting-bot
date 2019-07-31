@@ -121,6 +121,22 @@ class TakeOfferTask extends App {
         const taskList = this.cache["messageOnProcess"].message
         return {
             type:"Confirm",
+            hasTimeout:true,
+            prefix:this.prefix,
+            id:this.id,
+            onTimeout:{
+                type:"Confirm",
+                receiver:{
+                    type:"Send",
+                    id:this.friend,
+                    message :"Time out"
+                },
+                sender:{
+                    id:this.id,
+                    type: "Edit",
+                    message: "Time out"
+                }
+            },
             receiver:{
                 type:"Send",
                 id:this.friend,
@@ -150,6 +166,9 @@ class TakeOfferTask extends App {
         return {
             type:"Confirm",
             destroy:true,
+            stop:true,
+            prefix:this.prefix,
+            id:this.id,
             receiver:{
                 id:friend,
                 type:"Edit",
@@ -181,6 +200,9 @@ class TakeOfferTask extends App {
         return {
             type:"Confirm",
             destroy:true,
+            stop:true,
+            prefix:this.prefix,
+            id:this.id,
             receiver:{
                 id:friend,
                 type:"Edit",
