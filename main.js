@@ -335,6 +335,7 @@ bot.on('callback_query', async query => {
 
 
 // ----------------------------------------- (Response Handler) ----------------------------------------------//
+const lookUpTime = {}
 function handleRespond(response, to, message_id,query_id) {
     /**
      * response = {
@@ -349,6 +350,28 @@ function handleRespond(response, to, message_id,query_id) {
     if (!response) return
     const { type } = response
     console.log(`${to} - ${type} :: message_id :${message_id}`)
+
+    if(response.hasTimeout != undefined && response.hasTimeout==true){
+        if(lookUpTime[response.prefix]==undefined){
+            const t = setTimeout(()=>{
+                handleRespond(response.onTimeout, to , message_id)
+                delete lookUpTime[response.prefix]
+                delete lookUp[response.id][response.prefix]
+            }, 15000)
+            if(lookUpTime[response.id]==undefined){
+                lookUpTime[response.id]={}
+            }
+            lookUpTime[response.id][response.prefix] = t
+        }
+    }
+
+    if(response.stop==true){
+        const t = lookUpTime[response.id][response.prefix]
+        t.unref()
+        clearTimeout(t)
+        delete lookUpTime[response.id][response.prefix]
+    }
+
     if (type == "Edit") {
         bot.editMessageText(response.message, {
             message_id: message_id,
