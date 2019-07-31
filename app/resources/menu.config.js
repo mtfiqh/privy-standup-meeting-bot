@@ -113,7 +113,7 @@ const Mapper = {
     "readFeedback":{
         text:"Read Feedback",
         icon:em.list,
-        action:'onAddFeedback'
+        action:'onReadFeedback'
     }
 
     

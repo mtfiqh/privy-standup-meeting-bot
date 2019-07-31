@@ -71,8 +71,35 @@ class Advice  extends App {
             destroy:true
         }
     }
+
+    async onRead(){
+        this.lists=[]
+        const setAdvice = (lists) =>{
+            this.lists = lists
+        }
+        await db.getAdvice().then(setAdvice.bind(this))
+        let message = `Berikut list feedback yang ada:\n`
+        let i=1
+        for(let list of this.lists){
+            message+=`\n${i}. ${list.advice}\nBy: ${list.name}\n`
+            i++
+        }
+        return{
+            type:'Send',
+            id:this.id,
+            message:message,
+            destroy:true,
+            options:{
+                parse_mode:"Markdown"
+            }
+        }
+    }
+
 }
 
 module.exports = {
     Advice
 }
+
+const ad = new Advice('advice@123', 123, 'abc')
+ad.onRead()

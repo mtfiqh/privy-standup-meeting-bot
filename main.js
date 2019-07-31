@@ -573,6 +573,13 @@ async function handleAuto(context) {
                     })
                 })
             break
+        case '/readAdvice':
+            bot.deleteMessage(chat.id, message_id)
+            const readAdvice = new Advice(`readAdvice@${chat.id}`, chat.id, chat.first_name)
+            addLookUp(chat.id, `readAdvice@${chat.id}`, readAdvice)
+            response =  await readAdvice.onRead()
+            handleRespond(response, chat.id)
+            break
         default:
             console.log("waiting...")
             break
