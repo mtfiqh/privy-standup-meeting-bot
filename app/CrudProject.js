@@ -1,5 +1,6 @@
 const {addProjects, getProjects, deleteProject, editProjectName,getTaskCount, isAdmin, getUserProjects} = require('./DataTransaction')
 const{toggleCheck} = require('./helper/helper')
+const clndr = require('./Calendar')
 const {
     onTypeListenMessage,
     onCancelMessage,
@@ -13,9 +14,9 @@ const {
 } = require('./CrudProject.config')
 const {App} = require('../core/App')
 
-class CrudProject extends App{
+class CrudProject extends clndr.CalendarKeyboard{
     constructor(userID, name, prefix){
-        super()
+        super(`${userID}@${prefix}`, userID)
         this.register([
             'onTypeListen',
             'create',
@@ -25,6 +26,11 @@ class CrudProject extends App{
             'update',
             'read',
             'onClose',
+            'onSelectDeadline',
+            "onProcess",
+            "onSkip",
+            "onCancel"
+
         ])
         this.addCache('userID', userID)
         this.addCache('name', name)
@@ -32,6 +38,8 @@ class CrudProject extends App{
         this.prefix=prefix+'@'+userID
         this.addCache('token', Math.random().toString(36).substring(8))
         this.id = userID
+        this.deadline=null
+        this.date = new Date()
     }
     onTypeListen(context){
         const {text} = context
@@ -53,7 +61,70 @@ class CrudProject extends App{
             projectName:text
         })
         console.log(this.cache.userID, `${this.cache.prefix} - on Type Listen ${text}`)
-        return onTypeListenMessage(text, this.cache.userID, this.cache.prefix)
+        // return onTypeListenMessage(text, this.cache.userID, this.cache.prefix)
+        return{
+            type:'Confirm',
+            sender:{
+                type:'Delete',
+                id:this.cache.userID
+            },
+            receiver:{
+                type:'Send',
+                id:this.cache.userID,
+                message:'Pilih deadline project:\n',
+                options:{
+                    reply_markup:{
+                        inline_keyboard:this.makeCalendar(this.date.getFullYear(), this.date.getMonth(), 'onSelectDeadline', "Skip")
+                    }
+                }
+            }
+        }
+    }
+
+    onSelectDeadline(args){
+        const data = clndr.parseArgs(args)
+        const checkIcon = '️️✔️'
+
+        let text = this.calendar[data.row][data.col].text
+        this.deadline=null
+        if(text.includes(checkIcon)){
+            this.deadline = null
+        }else{
+            this.deadline=`${data.year}/${data.month}/${data.day}`
+        }
+        this.calendar[data.row][data.col].text = toggleCheck(text)
+        
+        return{
+            type:'Edit',
+            id:this.cache.userID,
+            message:'Pilih deadline project:\n',
+            options:{
+                reply_markup:{
+                    inline_keyboard:this.calendar
+                }
+            }
+        }
+    }
+
+    onSkip(){
+        this.deadline=null
+        return this.onSure()
+    }
+
+    onProcess(){
+        console.log(this.deadline)
+        if(this.deadline===null){
+            console.log('masuk')
+            return{
+                type:'NoAction',
+                message:'Pilih Tanggal Deadline atau SKIP jika tidak memiliki deadline',
+            }
+        }
+        return this.onSure()
+    }
+
+    onCancel(){
+        return onCancelMessage("Delete",this.cache.userID, this.cache.prefix)
     }
 
     onSure(){
@@ -64,7 +135,7 @@ class CrudProject extends App{
             edit=false
             action='create'
             this.cache.projects.forEach(project=>{
-                text+=`${i}. ${project.projectName}\n`
+                text+=`${i}. ${project.projectName}\ndeadline:${this.deadline ? this.deadline :'Deadline tidak ditentukan'}`
                 i++
             })
         }else if(this.cache.prefix==='deleteProjects'){

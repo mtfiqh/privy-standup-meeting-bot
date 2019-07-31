@@ -114,7 +114,14 @@ function makeHeader(prefix, month, year, current) {
     return [prev, title, next];
 }
 
-function makeFooter(prefix, resolve = "Process", reject = "Close") {
+function makeFooter(prefix, resolve = "Process", reject = "Close", skip=undefined) {
+    if(skip!==undefined){
+        return [
+            makeKeyboard(prefix, resolve, `on${resolve}`),
+            makeKeyboard(prefix, reject, `on${reject}`),
+            makeKeyboard(prefix, skip, `on${skip}`),
+        ];
+    }
     return [
         makeKeyboard(prefix, resolve, `on${resolve}`),
         makeKeyboard(prefix, reject, `on${reject}`)
@@ -161,7 +168,7 @@ class CalendarKeyboard extends App {
             "noaction",
             "onChoose",
             "onProcess",
-            "onClose"
+            "onClose",
         ]);
     }
 
@@ -192,7 +199,7 @@ class CalendarKeyboard extends App {
         };
     }
 
-    makeCalendar(year, month, action) {
+    makeCalendar(year, month, action, skip) {
         const _month = month;
         const header = makeHeader(
             this.prefix,
@@ -200,7 +207,12 @@ class CalendarKeyboard extends App {
             year,
             this.date.getMonth()
         );
-        const footer = makeFooter(this.prefix);
+        let footer
+        if(skip!==undefined){
+            footer = makeFooter(this.prefix, 'Process', 'Cancel', 'Skip');
+        }else{
+            footer = makeFooter(this.prefix);
+        }
         const subHeader = this.dayNames;
         const _calendar = [header, subHeader];
         const { firstDay } = getDayStartEnd(month, year);
