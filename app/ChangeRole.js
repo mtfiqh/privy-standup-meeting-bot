@@ -76,14 +76,8 @@ class ChangeRole extends App{
             console.log('select')
             if(this.cache.users.size<1){
                 return{
-                    type:'Edit',
-                    id:this.cache.userID,
-                    message:'Kamu harus memilih setidaknya satu user\nSilahkan pilih users tersebut akan di ganti menjadi role apa?',
-                    options:{
-                        reply_markup:{
-                            inline_keyboard:this.keyboard
-                        }
-                    }
+                    type:'NoAction',
+                    message:'Kamu harus memilih setidaknya satu !'
                 }
             }
             await this.getAllRoles()
@@ -153,14 +147,8 @@ class ChangeRole extends App{
         if(idx==='s'){
             if(this.cache.role===-1){
                 return{
-                    type:'Edit',
-                    id:this.cache.userID,
-                    message:'Kamu harus memilih Role nya!\nSilahkan pilih users tersebut akan di ganti menjadi role apa?',
-                    options:{
-                        reply_markup:{
-                            inline_keyboard:this.keyboard
-                        }
-                    }
+                    type:'NoAction',
+                    message:'Kamu Harus memilih salah satu !'
                 }
             }
 
