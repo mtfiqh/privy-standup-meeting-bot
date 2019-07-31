@@ -106,6 +106,7 @@ const onSaveMessage = (id, prefix, task, problems, token)=>{
     return{
         prefix,
         id,
+        record:true,
         userID:id,
         type:'Send',
         message:`Apakah kamu yakin akan memasukkan kendala di task ${task} untuk list problems berikut:\n${problems}`,
