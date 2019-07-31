@@ -15,7 +15,12 @@ class EditDeadline extends clndr.CalendarKeyboard{
         this.addCache('token', Math.random().toString(36).substring(8))
         this.id = userID
         this.deadline=null
-        this.date = new Date()        
+        this.date = new Date()   
+        
+        this.register([
+            'onStart',
+            'selectProject'
+        ])
     }
 
     async onStart(){
@@ -49,11 +54,36 @@ class EditDeadline extends clndr.CalendarKeyboard{
                 {text:'Cancel', callback_data:`${this.prefix}-selectProject-c`}
             ]        
         )
-        console.table(keyboard)        
+        
+        return{
+            type:'Send',
+            id:this.id,
+            message:'Pilih project yang akan diubah deadline nya:',
+            options:{
+                reply_markup:{
+                    inline_keyboard:keyboard
+                }
+            }
+        }
+    }
+
+    selectProject(idx){
+        if(idx==='s'){
+            console.log('select')
+            return //select
+        }else if(idx==='c'){
+            console.log('cancel')
+            return //cancel
+        }
+
+        console.log('index', idx)
+        console.log(this.projects[idx])
     }
 }
 
 module.exports={EditDeadline}
 
 const e = new EditDeadline(123, 'abc')
-e.onStart()
+e.onStart().then(res=>{
+    e.selectProject(0)
+})
