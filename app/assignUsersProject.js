@@ -100,7 +100,10 @@ class assignUsersProject extends App{
                 if(this.cache.idxProject>=0){
                     return this.onProjectSelect()
                 }
-                return onSelectionMessage(this.cache.keyboard, this.cache.userID, `Kamu harus memilih dulu!\n`)
+                return {
+                    type:'NoAction',
+                    message:'Kamu harus memilih salah satu!'
+                }
 
 
             }else if(multiple==='m'){
@@ -108,7 +111,10 @@ class assignUsersProject extends App{
                 if(this.cache.idxUsers && this.cache.idxUsers.size>=1){
                     return this.onUsersSelect()
                 }
-                return onSelectionMessage(this.cache.keyboard, this.cache.userID, `Kamu harus memilih dulu!\n`)
+                return {
+                    type:'NoAction',
+                    message:'Kamu harus memilih setidak nya satu!'
+                }
             }
         }else if(idx==="c"){
             //cancel
