@@ -340,7 +340,12 @@ bot.on('callback_query', async query => {
             currentApp = lookUp[from.id][lookUpKey]
         }
         const response = currentApp.isNewSession() ? currentApp.startNewSession() : await currentApp.listen(action, address)
-        handleRespond(response, from.id, message.message_id, query.id)
+        try{
+            
+            handleRespond(response, from.id, message.message_id, query.id)
+        }catch(err){
+            console.log(err.code)
+        }
         if (response && response.destroy == true) {
             if(history[currentApp.prefix]!==undefined) deleteHistory(currentApp.prefix)
             delete lookUp[currentApp.id][currentApp.prefix]
@@ -945,6 +950,15 @@ cronstart()
 
 // ----------------------------------------- (polling error) ----------------------------------------------- //
 
-// bot.on('polling_error', msg => {
-//     console.log(msg)
-// })
+bot.on('polling_error', msg => {
+    switch(msg.code){
+        case 'EFATAL':
+            console.log('Network error')
+        break
+        case 'ETELEGRAM':
+            console.log('Bad Request')
+        break
+        default:
+    }
+})
+

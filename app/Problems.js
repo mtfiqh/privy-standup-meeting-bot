@@ -19,7 +19,7 @@ class Problems extends App{
         const taskHaveProblems = []
         console.log('in')
         allTask.forEach(task=>{
-            if((task.problems!=undefined)&&(task.problems.length!=0)){
+            if((task.problems!=undefined)&&(task.problems.length!=0&&task.status=="In Progress")){
                 taskHaveProblems.push(task)
                 if(this.cache[task.taskID]==undefined){
                     this.addCache(task.taskID,task.name)
