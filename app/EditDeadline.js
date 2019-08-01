@@ -250,7 +250,7 @@ class EditDeadline extends clndr.CalendarKeyboard{
     }
 
     onSure(){
-        text=`apakah kamu yakin akan mengubah deadline project:\n`
+        let text=`apakah kamu yakin akan mengubah deadline project:\n`
         let date
         if(this.deadline!==null) date = `${this.deadline.year}/${parseInt(this.deadline.month)+1}/${this.deadline.day}`
         text+=`${this.projects[this.selectProject]}\ndeadline:${this.deadline ? date :'Deadline tidak ditentukan'}`
@@ -263,8 +263,8 @@ class EditDeadline extends clndr.CalendarKeyboard{
                 reply_markup:{
                     inline_keyboard:[
                         [
-                            {text:'Ya', callback_data:`${this.prefix}-onEdit-Y@token`},
-                            {text:'No', callback_data:`${this.prefix}-onEdit-N@token`},
+                            {text:'Ya', callback_data:`${this.prefix}-onEdit-Y@${this.cache.token}`},
+                            {text:'No', callback_data:`${this.prefix}-onEdit-N@${this.cache.token}`},
                         ]
                     ]
                 }
@@ -274,6 +274,7 @@ class EditDeadline extends clndr.CalendarKeyboard{
 
     onEdit(args){
         const [ans, token] = args.split('@')
+
         if(token!==this.cache.token) return
 
         if(ans==='N'){
@@ -286,7 +287,13 @@ class EditDeadline extends clndr.CalendarKeyboard{
             console.log(this.deadline)
         }
         db.editProjectDeadline(this.projects[this.selectProject], this.deadline)
-        
+
+        return{
+            type:'Edit',
+            id:this.id,
+            message:'Selamat, deadline project berhasil diubah!',
+            destroy:true,
+        }
     }
 }
 
