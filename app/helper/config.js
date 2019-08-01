@@ -3,6 +3,7 @@ const payload = fs.readFileSync('./settings.json')
 class Config {
     constructor(){
         console.log("FIRST.........")
+        const payload = fs.readFileSync('./settings.json')
         this.data = JSON.parse(payload)
     }
 
@@ -14,6 +15,7 @@ class Config {
     }
     
     reload(){
+        const payload = fs.readFileSync('./settings.json')
         this.data = JSON.parse(payload)
     }
 }
@@ -36,5 +38,5 @@ module.exports={
     settings: Config.getInstance().data,
     refresh : config.reload,
     parseSheetID,
-    config
+    Config
 }

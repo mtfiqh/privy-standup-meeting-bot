@@ -19,6 +19,7 @@ const { ListCuti } = require('./app/ListCuti')
 const { Advice } = require('./app/advice')
 const { Problems } = require('./app/Problems')
 const { MonitoringUsers } = require('./app/MonitoringUsers')
+const {Logger}= require('./app/Logger')
 require('dotenv').config()
 const moment = require('moment')
 const SCHEDULE_10  = process.env.SCHEDULE_10
@@ -26,7 +27,7 @@ const SCHEDULE_13  = process.env.SCHEDULE_13
 const SCHEDULE_RESET   = process.env.SCHEDULE_RESET
 const SCHEDULE_MENTION = process.env.SCHEDULE_MENTION
 // -------------------------------------- (global vars) ----------------------------------------------- //
-const {settings}  = require("./app/helper/config")
+const {settings,Config}  = require("./app/helper/config")
 const TAKE_OFFER_TASK_TIMEOUT = (1000 * settings.takeOfferTask.timeout)
 
 // -------------------------------------- (global vars) ----------------------------------------------- //
@@ -817,31 +818,44 @@ async function remindMessage(type,user){
     
 }
 
+
 function remindProjectStart(){
-    const start = settings.projects.deadlineReminder
+    Config.getInstance().reload()
+    const start = Config.getInstance().data.projects.deadlineReminder
     let idx = 0
+    let count = 1
     let multiplier = 24*60*60*1000
     if(start.includes('d'))       idx = start.indexOf('d')
     else if(start.includes('w'))  idx = start.indexOf('w'), multiplier *= 7
     else if(start.includes('m'))  idx = start.indexOf('m'), multiplier *= 30
     else if(start.includes('y'))  idx = start.indexOf('y'), multiplier *= 360
-    else throw new Error('Format reminder projects invalid!')
+    else {
+        Logger.err(remindProjectStart.name,`Format reminder projects error (${start}) ! Using default value '1 w'`) 
+        return 7*multiplier
+    }
+    count = parseInt(start.slice(0,idx))
+    if(isNaN(count)) {
+        Logger.err(remindProjectStart.name,`Parsing error at (${start.slice(0,idx)}) ! Using default value '1'`)
+
+        count = 1
+    }
     
-    return parseInt(start.slice(0,idx))*multiplier
+    return count*multiplier
 }
 
 async function remindProjects(){
-    const projects = await db.getDetailedProject('In Progress')
+    const projects    = await db.getDetailedProject('In Progress')
+    let remindStart   = remindProjectStart()
+    const groupID     = await db.getGroupID()
     moment.locale('id')
-    const groupID = await db.getGroupID()
+
     for(let project of projects){
         let today     = new Date()
         let deadline  = project.deadline==null? new Date(0) : project.deadline.toDate()
-        let remindStart   = remindProjectStart()
         let diff    = deadline-today
         let diffLocale =  moment(`${deadline.getFullYear()}
         ${deadline.getMonth()<10?`0${deadline.getMonth()+1}`:deadline.getMonth()+1}${deadline.getDate()<10?`0${deadline.getDate()}`:deadline.getDate()}`,'YYYYMMDD').fromNow()
-        console.log(remindStart)
+
         if(diff>0&&diff<remindStart){
             bot.sendMessage(groupID,`Mengingatkan deadline Project *${project.projectName}* akan berakhir *${diffLocale}* ${emoticon.smile}`,{parse_mode:'Markdown'})
         }
