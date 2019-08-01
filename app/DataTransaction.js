@@ -1647,5 +1647,6 @@ module.exports = {
     resetStat,
     takeOverTask,
     setGroupID,
-    db
+    db,
+    editProjectDeadline
 }

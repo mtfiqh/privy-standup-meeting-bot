@@ -26,7 +26,12 @@ class EditDeadline extends clndr.CalendarKeyboard{
             'onSelectProject',
             'onSelectDeadline',
             'onPrev',
-            'onNext'
+            'onNext',
+            'onCancel',
+            'onSkip',
+            'onProcess',
+            'onSure',
+            'onEdit',
         ])
     }
 
@@ -100,12 +105,7 @@ class EditDeadline extends clndr.CalendarKeyboard{
 
         }else if(idx==='c'){
             console.log('cancel')
-            return {
-                id:this.id,
-                type:'Edit',
-                message:'Permintaan dibatlkan!',
-                destroy:true,
-            }
+            this.onCancel()
         }
 
         if(idx===this.selectProject){
@@ -221,6 +221,72 @@ class EditDeadline extends clndr.CalendarKeyboard{
                 }
             }
         };
+    }
+
+    onSkip(){
+        this.deadline=null
+        return this.onSure()
+    }
+
+    onProcess(){
+        console.log(this.deadline)
+        if(this.deadline===null){
+            console.log('masuk')
+            return{
+                type:'NoAction',
+                message:'Pilih Tanggal Deadline atau SKIP jika tidak memiliki deadline',
+            }
+        }
+        return this.onSure()
+    }
+
+    onCancel(){
+        return {
+            id:this.id,
+            type:'Edit',
+            message:'Permintaan dibatlkan!',
+            destroy:true,
+        }
+    }
+
+    onSure(){
+        text=`apakah kamu yakin akan mengubah deadline project:\n`
+        let date
+        if(this.deadline!==null) date = `${this.deadline.year}/${parseInt(this.deadline.month)+1}/${this.deadline.day}`
+        text+=`${this.projects[this.selectProject]}\ndeadline:${this.deadline ? date :'Deadline tidak ditentukan'}`
+
+        return{
+            type:'Edit',
+            id:this.id,
+            message:text,
+            options:{
+                reply_markup:{
+                    inline_keyboard:[
+                        [
+                            {text:'Ya', callback_data:`${this.prefix}-onEdit-Y@token`},
+                            {text:'No', callback_data:`${this.prefix}-onEdit-N@token`},
+                        ]
+                    ]
+                }
+            }
+        }
+    }
+
+    onEdit(args){
+        const [ans, token] = args.split('@')
+        if(token!==this.cache.token) return
+
+        if(ans==='N'){
+            return this.onCancel()
+        }
+        let date
+        if(this.deadline!==null){
+            date = `${this.deadline.year}/${parseInt(this.deadline.month)+1}/${this.deadline.day}`
+            this.deadline = new Date(date)
+            console.log(this.deadline)
+        }
+        db.editProjectDeadline(this.projects[this.selectProject], this.deadline)
+        
     }
 }
 
