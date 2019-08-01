@@ -1,0 +1,10 @@
+20:16:40.978 INFO  @handleAuto : Waiting user input at Thu Aug 01 2019 
+20:52:46.246 ERROR @setupAdmin : Cannot read property 'chat' of undefined at Thu Aug 01 2019 
+20:53:01.272 ERROR @setupAdmin : Cannot read property 'chat' of undefined at Thu Aug 01 2019 
+20:54:13.675 ERROR @setupAdmin : Cannot read property 'id' of undefined at Thu Aug 01 2019 
+20:56:03.846 ERROR @setupAdmin : Cannot read property 'id' of undefined at Thu Aug 01 2019 
+20:56:21.170 ERROR @setupAdmin : Cannot read property 'id' of undefined at Thu Aug 01 2019 
+20:56:41.215 ERROR @setupAdmin : Cannot read property 'id' of undefined at Thu Aug 01 2019 
+20:57:54.995 ERROR @setupAdmin : Cannot read property 'id' of undefined at Thu Aug 01 2019 
+20:58:58.955 ERROR @setupAdmin : Cannot read property 'id' of undefined at Thu Aug 01 2019 
+20:59:13.981 ERROR @setupAdmin : Cannot read property 'id' of undefined at Thu Aug 01 2019 

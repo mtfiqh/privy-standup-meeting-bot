@@ -4,6 +4,7 @@ class Config {
     constructor(){
         const payload = fs.readFileSync(fname)
         this.data = JSON.parse(payload)
+        this.admins = []
     }
 
     static  getInstance() {
@@ -16,9 +17,9 @@ class Config {
     }
     
     reload(){
+        this.admins = [...this.data.admin]
         const payload = fs.readFileSync(fname)
         this.data = JSON.parse(payload)
-        Config.change = false
         console.log(`${fname} was updated!`)
     }
 }
@@ -39,7 +40,13 @@ function parseSheetID(){
 module.exports={
     getSettings: () => {
         if(Config.change==true) Config.getInstance().reload()
+        Config.change==false
         return Config.getInstance().data
+    },
+    getAdmins: ()=>{
+        if(Config.change==true) Config.getInstance().reload()
+        Config.change==false
+        return Config.getInstance().admins
     },
     parseSheetID,
 }

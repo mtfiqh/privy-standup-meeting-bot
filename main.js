@@ -23,13 +23,14 @@ const {Logger}= require('./app/Logger')
 const { EditDeadline } = require('./app/EditDeadline')
 require('dotenv').config()
 const moment = require('moment')
+const fs      = require('fs')
 const SCHEDULE_10  = process.env.SCHEDULE_10
 const SCHEDULE_13  = process.env.SCHEDULE_13
 const SCHEDULE_RESET   = process.env.SCHEDULE_RESET
 const SCHEDULE_MENTION = process.env.SCHEDULE_MENTION
 // -------------------------------------- (global vars) ----------------------------------------------- //
 const conf  = require("./app/helper/config")
-
+const fname   = './settings.json'
 // -------------------------------------- (global vars) ----------------------------------------------- //
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true })
 const currentState = {}
@@ -55,6 +56,35 @@ const commands = new Set([
     "/advice",
     "/listCuti"
 ])
+
+// -------------------------------------- (Auto Start) ----------------------------------------------- //
+
+function autoAdmin(){
+    const currentAdmin  = new Set(conf.getAdmins()) // order is important
+    const admins = conf.getSettings().admin
+    for(let admin of admins){
+        if(!currentAdmin.has(admin)){
+            bot.sendMessage(parseInt(admin),"Selamat anda adalah *Thanos* :)", {
+                parse_mode:"Markdown"
+            }).then(ctx=>{
+                const { chat } = ctx
+                const payload = {
+                    name: `${chat.first_name += chat.last_name ? ' ' + chat.last_name : ''}`,
+                    status: 'active',
+                    type: 'admin',
+                    userID: chat.id,
+                    role:'admin',
+                    username: chat.username==undefined?"null":chat.username
+                }
+                db.updateUser(chat.id, payload)
+            })
+        }
+    }
+}
+// auto admin
+autoAdmin()
+fs.watchFile(fname,()=>autoAdmin())
+
 // -------------------------------------- (onText Listener) ----------------------------------------------- //
 
 function addLookUp(id, prefix, value){

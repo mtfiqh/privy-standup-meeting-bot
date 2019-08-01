@@ -1058,10 +1058,7 @@ const setGroupID = ({id,payload})=>{
 
 const isUserExist = async (userID) => {
     return db.collection('users').doc(userID.toString()).get()
-    .then(data => {
-        if (data.exists) return true
-        return true
-    })
+    .then(data => data.exists)
     .catch(err=>{
         DBLogger.err(isUserExist.name,`${err.message}`)
     })
