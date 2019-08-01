@@ -5,6 +5,6 @@
         "timeout": 15
     },
     "projects":{
-        "deadlineReminder":"4 d"
+        "deadlineReminder":"2w"
     }
 }
