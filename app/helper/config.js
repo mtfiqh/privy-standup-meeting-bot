@@ -1,27 +1,29 @@
 const fs      = require('fs')
-const payload = fs.readFileSync('./settings.json')
+const fname   = './settings.json'
 class Config {
     constructor(){
-        console.log("FIRST.........")
-        const payload = fs.readFileSync('./settings.json')
+        const payload = fs.readFileSync(fname)
         this.data = JSON.parse(payload)
     }
 
     static  getInstance() {
         if (Config.self == undefined) {
+            console.log("Singleton Config was created!")
             Config.self = new Config();
+            Config.change = false
         }
         return Config.self;
     }
     
     reload(){
-        const payload = fs.readFileSync('./settings.json')
+        const payload = fs.readFileSync(fname)
         this.data = JSON.parse(payload)
+        Config.change = false
+        console.log(`${fname} was updated!`)
     }
 }
 
-const config   = Config.getInstance()
-const settings = config.data
+fs.watchFile(fname,() => Config.change = true)
 function parseSheetID(){
     const url = settings.spreadsheetURL.split('/')
     let sheetID = ''
@@ -35,8 +37,9 @@ function parseSheetID(){
 }
 
 module.exports={
-    settings: Config.getInstance().data,
-    refresh : config.reload,
+    getSettings: () => {
+        if(Config.change==true) Config.getInstance().reload()
+        return Config.getInstance().data
+    },
     parseSheetID,
-    Config
 }

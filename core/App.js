@@ -1,4 +1,4 @@
-const TIME_OUT = require('../app/helper/config').settings.sessionTimeout
+const TIME_OUT = require('../app/helper/config').getSettings().sessionTimeout
 class App {
     constructor() {
         if (this.constructor === App) {

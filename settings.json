@@ -1,6 +1,7 @@
 {
     "spreadsheetURL":"",
     "sessionTimeout":120,
+    "admin":[],
     "takeOfferTask":{
         "timeout": 15
     },

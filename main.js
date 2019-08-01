@@ -28,8 +28,7 @@ const SCHEDULE_13  = process.env.SCHEDULE_13
 const SCHEDULE_RESET   = process.env.SCHEDULE_RESET
 const SCHEDULE_MENTION = process.env.SCHEDULE_MENTION
 // -------------------------------------- (global vars) ----------------------------------------------- //
-const {settings,Config}  = require("./app/helper/config")
-const TAKE_OFFER_TASK_TIMEOUT = (1000 * settings.takeOfferTask.timeout)
+const conf  = require("./app/helper/config")
 
 // -------------------------------------- (global vars) ----------------------------------------------- //
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true })
@@ -439,6 +438,7 @@ function handleRespond(response, to, message_id,query_id) {
 
     if(response.hasTimeout != undefined && response.hasTimeout==true){
         if(lookUpTime[response.prefix]==undefined){
+            const TAKE_OFFER_TASK_TIMEOUT = (1000 * conf.getSettings().takeOfferTask.timeout)
             const t = setTimeout(()=>{
                 handleRespond(response.onTimeout, to , message_id)
                 delete lookUpTime[response.prefix]
@@ -890,8 +890,7 @@ async function remindMessage(type,user){
 
 
 function remindProjectStart(){
-    Config.getInstance().reload()
-    const start = Config.getInstance().data.projects.deadlineReminder.toLowerCase()
+    const start = conf.getSettings().projects.deadlineReminder.toLowerCase()
     let count = 1
     let multiplier = 24*60*60*1000
     if(start.match(/\d+\s*[dwmy]{1}$/) == null){
