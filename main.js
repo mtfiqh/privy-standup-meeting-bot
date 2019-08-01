@@ -594,6 +594,9 @@ async function handleAuto(context) {
             break
         case '/editDeadline':
             bot.deleteMessage(chat.id, message_id)
+            if ((lookUp[chat.id]!=undefined) && (`editDeadline@${chat.id}` in lookUp[chat.id])){
+                return 
+            }
             const editDeadline = new EditDeadline(chat.id, chat.first_name)
             addLookUp(chat.id, `editDeadline@${chat.id}`, editDeadline)
             response = await editDeadline.onStart()
