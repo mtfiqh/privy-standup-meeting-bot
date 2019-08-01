@@ -19,6 +19,7 @@ const { ListCuti } = require('./app/ListCuti')
 const { Advice } = require('./app/advice')
 const { Problems } = require('./app/Problems')
 const { MonitoringUsers } = require('./app/MonitoringUsers')
+const {Logger}= require('./app/Logger')
 const { EditDeadline } = require('./app/EditDeadline')
 require('dotenv').config()
 const moment = require('moment')
@@ -26,7 +27,6 @@ const SCHEDULE_10  = process.env.SCHEDULE_10
 const SCHEDULE_13  = process.env.SCHEDULE_13
 const SCHEDULE_RESET   = process.env.SCHEDULE_RESET
 const SCHEDULE_MENTION = process.env.SCHEDULE_MENTION
-
 // -------------------------------------- (global vars) ----------------------------------------------- //
 const conf  = require("./app/helper/config")
 
@@ -71,7 +71,6 @@ bot.onText(/\/start/, async context => {
         await setupGroup(context)
         await setupAdmin(context)
     }else{
-
         db.saveUser(from.id, {
             name: `${from.first_name += from.last_name ? ' ' + from.last_name : ''}`,
             status: 'active',
@@ -82,7 +81,7 @@ bot.onText(/\/start/, async context => {
         })
     }
     bot.sendMessage(chat.id,
-        dict.start.getMessage(from.first_name),
+        dict.start.getMessage(from.first_name,from.id),
         dict.start.getOptions()
     ).then((context) => {
         currentState[`autostartBot@${context.chat.id}`] = context.message_id
@@ -104,7 +103,7 @@ async function setupGroup(context){
         db.setGroupID({id:id,payload:payload})
         
     } catch (error) {
-        console.log(error)
+        Logger.err(setupGroup.name,error.message)
     }
 }
 
@@ -124,7 +123,7 @@ async function setupAdmin(context){
         }
         
     }catch(error){
-        console.log(error)
+        Logger.err(setupAdmin.name,error.message)
     }
 }
 
@@ -151,7 +150,7 @@ bot.onText(/\/addTasks/, context => {
         }
         handleRespond(response, from.id)
     } catch (e) {
-        console.log(e)
+        Logger.err('BOT-addTasks',e.message)    
     }
 })
 
@@ -168,7 +167,7 @@ bot.onText(/\/assignTasks/, (context, match) => {
         }
         handleRespond(response, from.id)
     } catch (e) {
-        console.log(e)
+        Logger.err('BOT-assignTasks',e.message)    
     }
 })
 
@@ -178,120 +177,175 @@ bot.onText(/\/showTasks/, async (context, match) => {
         const response = await currentApp.showTasks(from)
         handleRespond(response, from.id)
     } catch (e) {
-        console.log(e)
+        Logger.err('BOT-showTasks',e.message)    
     }
 })
 
 bot.onText(/\/dayOff/, async (context, match) => {
-    const { from, message_id } = context
-    const dayOff = new DayOff(bot, from.id)
-    const res = await dayOff.onStart(context, true)
-    const prefix = `DayOff@${from.id}`
-    addLookUp(from.id, prefix, dayOff)
-    handleRespond(res, from.id, message_id)
+    try {
+        const { from, message_id } = context
+        const dayOff = new DayOff(bot, from.id)
+        const res = await dayOff.onStart(context, true)
+        const prefix = `DayOff@${from.id}`
+        addLookUp(from.id, prefix, dayOff)
+        handleRespond(res, from.id, message_id)
+    } catch (error) {
+        Logger.err('BOT-dayOff',error.message)    
+    }
 })
 
 bot.onText(/\/req/, async context => {
-    const { from, message_id } = context
-    const { id, first_name: name } = from
-    const response = await initUserReport(id, name, message_id)
-    if (!response.active) await bot.sendMessage(id, response.message, response.options)
-    bot.deleteMessage(id, message_id)
+    try {
+        const { from, message_id } = context
+        const { id, first_name: name } = from
+        const response = await initUserReport(id, name, message_id)
+        if (!response.active) await bot.sendMessage(id, response.message, response.options)
+        bot.deleteMessage(id, message_id)
+    } catch (error) {
+        Logger.err('BOT-req',error.message)    
+    }
 
 })
 
 bot.onText(/\/offer/, async context => {
-    const { from, message_id } = context
-    const { id, first_name: name } = from
-    const response = await initOfferTask(id, name, message_id)
-    if (!response.active) await bot.sendMessage(id, response.message, response.options)
-    bot.deleteMessage(id, message_id)
+    try {
+        const { from, message_id } = context
+        const { id, first_name: name } = from
+        const response = await initOfferTask(id, name, message_id)
+        if (!response.active) await bot.sendMessage(id, response.message, response.options)
+        bot.deleteMessage(id, message_id)
+    } catch (error) {
+        Logger.err('BOT-offer',error.message)    
+    }
 })
 
 bot.onText(/\/createProjects/, async context => {
-    const { chat } = context
-    initProjects('createProjects', chat.id, chat.first_name)
+    try {
+        const { chat } = context
+        initProjects('createProjects', chat.id, chat.first_name)
+    } catch (error) {
+        Logger.err('BOT-createProjects',error.message)    
+    }
 })
 
 bot.onText(/\/deleteProjects/, async context => {
-    const { chat } = context
-    initProjects('deleteProjects', chat.id, chat.first_name)
+    try {        
+        const { chat } = context
+        initProjects('deleteProjects', chat.id, chat.first_name)
+    } catch (error) {
+        Logger.err('BOT-deleteProjects',error.message)    
+    }
 })
 
 bot.onText(/\/updateProjects/, async context => {
-    const { chat } = context
-    initProjects('updateProjects', chat.id, chat.first_name)
+    try {
+        const { chat } = context
+        initProjects('updateProjects', chat.id, chat.first_name)
+    } catch (error) {
+        Logger.err('BOT-updateProjects',error.message)    
+    }
 })
 
 bot.onText(/\/listProjects/, async context => {
-    const { chat } = context
-    initProjects('readProjects', chat.id, chat.first_name)
+    try {
+        const { chat } = context
+        initProjects('readProjects', chat.id, chat.first_name)
+    } catch (error) {
+        Logger.err('BOT-listProjects',error.message)    
+    }
 })
 
 bot.onText(/\/role/, async context =>{
-    console.log('keyboard')
-    initChangeRole(context.chat.id, context.chat.first_name)
+    try {
+        initChangeRole(context.chat.id, context.chat.first_name)
+    } catch (error) {
+        Logger.err('BOT-role',error.message)    
+    }
 })
 
 bot.onText(/\/calls/, context => {
-    const { from, message_id } = context
-    const { id, first_name: name } = from
-    const prefix = `CalendarKeyboard@${id}`
-    const calendar = new CalendarKeyboard(prefix, id)
-    addLookUp(id, prefix, calendar)
-    const date = new Date()
-    bot.sendMessage(id, "Test",{
-        parse_mode:'Markdown',
-        reply_markup:{
-            inline_keyboard:calendar.makeCalendar(date.getFullYear(),date.getMonth(),'onChoose')
-        }
-    })
+    try {
+        const { from, message_id } = context
+        const { id, first_name: name } = from
+        const prefix = `CalendarKeyboard@${id}`
+        const calendar = new CalendarKeyboard(prefix, id)
+        addLookUp(id, prefix, calendar)
+        const date = new Date()
+        bot.sendMessage(id, "Test",{
+            parse_mode:'Markdown',
+            reply_markup:{
+                inline_keyboard:calendar.makeCalendar(date.getFullYear(),date.getMonth(),'onChoose')
+            }
+        })
+    } catch (error) {
+        Logger.err('BOT-calls',error.message)    
+    }
 })
 
 bot.onText(/\/listCuti/, context =>{
-    const { chat } = context
-    initListDayOff(chat.id, chat.first_name)
+    try {
+        const { chat } = context
+        initListDayOff(chat.id, chat.first_name)
+    } catch (error) {
+        Logger.err('BOT-listCuti',error.message)    
+    }
 })
 
 bot.onText(/\/restart/, context =>{
-    const { chat } = context
-    bot.deleteMessage(chat.id, context.message_id)
-    bot.sendMessage(chat.id, "*Restarted!*", {parse_mode: "Markdown"})
-    delete lookUp[chat.id]
+    try {
+        const { chat } = context
+        bot.deleteMessage(chat.id, context.message_id)
+        bot.sendMessage(chat.id, "*Restarted!*", {parse_mode: "Markdown"})
+        delete lookUp[chat.id]
+    } catch (error) {
+        Logger.err('BOT-restart',error.message)    
+    }
 })
 
 bot.onText(/\/advice/, context => {
-    const {chat} = context
-    const prefix = `Advice@${chat.id}`
-    const advice = new Advice(prefix, chat.id, chat.first_name)
-    addLookUp(chat.id, prefix, advice)
-    const response = advice.onRequest()
-    bot.sendMessage(chat.id, response.message, response.options)
-        .then( ctx => {
-            bot.once("message", async c => {
-                if(!commands.has(c.text)){
-                    const res = advice.onRespond(c.text)
-                    bot.deleteMessage(chat.id, c.message_id)
-                    handleRespond(res,ctx.chat.id, ctx.message_id)
-                }else{
-                    bot.deleteMessage(ctx.chat.id, ctx.message_id)
-                }
+    try {
+        const {chat} = context
+        const prefix = `Advice@${chat.id}`
+        const advice = new Advice(prefix, chat.id, chat.first_name)
+        addLookUp(chat.id, prefix, advice)
+        const response = advice.onRequest()
+        bot.sendMessage(chat.id, response.message, response.options)
+            .then( ctx => {
+                bot.once("message", async c => {
+                    if(!commands.has(c.text)){
+                        const res = advice.onRespond(c.text)
+                        bot.deleteMessage(chat.id, c.message_id)
+                        handleRespond(res,ctx.chat.id, ctx.message_id)
+                    }else{
+                        bot.deleteMessage(ctx.chat.id, ctx.message_id)
+                    }
+                })
             })
-        })
+    } catch (error) {
+        Logger.err('BOT-advice',error.message)    
+    }
 })
 
 bot.onText(/\/listprob/,async context=>{
-    const {chat}= context
-    const prefix = `Problems@${chat.id}`
-    const problems = new Problems(chat.id,prefix)
-    addLookUp(chat.id,prefix,problems)
-    const response = await problems.onGetTask()
-    handleRespond(response,chat.id,context.message_id)
+    try {
+        const {chat}= context
+        const prefix = `Problems@${chat.id}`
+        const problems = new Problems(chat.id,prefix)
+        addLookUp(chat.id,prefix,problems)
+        const response = await problems.onGetTask()
+        handleRespond(response,chat.id,context.message_id)
+    } catch (error) {
+        Logger.err('BOT-listprob',error.message)    
+    }
 })
 
 bot.onText(/\/monit/, context=>{
-    const { chat } = context
-    initMonit(chat.id, chat.first_name)
+    try {
+        const { chat } = context
+        initMonit(chat.id, chat.first_name)
+    } catch (error) {
+        Logger.err('BOT-monit',error.message)    
+    }
 })
 // ----------------------------------------- (on Messages) ----------------------------------------------- //
 
@@ -299,7 +353,6 @@ bot.on("message", async context => {
     const { from, chat, text } = context
     if (currentState[from.id]) {
         if(commands.has(text)) return
-        console.log(from.id, 'Type Listen')
         const currentApp = lookUp[from.id][`${currentState[from.id]}@${from.id}`]
         const response = await currentApp.listen('onTypeListen', context)
         if (response && response.destroy == true) {
@@ -344,10 +397,9 @@ bot.on('callback_query', async query => {
         }
         const response = currentApp.isNewSession() ? currentApp.startNewSession() : await currentApp.listen(action, address)
         try{
-            
             handleRespond(response, from.id, message.message_id, query.id)
         }catch(err){
-            console.log(err.code)
+            Logger.err('BOT-callback_query-handleRespond',err.message)    
         }
         if (response && response.destroy == true) {
             if(history[currentApp.prefix]!==undefined) deleteHistory(currentApp.prefix)
@@ -359,8 +411,8 @@ bot.on('callback_query', async query => {
             console.log('History ',history[response.prefix+'@'+response.userID])
         }
         
-    } catch (error) {
-        console.log(error.message)
+    } catch (error) {        
+        Logger.err('BOT-callback_query',error.message)    
         bot.answerCallbackQuery(query.id, {text: "Session Over!"})
     }
 
@@ -444,12 +496,12 @@ function handleRespond(response, to, message_id,query_id) {
                 if(history[response.prefix+'@'+response.userID]===undefined) history[response.prefix+'@'+response.userID]=new Set([])
                 history[response.prefix+'@'+response.userID].add(ctx.message_id)
             }
-            console.log('History ',history[response.prefix+'@'+response.userID])    
+//            console.log('History ',history[response.prefix+'@'+response.userID])    
         })
     }
     if (response.listenType === true) {
         currentState[response.userID] = response.prefix
-        console.log(response.userID, `lock user in state '${response.prefix}'`)
+//        console.log(response.userID, `lock user in state '${response.prefix}'`)
     }
     
 }
@@ -604,9 +656,7 @@ async function handleAuto(context) {
             break
             
         default:
-            console.log("waiting...")
-            break
-
+            Logger.info('handleAuto','Waiting user input')
     }
 }
 
@@ -654,7 +704,7 @@ function initTasks(activityName, userID, name) {
         }
         handleRespond(response, userID)
     } catch (e) {
-        console.log(e)
+        Logger.err(initTasks.name,e.message)
     }
 }
 
@@ -729,18 +779,26 @@ async function initProjects(activityName, userID, name) {
         return handleRespond(response, userID)
 
     } catch (e) {
-        console.log(e)
+        Logger.err(initProjects.name,e.message)
     }
 }
 
 bot.onText(/\/problems/, (context, match)=>{
-    const {from, chat} = context
-    initProblems('problems', chat.id, chat.first_name)
+    try {
+        const {from, chat} = context
+        initProblems('problems', chat.id, chat.first_name)
+    } catch (error) {
+        Logger.err('BOT-problems',error.message)
+    }
 })
 bot.onText(/\/assignProject/, (context, match)=>{
-    const {from, chat, message_id} = context
-    bot.deleteMessage(chat.id, message_id)
-    initAssignProject(chat.id, chat.first_name, 'assignProject')
+    try {
+        const {from, chat, message_id} = context
+        bot.deleteMessage(chat.id, message_id)
+        initAssignProject(chat.id, chat.first_name, 'assignProject')
+    } catch (error) {
+        Logger.err('BOT-assignProject',error.message)
+    }
 })
 
 async function initAssignProject(userID, name, activityName){
@@ -751,7 +809,7 @@ async function initAssignProject(userID, name, activityName){
         const response = await _assignProject.listen('onStart')
         return handleRespond(response, userID)
     }catch(err){
-        console.log(err)
+        Logger.err('BOT-initAssignProject',err.message)
     }
 }
 async function initListDayOff(userID, name){
@@ -830,19 +888,48 @@ async function remindMessage(type,user){
     
 }
 
+
+function remindProjectStart(){
+    const start = conf.getSettings().projects.deadlineReminder.toLowerCase()
+    let count = 1
+    let multiplier = 24*60*60*1000
+    if(start.match(/\d+\s*[dwmy]{1}$/) == null){
+        Logger.err(remindProjectStart.name,`Format reminder projects error '${start}' ! Using default value '1 w'`) 
+        return 7*multiplier
+    }else{
+        count = start.match(/\d+\s*/).pop()
+        dateFormat = start.slice(count.length,count.length+1)
+        switch(dateFormat){
+            case 'w':
+                multiplier*=7
+            break
+            case 'm':
+                multiplier*=30
+            break
+            case 'y':
+                multiplier*=365
+            break
+            default:
+        }
+    }
+
+    return parseInt(count)*multiplier
+}
+
 async function remindProjects(){
-    const projects = await db.getDetailedProject('In Progress')
+    const projects    = await db.getDetailedProject('In Progress')
+    let remindStart   = remindProjectStart()
+    const groupID     = await db.getGroupID()
     moment.locale('id')
-    const groupID = await db.getGroupID()
+
     for(let project of projects){
         let today     = new Date()
         let deadline  = project.deadline==null? new Date(0) : project.deadline.toDate()
-        let limit   = 7*24*60*60*1000
         let diff    = deadline-today
         let diffLocale =  moment(`${deadline.getFullYear()}
         ${deadline.getMonth()<10?`0${deadline.getMonth()+1}`:deadline.getMonth()+1}${deadline.getDate()<10?`0${deadline.getDate()}`:deadline.getDate()}`,'YYYYMMDD').fromNow()
 
-        if(diff>0&&diff<limit){
+        if(diff>0&&diff<remindStart){
             bot.sendMessage(groupID,`Mengingatkan deadline Project *${project.projectName}* akan berakhir *${diffLocale}* ${emoticon.smile}`,{parse_mode:'Markdown'})
         }
     }
@@ -952,6 +1039,18 @@ const cronMention = cron.schedule(SCHEDULE_MENTION,function(){
 })
 
 /**
+ * Remind projects deadline
+ */
+const cronProject = cron.schedule(SCHEDULE_10,()=>{
+    console.log('10 A.M')
+    allowReminder().then(allowed=>{
+        if(allowed){
+            remindProjects()
+        }
+    })
+})
+
+/**
  * Set a user active or not based on day-off databases
  * SCHEDULE_RESET
  */
@@ -976,6 +1075,7 @@ function cronstart(){
     cron10.stop()
     cron13.stop()
     cronMention.stop()
+    cronProject.stop()
     cronreset.stop()
 }
 
@@ -984,14 +1084,6 @@ cronstart()
 // ----------------------------------------- (polling error) ----------------------------------------------- //
 
 bot.on('polling_error', msg => {
-    switch(msg.code){
-        case 'EFATAL':
-            console.log('Network error')
-        break
-        case 'ETELEGRAM':
-            console.log('Bad Request')
-        break
-        default:
-    }
+    Logger.err('Telegram Bot',msg.message)
 })
 

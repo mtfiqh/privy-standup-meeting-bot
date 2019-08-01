@@ -4,5 +4,8 @@
     "admin":[],
     "takeOfferTask":{
         "timeout": 15
+    },
+    "projects":{
+        "deadlineReminder":"2w"
     }
 }

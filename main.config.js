@@ -4,7 +4,7 @@ const em = require('./app/resources/emoticons.config')
 module.exports = {
     dictionary:{
         start:{
-            getMessage: name => `Selamat Datang ${name}\nTekan tombol Menu atau kirim */menu* untuk menggunakan fitur bot.`,
+            getMessage: (name,id) => `Selamat Datang *${name}*,\nuser ID anda : *${id}*\nTekan tombol Menu atau kirim */menu* untuk menggunakan fitur bot.`,
             getOptions: () => {
                 return {
                     parse_mode: 'Markdown',
