@@ -28,6 +28,7 @@ const SCHEDULE_10  = process.env.SCHEDULE_10
 const SCHEDULE_13  = process.env.SCHEDULE_13
 const SCHEDULE_RESET   = process.env.SCHEDULE_RESET
 const SCHEDULE_MENTION = process.env.SCHEDULE_MENTION
+const SCHEDULE_REMINDPROJECT = process.env.SCHEDULE_REMINDPROJECT
 // -------------------------------------- (global vars) ----------------------------------------------- //
 const conf  = require("./app/helper/config")
 const fname   = './settings.json'
@@ -960,7 +961,9 @@ async function remindProjects(){
         ${deadline.getMonth()<10?`0${deadline.getMonth()+1}`:deadline.getMonth()+1}${deadline.getDate()<10?`0${deadline.getDate()}`:deadline.getDate()}`,'YYYYMMDD').fromNow()
 
         if(diff>0&&diff<remindStart){
-            bot.sendMessage(groupID,`Mengingatkan deadline Project *${project.projectName}* akan berakhir *${diffLocale}* ${emoticon.smile}`,{parse_mode:'Markdown'})
+            project.users.forEach(user=>{
+                bot.sendMessage(user,`Mengingatkan deadline Project *${project.projectName}* akan berakhir *${diffLocale}* ${emoticon.smile}`,{parse_mode:'Markdown'})
+            })
         }
     }
 }
@@ -1069,7 +1072,7 @@ const cronMention = cron.schedule(SCHEDULE_MENTION,function(){
 /**
  * Remind projects deadline
  */
-const cronProject = cron.schedule(SCHEDULE_10,()=>{
+const cronProject = cron.schedule(SCHEDULE_REMINDPROJECT,()=>{
     // console.log('10 A.M')
     allowReminder().then(allowed=>{
         if(allowed){
