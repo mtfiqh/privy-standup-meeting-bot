@@ -51,7 +51,8 @@ class Menu extends App{
             'onMonitoringClicked',
             'onMonitoringUsers',
             'onAddFeedback',
-            'onReadFeedback'
+            'onReadFeedback',
+            'onEditDeadline'
         ])
         // Define Class variable here
         this.prefix     = `${Menu.name}@${userID}`
@@ -240,7 +241,13 @@ class Menu extends App{
 
         return menuProjectsUser(this.from,this.prefix)
     }
-
+    onEditDeadline(){
+        this.onVisit('onProjectsClicked')
+        return {
+            type:'Auto',
+            message:'/editDeadline'
+        }
+    }
     onAddProjects(){
         this.onVisit('onProjectsClicked')
         return {

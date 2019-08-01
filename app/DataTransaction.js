@@ -1166,7 +1166,7 @@ const editProjectDeadline = (projectName, deadline) => {
         data.forEach(dt => {
             db.collection('projects').doc(dt.id).set({deadline:deadline }, { merge: true })
             .then(()=>{
-                DBLogger.info(editProjectDeadline.name,`project ${oldName} edited to ${newName}`)
+                DBLogger.info(editProjectDeadline.name,`project ${projectName} deadline set to ${deadline}`)
             })
             .catch(err=>{
                 DBLogger.err(editProjectDeadline.name,`on set project ${err.message}`)
@@ -1647,5 +1647,6 @@ module.exports = {
     resetStat,
     takeOverTask,
     setGroupID,
-    db
+    db,
+    editProjectDeadline
 }
