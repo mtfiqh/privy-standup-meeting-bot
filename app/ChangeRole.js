@@ -233,11 +233,21 @@ class ChangeRole extends App{
                 }
             }
         }
+        let response=[]
         this.cache.users.forEach(user=>{
             updateUser(user.userID, {type:`${this.roles[this.cache.role].title}`,role:`${this.roles[this.cache.role].title}`})
+            response.push({
+                type:'Send',
+                id:user.userID,
+                message:`Halo, <b>${user.name}</b> role kamu sudah berubah menjadi <b>${this.roles[this.cache.role].description}</b>, oleh <b>${this.cache.name}</b>`,
+                options:{
+                    parse_mode:'HTML',
+                    reply_markup:{
+                    }
+                }
+            })
         })
-
-        return{
+        response.push({
             type:'Edit',
             id:this.cache.userID,
             message:'Selamat, role berhasil di update!',
@@ -246,6 +256,10 @@ class ChangeRole extends App{
                     inline_keyboard:[[{text:'Close', callback_data:`${this.prefix}-onClose-${token}`}]]
                 }
             }
+        })
+        return{
+            type:'Batch',
+            responses:response
         }
     }
 }
