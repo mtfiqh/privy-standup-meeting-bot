@@ -1,6 +1,6 @@
 const {getUserRole,exportToExcel} = require("./DataTransaction")
 const {App} = require('../core/App')
-const {settings}= require('./helper/config')
+const {getSettings}= require('./helper/config')
 const {
     menuAdmin,
     menuUser,
@@ -132,15 +132,15 @@ class Menu extends App{
     }
     
     async onSave(){
-        const spreadsheetURL = settings.spreadsheetURL
+        const spreadsheetURL = getSettings().spreadsheetURL
         try {
            await exportToExcel()           
            this.onVisit(this.onVisit.name) 
         } catch (error) {
             return {
-                type:'Edit',
+                type:'Send',
                 id:this.userID,
-                message:error.message,
+                message:`Gagal menyimpan ke excel.\n${error.message}.`,
             }
         }
         return {

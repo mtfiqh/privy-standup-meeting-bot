@@ -1008,7 +1008,6 @@ async function mentionUser(){
  * SCHEDULE_10
  */
 const cron10 = cron.schedule(SCHEDULE_10,()=>{
-    console.log('10 A.M')
     allowReminder().then(allowed=>{
         if(allowed){
             reminder(10)
@@ -1021,7 +1020,6 @@ const cron10 = cron.schedule(SCHEDULE_10,()=>{
  * SCHEDULE_13
  */
 const cron13 = cron.schedule(SCHEDULE_13,()=>{
-    console.log('1 P.M')
     allowReminder().then(allowed=>{
         if(allowed){
             reminder(13)
@@ -1042,7 +1040,7 @@ const cronMention = cron.schedule(SCHEDULE_MENTION,function(){
  * Remind projects deadline
  */
 const cronProject = cron.schedule(SCHEDULE_10,()=>{
-    console.log('10 A.M')
+    // console.log('10 A.M')
     allowReminder().then(allowed=>{
         if(allowed){
             remindProjects()
@@ -1055,7 +1053,7 @@ const cronProject = cron.schedule(SCHEDULE_10,()=>{
  * SCHEDULE_RESET
  */
 const cronreset = cron.schedule(SCHEDULE_RESET,()=>{
-    console.log('reset')    
+    // console.log('reset')    
     db.resetStat()
 
     db.checkDayOff().then(results=>{

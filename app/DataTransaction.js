@@ -1369,9 +1369,10 @@ const exportToExcel = async () => {
             report.push(result)
         })
     })
-
-
-    save({ year: year, month: month, day: day }, report)
+    await save({ year: year, month: month, day: day }, report).catch(error=>{
+        DBLogger.err(exportToExcel.name,error)
+        throw new Error(error.message)
+    })           
 }
 
 const generateColumn = async (userData, todayReport) => {

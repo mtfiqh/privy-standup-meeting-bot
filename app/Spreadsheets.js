@@ -1,6 +1,13 @@
+const {getErrors} = require('./ErrorCode')
 
+class garbageCollection{
+    constructor(){
+        this.err = []
+    }
+}
+const gb = new garbageCollection()
+async function save(date, report) {
 
-function save(date, report) {
     const data=report
     let {parseSheetID} = require('./helper/config')
     let spreadsheetId = parseSheetID()
@@ -16,15 +23,15 @@ function save(date, report) {
         keys.private_key,
         ['https://www.googleapis.com/auth/spreadsheets']
     )
-
-    client.authorize(async(err, tokens) => {
-        if (err) {
-            console.log(err)
-        } else {
-            console.log('connected! ' + tokens)
-            write(client)
-        }
+    await client.authorize().catch(e=>{
+        gb.err.push(e)
     })
+
+    await write(client)
+    
+    if(gb.err.length!=0){
+        throw new Error(gb.err)
+    }
 
     async function write(client) {
         const gsapi = google.sheets({
@@ -33,10 +40,8 @@ function save(date, report) {
         })
 
         let title = date.year + "-" + date.month + "-" + date.day
-        // let title = "res"
-        // create new sheets
+        
         const request = {
-            // The ID of the spreadsheet
             "spreadsheetId": spreadsheetId,
             "resource": {
                 "requests": [{
@@ -48,39 +53,34 @@ function save(date, report) {
                 }]
             }
         }
-        // console.log(report.data)
         let wait = true
-        gsapi.spreadsheets.batchUpdate(request, (err, response) => {
-            if (err) {
-                // TODO: Handle error
-                console.log("pembuatan sheets baru error\n" + err)
-            } else {
-                console.log("sheets baru dibuat untuk : " + title)
+        await gsapi.spreadsheets.batchUpdate(request).catch(e=>{
+            if(e.code==404){
+                gb.err.push(getErrors(e.code,'Spreadsheet id, check settings'))
+            }else if(e.code==400){
+
+            }else{
+                gb.err.push(getErrors(e.code,e.message))
             }
-
-             // update properties
-             const prop = {
-                spreadsheetId: spreadsheetId,
-                range: title+"!A1", //sheet!A1
-                valueInputOption: 'USER_ENTERED',
-                resource: {
-                    values: data,
-                }
+        })                 
+        
+        const prop = {
+            spreadsheetId: spreadsheetId,
+            range: title+"!A1", //sheet!A1
+            valueInputOption: 'USER_ENTERED',
+            resource: {
+                values: data,
             }
-            gsapi.spreadsheets.values.update(prop, (err, response)=>{
-                if(err){
-                    console.log(err)
-                }else{
-                    console.log("Data berhasil di save")
-                }
-            })
-            
-        });
+        }
 
-       
-    }
-
-
+        gsapi.spreadsheets.values.update(prop).catch(e=>{
+            if(e.code==404){
+                gb.err.push(getErrors(e.code,'Spreadsheet id, check settings'))
+            }else{
+                gb.err.push(getErrors(e.code,e.message))
+            }
+        })
+    }        
 }
 
 

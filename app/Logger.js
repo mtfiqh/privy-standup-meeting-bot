@@ -1,4 +1,4 @@
-const log       = require('simple-node-logger').createSimpleLogger()
+const log       = require('simple-node-logger').createSimpleLogger('bot.log')
 class Logger{
     static err(name, reason){
         const message = `@${name} : ${reason} at ${new Date().toDateString()}`

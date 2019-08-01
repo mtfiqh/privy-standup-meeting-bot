@@ -25,7 +25,7 @@ class Config {
 
 fs.watchFile(fname,() => Config.change = true)
 function parseSheetID(){
-    const url = settings.spreadsheetURL.split('/')
+    const url = Config.getInstance().data.spreadsheetURL.split('/')
     let sheetID = ''
 
     url.forEach(element => {

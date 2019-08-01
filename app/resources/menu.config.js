@@ -117,7 +117,7 @@ const Mapper = {
     },
     'editDeadline':{
         text:"Edit project deadline",
-        icon:em.offer,
+        icon:`${em.edit}${em.clock}`,
         action:"onEditDeadline"
     }
 

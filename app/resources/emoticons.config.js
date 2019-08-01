@@ -20,5 +20,6 @@ module.exports = {
     left    :'⬅️',
     calendar:'📅',
     exc     :'❗',
-    smile   :'😊'
+    smile   :'😊',
+    clock   :'🕑'
 }
