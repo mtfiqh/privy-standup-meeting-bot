@@ -44,6 +44,8 @@ class CrudProject extends clndr.CalendarKeyboard{
         this.addCache('token', Math.random().toString(36).substring(8))
         this.id = userID
         this.deadline=null
+        this.selectDeadline=null
+
         this.date = new Date()
     }
     onTypeListen(context){
@@ -88,13 +90,19 @@ class CrudProject extends clndr.CalendarKeyboard{
 
     onSelectDeadline(args){
         const data = clndr.parseArgs(args)
+        console.log(data)
         const checkIcon = '️️✔️'
 
         let text = this.calendar[data.row][data.col].text
-        this.deadline=null
+        console.log(text)
         if(text.includes(checkIcon)){
+            this.selectDeadline=null
             this.deadline = null
         }else{
+            if(this.selectDeadline!==null){
+                this.calendar[this.selectDeadline.row][this.selectDeadline.col].text = toggleCheck(this.calendar[this.selectDeadline.row][this.selectDeadline.col].text)
+            }
+            this.selectDeadline=data
             this.deadline={
                 'year':data.year,
                 'month':data.month,
@@ -102,7 +110,7 @@ class CrudProject extends clndr.CalendarKeyboard{
             }
         }
         this.calendar[data.row][data.col].text = toggleCheck(text)
-        
+        console.log(this.calendar[data.row][data.col].text)
         return{
             type:'Edit',
             id:this.cache.userID,

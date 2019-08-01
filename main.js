@@ -19,6 +19,7 @@ const { ListCuti } = require('./app/ListCuti')
 const { Advice } = require('./app/advice')
 const { Problems } = require('./app/Problems')
 const { MonitoringUsers } = require('./app/MonitoringUsers')
+const { EditDeadline } = require('./app/EditDeadline')
 require('dotenv').config()
 const moment = require('moment')
 const SCHEDULE_10  = process.env.SCHEDULE_10
@@ -591,6 +592,14 @@ async function handleAuto(context) {
             response =  await readAdvice.onRead()
             handleRespond(response, chat.id)
             break
+        case '/editDeadline':
+            bot.deleteMessage(chat.id, message_id)
+            const editDeadline = new EditDeadline(chat.id, chat.first_name)
+            addLookUp(chat.id, `editDeadline@${chat.id}`, editDeadline)
+            response = await editDeadline.onStart()
+            handleRespond(response, chat.id)
+            break
+            
         default:
             console.log("waiting...")
             break
