@@ -1060,7 +1060,7 @@ const isUserExist = async (userID) => {
     return db.collection('users').doc(userID.toString()).get()
     .then(data => {
         if (data.exists) return true
-        return true
+        return false
     })
     .catch(err=>{
         DBLogger.err(isUserExist.name,`${err.message}`)
