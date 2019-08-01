@@ -3,5 +3,8 @@
     "sessionTimeout":120,
     "takeOfferTask":{
         "timeout": 15
+    },
+    "projects":{
+        "deadlineReminder":"1 d"
     }
 }

@@ -25,7 +25,6 @@ const SCHEDULE_10  = process.env.SCHEDULE_10
 const SCHEDULE_13  = process.env.SCHEDULE_13
 const SCHEDULE_RESET   = process.env.SCHEDULE_RESET
 const SCHEDULE_MENTION = process.env.SCHEDULE_MENTION
-
 // -------------------------------------- (global vars) ----------------------------------------------- //
 const {settings}  = require("./app/helper/config")
 const TAKE_OFFER_TASK_TIMEOUT = (1000 * settings.takeOfferTask.timeout)
@@ -82,7 +81,7 @@ bot.onText(/\/start/, async context => {
         })
     }
     bot.sendMessage(chat.id,
-        dict.start.getMessage(from.first_name),
+        dict.start.getMessage(from.first_name,from.id),
         dict.start.getOptions()
     ).then((context) => {
         currentState[`autostartBot@${context.chat.id}`] = context.message_id
@@ -818,6 +817,19 @@ async function remindMessage(type,user){
     
 }
 
+function remindProjectStart(){
+    const start = settings.projects.deadlineReminder
+    let idx = 0
+    let multiplier = 24*60*60*1000
+    if(start.includes('d'))       idx = start.indexOf('d')
+    else if(start.includes('w'))  idx = start.indexOf('w'), multiplier *= 7
+    else if(start.includes('m'))  idx = start.indexOf('m'), multiplier *= 30
+    else if(start.includes('y'))  idx = start.indexOf('y'), multiplier *= 360
+    else throw new Error('Format reminder projects invalid!')
+    
+    return parseInt(start.slice(0,idx))*multiplier
+}
+
 async function remindProjects(){
     const projects = await db.getDetailedProject('In Progress')
     moment.locale('id')
@@ -825,12 +837,12 @@ async function remindProjects(){
     for(let project of projects){
         let today     = new Date()
         let deadline  = project.deadline==null? new Date(0) : project.deadline.toDate()
-        let limit   = 7*24*60*60*1000
+        let remindStart   = remindProjectStart()
         let diff    = deadline-today
         let diffLocale =  moment(`${deadline.getFullYear()}
         ${deadline.getMonth()<10?`0${deadline.getMonth()+1}`:deadline.getMonth()+1}${deadline.getDate()<10?`0${deadline.getDate()}`:deadline.getDate()}`,'YYYYMMDD').fromNow()
-
-        if(diff>0&&diff<limit){
+        console.log(remindStart)
+        if(diff>0&&diff<remindStart){
             bot.sendMessage(groupID,`Mengingatkan deadline Project *${project.projectName}* akan berakhir *${diffLocale}* ${emoticon.smile}`,{parse_mode:'Markdown'})
         }
     }
@@ -940,6 +952,18 @@ const cronMention = cron.schedule(SCHEDULE_MENTION,function(){
 })
 
 /**
+ * Remind projects deadline
+ */
+const cronProject = cron.schedule(SCHEDULE_10,()=>{
+    console.log('10 A.M')
+    allowReminder().then(allowed=>{
+        if(allowed){
+            remindProjects()
+        }
+    })
+})
+
+/**
  * Set a user active or not based on day-off databases
  * SCHEDULE_RESET
  */
@@ -964,6 +988,7 @@ function cronstart(){
     cron10.stop()
     cron13.stop()
     cronMention.stop()
+    cronProject.start()
     cronreset.stop()
 }
 
