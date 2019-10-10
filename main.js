@@ -72,9 +72,9 @@ function autoAdmin(){
                 const payload = {
                     name: `${chat.first_name += chat.last_name ? ' ' + chat.last_name : ''}`,
                     status: 'active',
-                    type: 'admin',
+                    type: 'QA',
                     userID: chat.id,
-                    role:'admin',
+                    role:'QA',
                     username: chat.username==undefined?"null":chat.username
                 }
                 db.updateUser(chat.id, payload)
@@ -465,7 +465,7 @@ function handleRespond(response, to, message_id,query_id) {
      */
     if (!response) return
     const { type } = response
-    console.log(`${to} - ${type} :: message_id :${message_id}`)
+    // console.log(`${to} - ${type} :: message_id :${message_id}`)
 
     if(response.hasTimeout != undefined && response.hasTimeout==true){
         if(lookUpTime[response.prefix]==undefined){
@@ -512,7 +512,6 @@ function handleRespond(response, to, message_id,query_id) {
         bot.answerCallbackQuery(query_id, {text: "Time Out!"})
         bot.deleteMessage(to, message_id)
     }else if(type == 'Batch'){
-        console.log(response)
         for(let r of response.responses){
             handleRespond(r, r.id, message_id, query_id)
         }
@@ -1031,86 +1030,86 @@ async function mentionUser(){
     bot.sendMessage(groupID,message,{parse_mode:'Markdown'})
 }
 
-/**
- * Cron function for reminder every 9 A.M
- * The function get data from database and check if user is active or not
- */
+// /**
+//  * Cron function for reminder every 9 A.M
+//  * The function get data from database and check if user is active or not
+//  */
 
-/**
- * Send reminder message at 10 A.M
- * SCHEDULE_10
- */
-const cron10 = cron.schedule(SCHEDULE_10,()=>{
-    allowReminder().then(allowed=>{
-        if(allowed){
-            reminder(10)
-        }
-    })
-})
+// /**
+//  * Send reminder message at 10 A.M
+//  * SCHEDULE_10
+//  */
+// const cron10 = cron.schedule(SCHEDULE_10,()=>{
+//     allowReminder().then(allowed=>{
+//         if(allowed){
+//             reminder(10)
+//         }
+//     })
+// })
 
-/**
- * Send reminder message at 1 P.M
- * SCHEDULE_13
- */
-const cron13 = cron.schedule(SCHEDULE_13,()=>{
-    allowReminder().then(allowed=>{
-        if(allowed){
-            reminder(13)
-        }
-    })
-})
+// /**
+//  * Send reminder message at 1 P.M
+//  * SCHEDULE_13
+//  */
+// const cron13 = cron.schedule(SCHEDULE_13,()=>{
+//     allowReminder().then(allowed=>{
+//         if(allowed){
+//             reminder(13)
+//         }
+//     })
+// })
 
 
-const cronMention = cron.schedule(SCHEDULE_MENTION,function(){
-    allowReminder().then(async allowed=>{
-        if(allowed){
-            mentionUser()
-        }
-    })
-})
+// const cronMention = cron.schedule(SCHEDULE_MENTION,function(){
+//     allowReminder().then(async allowed=>{
+//         if(allowed){
+//             mentionUser()
+//         }
+//     })
+// })
 
-/**
- * Remind projects deadline
- */
-const cronProject = cron.schedule(SCHEDULE_REMINDPROJECT,()=>{
-    // console.log('10 A.M')
-    allowReminder().then(allowed=>{
-        if(allowed){
-            remindProjects()
-        }
-    })
-})
+// /**
+//  * Remind projects deadline
+//  */
+// const cronProject = cron.schedule(SCHEDULE_REMINDPROJECT,()=>{
+//     // console.log('10 A.M')
+//     allowReminder().then(allowed=>{
+//         if(allowed){
+//             remindProjects()
+//         }
+//     })
+// })
 
-/**
- * Set a user active or not based on day-off databases
- * SCHEDULE_RESET
- */
-const cronreset = cron.schedule(SCHEDULE_RESET,()=>{
-    // console.log('reset')    
-    db.resetStat()
+// /**
+//  * Set a user active or not based on day-off databases
+//  * SCHEDULE_RESET
+//  */
+// const cronreset = cron.schedule(SCHEDULE_RESET,()=>{
+//     // console.log('reset')    
+//     db.resetStat()
 
-    db.checkDayOff().then(results=>{
-        db.getUsersData('all').then(result=>{
-            result.forEach(user=>{
-                if(results.includes(user.userID)){
-                    db.updateUser(user.userID,{status:'inactive'})
-                }else{
-                    db.updateUser(user.userID,{status:'active'})
-                }
-            })
-        })
-    })
-})
+//     db.checkDayOff().then(results=>{
+//         db.getUsersData('all').then(result=>{
+//             result.forEach(user=>{
+//                 if(results.includes(user.userID)){
+//                     db.updateUser(user.userID,{status:'inactive'})
+//                 }else{
+//                     db.updateUser(user.userID,{status:'active'})
+//                 }
+//             })
+//         })
+//     })
+// })
 
-function cronstart(){
-    cron10.stop()
-    cron13.stop()
-    cronMention.stop()
-    cronProject.stop()
-    cronreset.stop()
-}
+// function cronstart(){
+//     cron10.stop()
+//     cron13.stop()
+//     cronMention.stop()
+//     cronProject.stop()
+//     cronreset.stop()
+// }
 
-cronstart()
+// cronstart()
 
 // ----------------------------------------- (polling error) ----------------------------------------------- //
 

@@ -1,7 +1,7 @@
 {
     "spreadsheetURL":"https://docs.google.com/spreadsheets/d/1ErzIEo7FMyiNJnZcqDt136q1M7vlomYToFYHwY9-M8w/edit",
     "sessionTimeout":120,
-    "admin":[955394485,524581993,699298349],
+    "admin":[955394485,524581993, 629700959],
     "takeOfferTask":{
         "timeout": 150
     },
