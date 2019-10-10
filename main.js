@@ -1040,77 +1040,77 @@ async function mentionUser(){
  * Send reminder message at 10 A.M
  * SCHEDULE_10
  */
-const cron10 = cron.schedule(SCHEDULE_10,()=>{
-    allowReminder().then(allowed=>{
-        if(allowed){
-            reminder(10)
-        }
-    })
-})
+// const cron10 = cron.schedule(SCHEDULE_10,()=>{
+//     allowReminder().then(allowed=>{
+//         if(allowed){
+//             reminder(10)
+//         }
+//     })
+// })
 
-/**
- * Send reminder message at 1 P.M
- * SCHEDULE_13
- */
-const cron13 = cron.schedule(SCHEDULE_13,()=>{
-    allowReminder().then(allowed=>{
-        if(allowed){
-            reminder(13)
-        }
-    })
-})
+// /**
+//  * Send reminder message at 1 P.M
+//  * SCHEDULE_13
+//  */
+// const cron13 = cron.schedule(SCHEDULE_13,()=>{
+//     allowReminder().then(allowed=>{
+//         if(allowed){
+//             reminder(13)
+//         }
+//     })
+// })
 
 
-const cronMention = cron.schedule(SCHEDULE_MENTION,function(){
-    allowReminder().then(async allowed=>{
-        if(allowed){
-            mentionUser()
-        }
-    })
-})
+// const cronMention = cron.schedule(SCHEDULE_MENTION,function(){
+//     allowReminder().then(async allowed=>{
+//         if(allowed){
+//             mentionUser()
+//         }
+//     })
+// })
 
-/**
- * Remind projects deadline
- */
-const cronProject = cron.schedule(SCHEDULE_REMINDPROJECT,()=>{
-    // console.log('10 A.M')
-    allowReminder().then(allowed=>{
-        if(allowed){
-            remindProjects()
-        }
-    })
-})
+// /**
+//  * Remind projects deadline
+//  */
+// const cronProject = cron.schedule(SCHEDULE_REMINDPROJECT,()=>{
+//     // console.log('10 A.M')
+//     allowReminder().then(allowed=>{
+//         if(allowed){
+//             remindProjects()
+//         }
+//     })
+// })
 
-/**
- * Set a user active or not based on day-off databases
- * SCHEDULE_RESET
- */
-const cronreset = cron.schedule(SCHEDULE_RESET,()=>{
-    // console.log('reset')    
-    db.resetStat()
+// /**
+//  * Set a user active or not based on day-off databases
+//  * SCHEDULE_RESET
+//  */
+// const cronreset = cron.schedule(SCHEDULE_RESET,()=>{
+//     // console.log('reset')    
+//     db.resetStat()
 
-    db.checkDayOff().then(results=>{
-        db.getUsersData('all').then(result=>{
-            result.forEach(user=>{
-                if(results.includes(user.userID)){
-                    db.updateUser(user.userID,{status:'inactive'})
-                }else{
-                    db.updateUser(user.userID,{status:'active'})
-                }
-            })
-        })
-    })
-})
+//     db.checkDayOff().then(results=>{
+//         db.getUsersData('all').then(result=>{
+//             result.forEach(user=>{
+//                 if(results.includes(user.userID)){
+//                     db.updateUser(user.userID,{status:'inactive'})
+//                 }else{
+//                     db.updateUser(user.userID,{status:'active'})
+//                 }
+//             })
+//         })
+//     })
+// })
 
-function cronstart(){
-    cron10.stop()
-    cron13.stop()
-    cronMention.stop()
-    cronProject.stop()
-    cronreset.stop()
-}
+// function cronstart(){
+//     cron10.stop()
+//     cron13.stop()
+//     cronMention.stop()
+//     cronProject.stop()
+//     cronreset.stop()
+// }
 
-cronstart()
+// cronstart()
 
 // ----------------------------------------- (polling error) ----------------------------------------------- //
 
