@@ -1,8 +1,7 @@
 
 # Privy StandUp-Meet Bot
-
-## Overview
 [![Build Status](https://travis-ci.com/mtfiqh/privy-standup-meeting-bot.svg?branch=master)](https://travis-ci.com/mtfiqh/privy-standup-meeting-bot)
+## Overview
 
 SMPrivyDev is a Telegram bot to make it easier for developers at PrivyID to report and record the daily tasks directly from Telegram.
 
