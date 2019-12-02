@@ -21,9 +21,9 @@ const { Problems } = require('./app/Problems')
 const { MonitoringUsers } = require('./app/MonitoringUsers')
 const {Logger}= require('./app/Logger')
 const { EditDeadline } = require('./app/EditDeadline')
-require('dotenv').config()
 const moment = require('moment')
 const fs      = require('fs')
+require('dotenv').config()
 const SCHEDULE_10  = process.env.SCHEDULE_10
 const SCHEDULE_13  = process.env.SCHEDULE_13
 const SCHEDULE_RESET   = process.env.SCHEDULE_RESET
@@ -37,7 +37,6 @@ const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true })
 const currentState = {}
 const history = {}
 const lookUp = {}
-
 const commands = new Set([
     "/start",
     "/menu",
@@ -390,7 +389,7 @@ bot.on("message", async context => {
             if(history[currentApp.prefix]!==undefined){
                 history[currentApp.prefix].add(context.message_id)
                 deleteHistory(currentApp.prefix)
-            }
+            } 
             delete lookUp[from.id][currentApp.prefix]
         }
         if(response && response.record===true){
@@ -1006,6 +1005,7 @@ async function allowReminder(){
     if((!isHoliday)&&(todayDate.getDate()!=6)&&(todayDate.getDate()!=0)){
         return true
     }
+    console.log('reminder not allowed')
     return false
 }
 
@@ -1060,15 +1060,6 @@ const cron13 = cron.schedule(SCHEDULE_13,()=>{
     })
 })
 
-
-const cronMention = cron.schedule(SCHEDULE_MENTION,function(){
-    allowReminder().then(async allowed=>{
-        if(allowed){
-            mentionUser()
-        }
-    })
-})
-
 /**
  * Remind projects deadline
  */
@@ -1081,6 +1072,13 @@ const cronProject = cron.schedule(SCHEDULE_REMINDPROJECT,()=>{
     })
 })
 
+const cronMention = cron.schedule(SCHEDULE_MENTION,function(){
+    allowReminder().then(async allowed=>{
+        if(allowed){
+            mentionUser()
+        }
+    })
+})
 /**
  * Set a user active or not based on day-off databases
  * SCHEDULE_RESET
@@ -1103,11 +1101,11 @@ const cronreset = cron.schedule(SCHEDULE_RESET,()=>{
 })
 
 function cronstart(){
-    cron10.stop()
-    cron13.stop()
-    cronMention.stop()
-    cronProject.stop()
-    cronreset.stop()
+    cron10.start()
+    cron13.start()
+    cronMention.start()
+    cronProject.start()
+    cronreset.start()
 }
 
 cronstart()
@@ -1117,4 +1115,8 @@ cronstart()
 bot.on('polling_error', msg => {
     Logger.err('Telegram Bot',msg.message)
 })
+
+
+
+
 

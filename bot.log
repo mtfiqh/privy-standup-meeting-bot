@@ -11,3 +11,45 @@
 20:08:00.646 INFO  @handleAuto : Waiting user input at Thu Aug 01 2019 
 20:08:04.698 INFO  @handleAuto : Waiting user input at Thu Aug 01 2019 
 20:08:47.258 INFO  @handleAuto : Waiting user input at Thu Aug 01 2019 
+16:55:09.298 INFO  @handleAuto : Waiting user input at Thu Sep 12 2019 
+16:55:50.902 INFO  @handleAuto : Waiting user input at Thu Sep 12 2019 
+16:56:16.852 INFO  @handleAuto : Waiting user input at Thu Sep 12 2019 
+17:06:03.550 INFO  @handleAuto : Waiting user input at Thu Sep 12 2019 
+15:35:26.485 ERROR @Telegram Bot : EFATAL: Error: getaddrinfo EAI_AGAIN api.telegram.org api.telegram.org:443 at Mon Sep 30 2019 
+15:35:26.793 ERROR @Telegram Bot : EFATAL: Error: getaddrinfo EAI_AGAIN api.telegram.org api.telegram.org:443 at Mon Sep 30 2019 
+15:35:27.100 ERROR @Telegram Bot : EFATAL: Error: getaddrinfo EAI_AGAIN api.telegram.org api.telegram.org:443 at Mon Sep 30 2019 
+15:35:27.405 ERROR @Telegram Bot : EFATAL: Error: getaddrinfo EAI_AGAIN api.telegram.org api.telegram.org:443 at Mon Sep 30 2019 
+15:35:27.711 ERROR @Telegram Bot : EFATAL: Error: getaddrinfo EAI_AGAIN api.telegram.org api.telegram.org:443 at Mon Sep 30 2019 
+15:35:28.016 ERROR @Telegram Bot : EFATAL: Error: getaddrinfo EAI_AGAIN api.telegram.org api.telegram.org:443 at Mon Sep 30 2019 
+15:35:28.322 ERROR @Telegram Bot : EFATAL: Error: getaddrinfo EAI_AGAIN api.telegram.org api.telegram.org:443 at Mon Sep 30 2019 
+15:35:28.626 ERROR @Telegram Bot : EFATAL: Error: getaddrinfo EAI_AGAIN api.telegram.org api.telegram.org:443 at Mon Sep 30 2019 
+15:35:28.931 ERROR @Telegram Bot : EFATAL: Error: getaddrinfo EAI_AGAIN api.telegram.org api.telegram.org:443 at Mon Sep 30 2019 
+15:36:02.816 ERROR @BOT-callback_query : Cannot destructure property `from` of 'undefined' or 'null'. at Mon Sep 30 2019 
+00:23:52.392 INFO  @handleAuto : Waiting user input at Tue Oct 29 2019 
+00:24:29.661 INFO  @handleAuto : Waiting user input at Tue Oct 29 2019 
+00:25:02.484 INFO  @handleAuto : Waiting user input at Tue Oct 29 2019 
+00:25:31.209 INFO  @handleAuto : Waiting user input at Tue Oct 29 2019 
+01:38:26.121 INFO  @handleAuto : Waiting user input at Tue Oct 29 2019 
+01:44:03.936 ERROR @BOT-callback_query : Cannot read property 'Menu@886120759@cron' of undefined at Tue Oct 29 2019 
+01:44:08.999 ERROR @BOT-callback_query : Cannot read property 'Menu@886120759@cron' of undefined at Tue Oct 29 2019 
+01:50:00.788 INFO  @handleAuto : Waiting user input at Tue Oct 29 2019 
+01:51:12.184 INFO  @handleAuto : Waiting user input at Tue Oct 29 2019 
+11:56:56.527 INFO  @handleAuto : Waiting user input at Sat Nov 30 2019 
+11:59:02.611 INFO  @handleAuto : Waiting user input at Sat Nov 30 2019 
+11:59:28.915 INFO  @handleAuto : Waiting user input at Sat Nov 30 2019 
+12:01:00.022 INFO  @handleAuto : Waiting user input at Sat Nov 30 2019 
+12:02:27.313 INFO  @handleAuto : Waiting user input at Sat Nov 30 2019 
+12:03:51.591 INFO  @handleAuto : Waiting user input at Sat Nov 30 2019 
+12:04:50.302 INFO  @handleAuto : Waiting user input at Sat Nov 30 2019 
+13:05:52.318 ERROR @Telegram Bot : EFATAL: Error: getaddrinfo EAI_AGAIN api.telegram.org at Sat Nov 30 2019 
+13:05:52.625 ERROR @Telegram Bot : EFATAL: Error: getaddrinfo EAI_AGAIN api.telegram.org at Sat Nov 30 2019 
+13:05:52.933 ERROR @Telegram Bot : EFATAL: Error: getaddrinfo EAI_AGAIN api.telegram.org at Sat Nov 30 2019 
+13:05:53.238 ERROR @Telegram Bot : EFATAL: Error: getaddrinfo EAI_AGAIN api.telegram.org at Sat Nov 30 2019 
+13:05:53.545 ERROR @Telegram Bot : EFATAL: Error: getaddrinfo EAI_AGAIN api.telegram.org at Sat Nov 30 2019 
+13:05:53.850 ERROR @Telegram Bot : EFATAL: Error: getaddrinfo EAI_AGAIN api.telegram.org at Sat Nov 30 2019 
+13:05:54.155 ERROR @Telegram Bot : EFATAL: Error: getaddrinfo EAI_AGAIN api.telegram.org at Sat Nov 30 2019 
+13:05:54.462 ERROR @Telegram Bot : EFATAL: Error: getaddrinfo EAI_AGAIN api.telegram.org at Sat Nov 30 2019 
+13:05:54.768 ERROR @Telegram Bot : EFATAL: Error: getaddrinfo EAI_AGAIN api.telegram.org at Sat Nov 30 2019 
+13:05:55.072 ERROR @Telegram Bot : EFATAL: Error: getaddrinfo EAI_AGAIN api.telegram.org at Sat Nov 30 2019 
+13:05:55.379 ERROR @Telegram Bot : EFATAL: Error: getaddrinfo EAI_AGAIN api.telegram.org at Sat Nov 30 2019 
+13:05:55.686 ERROR @Telegram Bot : EFATAL: Error: getaddrinfo EAI_AGAIN api.telegram.org at Sat Nov 30 2019 

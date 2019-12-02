@@ -1,4 +1,5 @@
 const firebase  = require("./Firebase.js")
+const db        = firebase.database();
 const { save }  = require('./Spreadsheets.js')
 
 const dateTime  = require('node-datetime');
@@ -6,7 +7,6 @@ const dateCalc  = require("add-subtract-date");
 const log       = require('simple-node-logger').createSimpleLogger('./log/DB.log')
 
 const admin     = firebase.admin()
-const db        = firebase.database();
 const users     = new Set([])
 const projects  = []
 const tasks     = new Set([])

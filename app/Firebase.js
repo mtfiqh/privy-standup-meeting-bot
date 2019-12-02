@@ -8,12 +8,12 @@ module.exports = {
         credential: admin.credential.cert(serviceAccount),
         databaseURL: databaseURL
         });
-
-        return admin.firestore()
+ 
+        return admin.firestore();
     },
     admin:function(){
         let admin = require('firebase-admin');
-        return admin
+        return admin;
     }
      
 };

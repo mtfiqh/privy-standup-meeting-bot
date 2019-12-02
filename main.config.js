@@ -164,7 +164,7 @@ module.exports = {
                             const added = result.Added
                             const done  = result.Done
                             const recurring = result.Recurring
-    
+                            console.log(result)
                             return `Selamat Siang ${name}\n${done==(recurring+added)?'Selamat, semua tugas anda telah selesai':`${done==0?'Anda belum menyelesaikan tugas satu pun. Ada kendala?':`${done} dari ${recurring+added} tugas anda telah selesai.`} `}`
                         }
                     })
